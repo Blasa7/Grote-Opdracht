@@ -11,7 +11,7 @@ class Input
 
         input.orders = new Order[1177];
 
-        String line;
+        string line;
         using (StreamReader sr = new StreamReader(@"..\\..\\..\\order.txt"))
         {
             sr.ReadLine();
@@ -21,7 +21,7 @@ class Input
 
             while (line != null)
             {
-                String[] split = line.Split(";");
+                string[] split = line.Split(";");
                 for (int j = 0; j < split.Length; j++)
                 {
                     split[j] = split[j].Trim();
@@ -39,7 +39,7 @@ class Input
         return input;
     }
 
-    public override String ToString()
+    public override string ToString()
     {
         return orders.ToString() + distancesMatrix.ToString();
     }
@@ -58,7 +58,7 @@ class Order
 
 
 
-    public static Order Parse(String[] input)
+    public static Order Parse(string[] input)
     {
         Order order = new Order();
         order.id = int.Parse(input[0]);
@@ -74,7 +74,7 @@ class Order
         return order;
     }
 
-    public override String ToString()
+    public override string ToString()
     {
         return 
             id.ToString() + " " +
@@ -103,11 +103,11 @@ class DistancesMatrix
         {
             sr.ReadLine();
 
-            String line = sr.ReadLine();
+            string line = sr.ReadLine();
 
             while (line != null)
             {
-                String[] split = line.Split(';');
+                string[] split = line.Split(';');
 
                 distancesMatrix.matrix[int.Parse(split[0]), int.Parse(split[1])] = new Distance(int.Parse(split[2]), int.Parse(split[3])); 
 
