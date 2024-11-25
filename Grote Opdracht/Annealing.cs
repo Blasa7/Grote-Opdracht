@@ -49,6 +49,38 @@ class Annealing
             return true;
         return false;
     }
-
 }
 
+class Judge
+{
+    int score;
+    Judgement judgement;
+
+    public void Testify(int weight)
+    {
+        score += weight;
+    }
+
+    public void OverrideJudge(Judgement judgement)
+    {
+        this.judgement = judgement;
+    }
+
+    public Judgement GetJudgement()
+    {
+        if (judgement == Judgement.Undecided)
+        {
+            //Decide here
+            return Judgement.Pass;
+        }
+        else
+            return judgement;
+    }
+}
+
+enum Judgement
+{
+    Fail = 0,
+    Pass = 1,
+    Undecided
+}

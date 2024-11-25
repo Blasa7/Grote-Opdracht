@@ -20,11 +20,11 @@ class Solution
         //WIP
         for (int i = 0; i < Truck1.Length; i++)
         {
-            Truck1[i] = new Route(new Adress("depot"), 1000);
+            Truck1[i] = new Route(new Address("depot"), 1000);
         }
         for (int i = 0; i < Truck2.Length; i++)
         {
-            Truck2[i] = new Route(new Adress("depot"), 1000);
+            Truck2[i] = new Route(new Address("depot"), 1000);
         }
     }
     public int CalculateDifference(Route route)
@@ -46,247 +46,98 @@ class Schedule
     /// <summary>
     /// Adds a one time delivery to the given route at random.
     /// </summary>
-    void AddOneTimeDelivery(OneTimeDelivery delivery, Route route, Random rng)
+    void AddOneTimeDelivery(OneTimeDelivery delivery, Route route, Random rng, Judge judge)
     {
-        route.AddRandomStop(delivery.adress, rng);
+        int testimony = -delivery.address.emptyingTime * 3; //Assumption is that a previously unfulfilled order is added
+
+        judge.Testify(testimony);
+
+        route.AddRandomStop(delivery.address, rng, judge);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+            deliveries[(int)route.weekDay].AddLast(delivery);
     }
 
-    void RemoveOneTimeDelivery(OneTimeDelivery delivery, Route route, Random rng)
-    {
-        route.RemoveNode(delivery.adress.routeIndex);
-    }
-
-    void ShuffleOneTimeDelivery(OneTimeDelivery delivery, Random rng)
-    {
-        delivery.node.List.Remove(delivery.node);
-
-        deliveries[rng.Next(0, 5)].AddLast(delivery.node);
-    }
-
-    void ShuffleTwoTimeDelivery(TwoTimeDeliery delivery, Random rng)
-    {
-        
-    }
+    //Maybe add remove
+    //Maybe add shuffle/swap
 }
 
 abstract class Delivery
 {
-    public Adress adress;
+    public Address address;
     public LinkedListNode<Delivery> node;
 
-    public Delivery(Adress adress, LinkedListNode<Delivery> node)
+    public Delivery(Address address, LinkedListNode<Delivery> node)
     {
-        this.adress = adress;
+        this.address = address;
         this.node = node;
     }
 }
 
-class OneTimeDelivery(Adress adress, LinkedListNode<Delivery> node) : Delivery(adress, node) { }
+class OneTimeDelivery(Address address, LinkedListNode<Delivery> node) : Delivery(address, node) { }
 
-class TwoTimeDeliery(Adress adress, LinkedListNode<Delivery> node) : Delivery(adress, node)
+class TwoTimeDeliery(Address address, LinkedListNode<Delivery> node) : Delivery(address, node)
 { 
     TwoTimeDeliery other;
 }
 
-class ThreeTimeDelivery(Adress adress, LinkedListNode<Delivery> node) : Delivery(adress, node)
+class ThreeTimeDelivery(Address address, LinkedListNode<Delivery> node) : Delivery(address, node)
 {
     ThreeTimeDelivery[] others = new ThreeTimeDelivery[2];
 }
 
-class FourTimeDelivery(Adress adress, LinkedListNode<Delivery> node) : Delivery (adress, node) 
+class FourTimeDelivery(Address address, LinkedListNode<Delivery> node) : Delivery (address, node) 
 {
     FourTimeDelivery[] others = new FourTimeDelivery[3];
 }
 
 class Route // This is a linked list
-{     
-    /// <summary>
-    /// Array of all locations that are either included or excluded from the route.
-    /// </summary>
-    public LocationNode[] nodes;
+{
+    public IndexedLinkedList<Address> route;
 
-    /// <summary>
-    /// Index of the last node that is part of the route.
-    /// </summary>
-    public int currentIndex;
+    public WeekDay weekDay;
+    
+    int collectedGarbage = 0;
+    int maximumGarbage;
 
-    /// <summary>
-    /// Empty constructor only use for testing.
-    /// </summary>
-    public Route() { }
+    int duration;
 
-    /// <summary>
-    /// Constructor of a route must recieve an array with all locations 
-    /// with the location at position 0 being the start and end.
-    /// </summary>
-    public Route(Adress depot, int locationCount)
+    public Route(Address depot, int maximumSize)
     {
-        nodes = new LocationNode[locationCount];
-
-        nodes[0] = new LocationNode(depot);
-        nodes[0].prev = nodes[0];
-        nodes[0].next = nodes[0];
-
-        currentIndex = 0;
+        route = new IndexedLinkedList<Address>(depot, maximumSize);
     }
 
-    /// <summary>
-    /// Returns a random index from the nodes that are part of the route excluding the start node.
-    /// Do not use on a route with only a single node.
-    /// </summary>
-    public int getRandomIncluded(Random rng)
+    public void AddRandomStop(Address address, Random rng, Judge judge)
     {
-        return rng.Next(1, currentIndex + 1);
+        int index = route.getRandomIncluded(rng);
+
+        int prevID = route.nodes[index].value.matrixID;
+        int nextID = route.nodes[index].next.value.matrixID;
+
+        int testimony = 
+            Input.GetTimeFromTo(prevID, address.matrixID) + //New values are added
+            Input.GetTimeFromTo(address.matrixID, nextID) - 
+            Input.GetTimeFromTo(prevID, nextID); //Old value is substracted
+
+        judge.Testify(testimony);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+            route.InsertAfter(address, index);
     }
 
-    /// <summary>
-    /// Inserts the node at nodeIndex after the node at prevIndex.
-    /// </summary>
-    public void InsertAfter(Adress address, int prevIndex)
-    {
-        LocationNode current = new LocationNode(address);
-
-        LocationNode prev = nodes[prevIndex];
-        LocationNode next = nodes[prevIndex].next;
-
-        //Swap pointers from neighbors
-        prev.next = current;
-        next.prev = current;
-
-        current.prev = prev;
-        current.next = next;
-
-        //Increase the current index before swapping the element at currentIndex
-        currentIndex++;
-        current.address.routeIndex = currentIndex;
-        nodes[currentIndex] = current;
-    }
-
-    /// <summary>
-    /// Removes the node at nodeIndex.
-    /// </summary>
-    public void RemoveNode(int nodeIndex)
-    {
-        //Removing the node from the linked list.
-        nodes[nodeIndex].prev.next = nodes[nodeIndex].next;
-        nodes[nodeIndex].next.prev = nodes[nodeIndex].prev;
-
-        //Swap the to be deleted node with the last node in the used nodes.
-        (nodes[nodeIndex], nodes[currentIndex]) = (nodes[currentIndex], nodes[nodeIndex]);
-
-        //Lower the current index to discard the last element.
-        currentIndex--;
-    }
-
-    /// <summary>
-    /// Swaps two nodes. A node is not allowed to swap with itself.
-    /// </summary>
-    public void SwapNodes(int leftIndex, int rightIndex)
-    {
-        //A node is not allowed to swap with itself.
-        if (leftIndex == rightIndex)
-            throw new System.Exception("Cannot swap a node with itself!");
-
-        LocationNode prevLeftNode = nodes[leftIndex].prev;
-        LocationNode leftNode = nodes[leftIndex];
-        LocationNode nextLeftNode = nodes[leftIndex].next;
-
-        LocationNode rightNode = nodes[rightIndex];
-
-        leftNode.address.routeIndex = rightIndex;
-        rightNode.address.routeIndex = leftIndex;
-
-        //If the left node is the right neighbor of the right node
-        //swap them to ensure the leftNode is to the left of the rightNode.
-        if (prevLeftNode == rightNode)
-        {
-            prevLeftNode = nodes[rightIndex].prev;
-            leftNode = nodes[rightIndex];
-            nextLeftNode = nodes[rightIndex].next;
-
-            rightNode = nodes[leftIndex];
-        }
-
-        //Unique case when leftIndex is the direct neighbor of the rightIndex.
-        if (nextLeftNode == rightNode)
-        {
-            
-            leftNode.prev = rightNode;
-            leftNode.next = rightNode.next;
-
-            rightNode.next = leftNode;
-            rightNode.prev = prevLeftNode;
-
-            //Update the neighbors
-            rightNode.prev.next = rightNode;
-            leftNode.next.prev = leftNode;
-
-            return;
-        }
-        
-        //Default case where two nodes are not neighboring eachother.
-
-        //Left points to right's neighbors.
-        leftNode.prev = rightNode.prev;
-        leftNode.next =rightNode.next;
-
-        //Right's neighbors point to left.
-        leftNode.prev.next = leftNode;
-        leftNode.next.prev = leftNode;
-
-        //Right points to left's neighbors.
-        rightNode.prev = prevLeftNode;
-        rightNode.next = nextLeftNode;
-
-        //Left's neighbors point to right.
-        rightNode.prev.next = rightNode;
-        rightNode.next.prev = rightNode;
-    }
-
-    public void AddRandomStop(Adress adress, Random rng)
-    {
-        InsertAfter(adress, getRandomIncluded(rng));
-    }
-
-    /// <summary>
-    /// Converts the route to a string where nodes are added in order of route traversal.
-    /// </summary>
     public override string ToString()
     {
-        string r = "";
-        LocationNode currentNode = nodes[0];
-
-        for (int i = 0; i < currentIndex + 1 ; i++)
-        {
-            r += currentNode.ToString() + "\n";
-            currentNode = currentNode.next;
-        }
-        return r;
+        return route.ToString();
     }
 }
 
-class LocationNode
+class Address
 {
-    public LocationNode prev;
-    public LocationNode next;
-    public Adress address;
-
-    public LocationNode(Adress address)
-    {
-        this.address = address;
-    }
-
-    public override string ToString(){
-        return "Node { prev = " + prev.address + ", value = " + address + ", " + "next = " + next.address + " }";
-    }
-}
-
-class Adress
-{
-    public int routeIndex;
     public string name;
+    public int matrixID;
+    public int emptyingTime;
 
-    public Adress(string s)
+    public Address(string s)
     {
         name = s;
     }
@@ -295,4 +146,13 @@ class Adress
     {
         return name;
     }
+}
+
+public enum WeekDay
+{
+    Monday = 0,
+    Tuesday = 1,
+    Wednesday = 2,
+    Thursday = 3,
+    Friday = 4
 }

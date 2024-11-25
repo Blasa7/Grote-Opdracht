@@ -4,17 +4,22 @@ using System.Text;
 
 class Input
 {
-    public Order[] orders = new Order[1177];
-    public DistancesMatrix distancesMatrix;
+    public static Order[] orders = new Order[1177];
+    public static DistancesMatrix distancesMatrix;
+
+    public static int GetTimeFromTo(int matrixID1, int matrixID2)
+    {
+        return distancesMatrix.matrix[matrixID1, matrixID2].time;
+    }
 
     /// <summary>
     /// Parses and builds and Input instance from DistancesMatrix.txt and Orders.txt
     /// </summary>
-    public static Input Parse()
+    public static void Parse() //Changed all inputs to static because its probarly easiest
     {
-        Input input = new Input();
+        //Input input = new Input();
 
-        input.orders = new Order[1177];
+        Input.orders = new Order[1177];
 
         string line;
         using (StreamReader sr = new StreamReader(@"..\\..\\..\\Orders.txt"))
@@ -32,16 +37,16 @@ class Input
                     split[j] = split[j].Trim();
                 }
 
-                input.orders[i] = Order.Parse(split);
+                Input.orders[i] = Order.Parse(split);
 
                 line = sr.ReadLine();
                 i++;
             }
         }
 
-        input.distancesMatrix = DistancesMatrix.Parse(@"..\\..\\..\\DistancesMatrix.txt");
+        Input.distancesMatrix = DistancesMatrix.Parse(@"..\\..\\..\\DistancesMatrix.txt");
 
-        return input;
+        //return input;
     }
 
     public override string ToString()
@@ -136,8 +141,8 @@ class DistancesMatrix
 
 class Distance
 {
-    int distance;
-    int time;
+    public int distance;
+    public int time;
 
     public Distance(int distance, int time)
     {

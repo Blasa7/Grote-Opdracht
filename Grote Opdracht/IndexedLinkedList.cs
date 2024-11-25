@@ -140,7 +140,7 @@
     }
 
     /// <summary>
-    /// Converts the route to a string where nodes are added in order of route traversal.
+    /// Converts the linked list to a string where nodes are added in order of linked list traversal.
     /// </summary>
     public override string ToString()
     {

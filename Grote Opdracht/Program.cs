@@ -4,17 +4,17 @@
     {
         // Input input = Input.Parse();
         
-        Route route = new Route(new Adress("start"), 1000);
+        Route route = new Route(new Address("start"), 1000);
 
         //insert d
-        route.InsertAfter(new Adress("a"), 0);
+        route.route.InsertAfter(new Address("a"), 0);
         //insert e
-        route.InsertAfter(new Adress("b"), 1);
+        route.route.InsertAfter(new Address("b"), 1);
         //a->e->d [a, d, e]
-        route.InsertAfter(new Adress("c"),2);
-        route.InsertAfter(new Adress("d"), 3);
+        route.route.InsertAfter(new Address("c"),2);
+        route.route.InsertAfter(new Address("d"), 3);
 
-        route.SwapNodes(2, 1);
+        route.route.SwapNodes(2, 1);
 
         //[a, d, e, b, c]
         //a e d
