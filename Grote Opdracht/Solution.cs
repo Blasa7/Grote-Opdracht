@@ -1,5 +1,6 @@
 ﻿using System.CodeDom.Compiler;
 using System.Collections;
+using System.Xml.Linq;
 
 class Solution
 {
@@ -42,7 +43,19 @@ class Schedule
 {
     LinkedList<Delivery>[] deliveries = new LinkedList<Delivery>[5];
 
-    
+    /// <summary>
+    /// Adds a one time delivery to the given route at random.
+    /// </summary>
+    void AddOneTimeDelivery(OneTimeDelivery delivery, Route route, Random rng)
+    {
+        route.AddRandomStop(delivery.adress, rng);
+    }
+
+    void RemoveOneTimeDelivery(OneTimeDelivery delivery, Route route, Random rng)
+    {
+        route.RemoveNode(delivery.adress.routeIndex);
+    }
+
     void ShuffleOneTimeDelivery(OneTimeDelivery delivery, Random rng)
     {
         delivery.node.List.Remove(delivery.node);
@@ -56,25 +69,31 @@ class Schedule
     }
 }
 
-class Delivery
+abstract class Delivery
 {
     public Adress adress;
     public LinkedListNode<Delivery> node;
+
+    public Delivery(Adress adress, LinkedListNode<Delivery> node)
+    {
+        this.adress = adress;
+        this.node = node;
+    }
 }
 
-class OneTimeDelivery : Delivery
-{
-    
-}
-class TwoTimeDeliery : Delivery
+class OneTimeDelivery(Adress adress, LinkedListNode<Delivery> node) : Delivery(adress, node) { }
+
+class TwoTimeDeliery(Adress adress, LinkedListNode<Delivery> node) : Delivery(adress, node)
 { 
     TwoTimeDeliery other;
 }
-class ThreeTimeDelivery :Delivery
+
+class ThreeTimeDelivery(Adress adress, LinkedListNode<Delivery> node) : Delivery(adress, node)
 {
     ThreeTimeDelivery[] others = new ThreeTimeDelivery[2];
 }
-class FourTimeDelivery : Delivery
+
+class FourTimeDelivery(Adress adress, LinkedListNode<Delivery> node) : Delivery (adress, node) 
 {
     FourTimeDelivery[] others = new FourTimeDelivery[3];
 }

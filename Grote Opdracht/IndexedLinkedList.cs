@@ -1,0 +1,175 @@
+﻿class IndexedLinkedList<Type>
+{
+    /// <summary>
+    /// Array of all potential nodes that are either included or excluded from the route.
+    /// </summary>
+    public IndexedLinkedListNode<Type>[] nodes;
+
+    /// <summary>
+    /// Index of the last node that is part of the linked list.
+    /// </summary>
+    public int currentIndex;
+
+
+    /// <summary>
+    /// Constructor of a route must recieve an array with all locations 
+    /// with the location at position 0 being the start and end.
+    /// </summary>
+    public IndexedLinkedList(Type head, int maximumSize)
+    {
+        nodes = new IndexedLinkedListNode<Type>[maximumSize];
+
+        nodes[0] = new IndexedLinkedListNode<Type>(head);
+        nodes[0].prev = nodes[0];
+        nodes[0].next = nodes[0];
+
+        currentIndex = 0;
+    }
+
+    /// <summary>
+    /// Returns a random index from the nodes that are part of the linked list excluding the start node.
+    /// Do not use on a linked list with only a single node.
+    /// </summary>
+    public int getRandomIncluded(Random rng)
+    {
+        return rng.Next(1, currentIndex + 1);
+    }
+
+    /// <summary>
+    /// Inserts the node at nodeIndex after the node at prevIndex.
+    /// </summary>
+    public void InsertAfter(Type value, int prevIndex)
+    {
+        IndexedLinkedListNode<Type> current = new IndexedLinkedListNode<Type>(value);
+
+        IndexedLinkedListNode<Type> prev = nodes[prevIndex];
+        IndexedLinkedListNode<Type> next = nodes[prevIndex].next;
+
+        //Swap pointers from neighbors
+        prev.next = current;
+        next.prev = current;
+
+        current.prev = prev;
+        current.next = next;
+
+        //Increase the current index before swapping the element at currentIndex
+        currentIndex++;
+        current.index = currentIndex;
+        nodes[currentIndex] = current;
+    }
+
+    /// <summary>
+    /// Removes the node at nodeIndex.
+    /// </summary>
+    public void RemoveNode(int nodeIndex)
+    {
+        //Removing the node from the linked list.
+        nodes[nodeIndex].prev.next = nodes[nodeIndex].next;
+        nodes[nodeIndex].next.prev = nodes[nodeIndex].prev;
+
+        //Swap the to be deleted node with the last node in the used nodes.
+        (nodes[nodeIndex], nodes[currentIndex]) = (nodes[currentIndex], nodes[nodeIndex]);
+
+        //Lower the current index to discard the last element.
+        currentIndex--;
+    }
+
+    /// <summary>
+    /// Swaps two nodes. A node is not allowed to swap with itself.
+    /// </summary>
+    public void SwapNodes(int leftIndex, int rightIndex)
+    {
+        //A node is not allowed to swap with itself.
+        if (leftIndex == rightIndex)
+            throw new System.Exception("Cannot swap a node with itself!");
+
+        IndexedLinkedListNode<Type> prevLeftNode = nodes[leftIndex].prev;
+        IndexedLinkedListNode<Type> leftNode = nodes[leftIndex];
+        IndexedLinkedListNode<Type> nextLeftNode = nodes[leftIndex].next;
+
+        IndexedLinkedListNode<Type> rightNode = nodes[rightIndex];
+
+        leftNode.index = rightIndex;
+        rightNode.index = leftIndex;
+
+        //If the left node is the right neighbor of the right node
+        //swap them to ensure the leftNode is to the left of the rightNode.
+        if (prevLeftNode == rightNode)
+        {
+            prevLeftNode = nodes[rightIndex].prev;
+            leftNode = nodes[rightIndex];
+            nextLeftNode = nodes[rightIndex].next;
+
+            rightNode = nodes[leftIndex];
+        }
+
+        //Unique case when leftIndex is the direct neighbor of the rightIndex.
+        if (nextLeftNode == rightNode)
+        {
+
+            leftNode.prev = rightNode;
+            leftNode.next = rightNode.next;
+
+            rightNode.next = leftNode;
+            rightNode.prev = prevLeftNode;
+
+            //Update the neighbors
+            rightNode.prev.next = rightNode;
+            leftNode.next.prev = leftNode;
+
+            return;
+        }
+
+        //Default case where two nodes are not neighboring eachother.
+
+        //Left points to right's neighbors.
+        leftNode.prev = rightNode.prev;
+        leftNode.next = rightNode.next;
+
+        //Right's neighbors point to left.
+        leftNode.prev.next = leftNode;
+        leftNode.next.prev = leftNode;
+
+        //Right points to left's neighbors.
+        rightNode.prev = prevLeftNode;
+        rightNode.next = nextLeftNode;
+
+        //Left's neighbors point to right.
+        rightNode.prev.next = rightNode;
+        rightNode.next.prev = rightNode;
+    }
+
+    /// <summary>
+    /// Converts the route to a string where nodes are added in order of route traversal.
+    /// </summary>
+    public override string ToString()
+    {
+        string r = "";
+        IndexedLinkedListNode<Type> currentNode = nodes[0];
+
+        for (int i = 0; i < currentIndex + 1; i++)
+        {
+            r += currentNode.ToString() + "\n";
+            currentNode = currentNode.next;
+        }
+        return r;
+    }
+}
+
+class IndexedLinkedListNode<Type>
+{
+    public Type value;
+    public int index;
+    public IndexedLinkedListNode<Type> prev;
+    public IndexedLinkedListNode<Type> next;
+
+    public IndexedLinkedListNode(Type value)
+    {
+        this.value = value;
+    }
+
+    public override string ToString()
+    {
+        return "Node { prev = " + prev.value + ", value = " + value + ", " + "next = " + next.value + " }";
+    }
+}
