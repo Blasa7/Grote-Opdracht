@@ -20,11 +20,14 @@
         route.nodes[0].next = route.nodes[0];
 
         //insert d
-        route.InsertNode(1, 0, 0);
+        route.InsertAfter(1, 0);
         //insert e
-        route.InsertNode(2, 1, 0);
+        route.InsertAfter(2, 1);
         //a->e->d [a, d, e]
-        route.SwapNodes(1,1);
+        route.InsertAfter(3,2);
+        route.InsertAfter(4, 3);
+
+        route.SwapNodes(2, 1);
 
         //[a, d, e, b, c]
         //a e d

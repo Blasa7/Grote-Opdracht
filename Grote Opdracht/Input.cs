@@ -1,10 +1,15 @@
 ﻿using System.IO;
+using System.Numerics;
+using System.Text;
 
 class Input
 {
     public Order[] orders = new Order[1177];
     public DistancesMatrix distancesMatrix;
 
+    /// <summary>
+    /// Parses and builds and Input instance from DistancesMatrix.txt and Orders.txt
+    /// </summary>
     public static Input Parse()
     {
         Input input = new Input();
@@ -12,7 +17,7 @@ class Input
         input.orders = new Order[1177];
 
         string line;
-        using (StreamReader sr = new StreamReader(@"..\\..\\..\\order.txt"))
+        using (StreamReader sr = new StreamReader(@"..\\..\\..\\Orders.txt"))
         {
             sr.ReadLine();
 
@@ -28,13 +33,13 @@ class Input
                 }
 
                 input.orders[i] = Order.Parse(split);
-                i++;
 
                 line = sr.ReadLine();
+                i++;
             }
         }
 
-        input.distancesMatrix = DistancesMatrix.Parse(@"..\\..\\..\\AfstandenMatrix.txt");
+        input.distancesMatrix = DistancesMatrix.Parse(@"..\\..\\..\\DistancesMatrix.txt");
 
         return input;
     }
@@ -57,7 +62,9 @@ class Order
     public int x, y;
 
 
-
+    /// <summary>
+    /// Parses a Order from the given string array. Expected format is the same as used in Orders.txt
+    /// </summary>
     public static Order Parse(string[] input)
     {
         Order order = new Order();
@@ -76,23 +83,31 @@ class Order
 
     public override string ToString()
     {
-        return 
-            id.ToString() + " " +
-            location + " " +
-            frequency.ToString() + " " +
-            containerAmount.ToString() + " " +
-            containerVolume.ToString() + " " +
-            emptyingTime.ToString() + " " +
-            matrixID.ToString() + " " +
-            x.ToString() + " " +
-            y.ToString();
+        return
+            "Order { " +
+            id.ToString() + ", " +
+            location + ", " +
+            frequency.ToString() + ", " +
+            containerAmount.ToString() + ", " +
+            containerVolume.ToString() + ", " +
+            emptyingTime.ToString() + ", " +
+            matrixID.ToString() + ", " +
+            x.ToString() + ", " +
+            y.ToString() +
+            " }";       
     }
 }
 
 class DistancesMatrix
 {
+    /// <summary>
+    /// Matrix where the first index corresponds to MatrixID1 and the second index to MatrixID2.
+    /// </summary>
     public Distance[,] matrix;
 
+    /// <summary>
+    /// Parses a DistancesMatrix from the given path
+    /// </summary>
     public static DistancesMatrix Parse(string path)
     {
         DistancesMatrix distancesMatrix = new DistancesMatrix();
@@ -132,6 +147,6 @@ class Distance
 
     public override string ToString()
     {
-        return distance.ToString() + " " + time.ToString();
+        return "Distance { " + distance.ToString() + ", " + time.ToString() + " }";
     }
 }

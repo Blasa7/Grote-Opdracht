@@ -6,117 +6,171 @@ class Solution
 }
 
 class Route //Dit is een linked list
-{   //                .
-    //[a, b, c, d, e, h, g, f, i, ..]
-    //currentIndex = 3
-    // b<-a->c
+{     
+    /// <summary>
+    /// Array of all locations that are either included or excluded from the route.
+    /// </summary>
     public LocationNode[] nodes;
-    //index of the last location that IS part of the route
+
+    /// <summary>
+    /// Index of the last node that is part of the route.
+    /// </summary>
     public int currentIndex;
 
-    Random rng = new Random();
-    public int getRandom(Random rng)
+    /// <summary>
+    /// Empty constructor only use for testing.
+    /// </summary>
+    public Route() { }
+
+    /// <summary>
+    /// Constructor of a route must recieve an array with all locations 
+    /// with the location at position 0 being the start and end.
+    /// </summary>
+    public Route(string[] locations)
     {
-        //WIP lol
-        return rng.Next(1, nodes.Length);
+        nodes = new LocationNode[locations.Length];
+
+        for (int i = 0; i < locations.Length; i++)
+        {
+            nodes[i] = new LocationNode(locations[i]);
+        }
+
+        nodes[0].prev = nodes[0];
+        nodes[0].next = nodes[0];
+
+        currentIndex = 0;
     }
 
-    public void InsertNode(int nodeIndex, int prevIndex, int nextIndex)
+    /// <summary>
+    /// Returns a random index from the nodes that are part of the route excluding the start node.
+    /// Do not use on a route with only a single node.
+    /// </summary>
+    public int getRandomIncluded(Random rng)
     {
-        //Insert nodeIndex
+        return rng.Next(1, currentIndex + 1);
+    }
+
+    /// <summary>
+    /// Returns a random index from the nodes that are not part of the route.
+    /// </summary>
+    public int getRandomExcluded(Random rng)
+    {
+        return rng.Next(currentIndex + 1, nodes.Length);
+    }
+
+    /// <summary>
+    /// Inserts the node at nodeIndex after the node at prevIndex.
+    /// </summary>
+    public void InsertAfter(int nodeIndex, int prevIndex)
+    {
+        LocationNode prev = nodes[prevIndex];
+        LocationNode current = nodes[nodeIndex];
+        LocationNode next = nodes[prevIndex].next;
+
         //Swap pointers from neighbors
-        nodes[prevIndex].next = nodes[nodeIndex];
-        nodes[nextIndex].prev = nodes[nodeIndex];
-        
-        nodes[nodeIndex].prev = nodes[prevIndex];
-        nodes[nodeIndex].next = nodes[nextIndex];
-        
-        //Increase the current index
+        prev.next = nodes[nodeIndex];
+        next.prev = nodes[nodeIndex];
+
+        current.prev = prev;
+        current.next = next;
+
+        //Increase the current index before swapping the element at currentIndex
         currentIndex++;
 
         //Swap elements of the nodes array
         (nodes[nodeIndex], nodes[currentIndex]) = (nodes[currentIndex], nodes[nodeIndex]);
     }
 
+    /// <summary>
+    /// Removes the node at nodeIndex.
+    /// </summary>
     public void RemoveNode(int nodeIndex)
     {
-        //Removing the node from the linked list
+        //Removing the node from the linked list.
         nodes[nodeIndex].prev.next = nodes[nodeIndex].next;
         nodes[nodeIndex].next.prev = nodes[nodeIndex].prev;
 
-        //Swap the to be deleted node with the last node in the used nodes
+        //Swap the to be deleted node with the last node in the used nodes.
         (nodes[nodeIndex], nodes[currentIndex]) = (nodes[currentIndex], nodes[nodeIndex]);
 
-        //Lower the current index to discard the last element
+        //Lower the current index to discard the last element.
         currentIndex--;
     }
 
+    /// <summary>
+    /// Swaps two nodes. A node is not allowed to swap with itself.
+    /// </summary>
     public void SwapNodes(int leftIndex, int rightIndex)
     {
-        //cannot swap with itself (or rather, it wouldn't change anything)
+        //A node is not allowed to swap with itself.
         if (leftIndex == rightIndex)
             throw new System.Exception("Cannot swap a node with itself!");
 
         LocationNode prevLeftNode = nodes[leftIndex].prev;
+        LocationNode leftNode = nodes[leftIndex];
         LocationNode nextLeftNode = nodes[leftIndex].next;
 
-        //If leftIndex is the left neighbor of the rightIndex
-        if (nodes[leftIndex].next == nodes[rightIndex])
+        LocationNode rightNode = nodes[rightIndex];
+
+        //If the left node is the right neighbor of the right node
+        //swap them to ensure the leftNode is to the left of the rightNode.
+        if (prevLeftNode == rightNode)
+        {
+            prevLeftNode = nodes[rightIndex].prev;
+            leftNode = nodes[rightIndex];
+            nextLeftNode = nodes[rightIndex].next;
+
+            rightNode = nodes[leftIndex];
+        }
+
+        //Unique case when leftIndex is the direct neighbor of the rightIndex.
+        if (nextLeftNode == rightNode)
         {
             
-            nodes[leftIndex].prev = nodes[rightIndex];
-            nodes[leftIndex].next = nodes[rightIndex].next;
+            leftNode.prev = rightNode;
+            leftNode.next = rightNode.next;
 
-            nodes[rightIndex].next = nodes[leftIndex];
-            nodes[rightIndex].prev = prevLeftNode;
+            rightNode.next = leftNode;
+            rightNode.prev = prevLeftNode;
 
             //Update the neighbors
-            nodes[rightIndex].prev.next = nodes[rightIndex];
-            nodes[leftIndex].next.prev = nodes[leftIndex];
+            rightNode.prev.next = rightNode;
+            leftNode.next.prev = leftNode;
 
             return;
         }
-
-        //If the leftIndex is the right neighbor of the rightIndex
-        if (nodes[leftIndex].prev == nodes[rightIndex])
-        {
-            
-            nodes[leftIndex].next = nodes[rightIndex];
-            nodes[leftIndex].prev = nodes[rightIndex].prev;
-
-            nodes[rightIndex].prev = nodes[leftIndex];
-            nodes[rightIndex].next = nextLeftNode;
-
-            //Update the neighbors
-            nodes[leftIndex].prev.next = nodes[leftIndex];
-            nodes[rightIndex].next.prev = nodes[rightIndex];
-            
-            return;
-        }
-
         
-        //left points to right's neighbors
-        nodes[leftIndex].prev = nodes[rightIndex].prev;
-        nodes[leftIndex].next = nodes[rightIndex].next;
+        //Default case where two nodes are not neighboring eachother.
 
-        //right's neighbors point to left
-        nodes[leftIndex].prev.next = nodes[leftIndex];
-        nodes[leftIndex].next.prev = nodes[leftIndex];
+        //Left points to right's neighbors.
+        leftNode.prev = rightNode.prev;
+        leftNode.next =rightNode.next;
 
-        //right points to left's neighbors
-        nodes[rightIndex].prev = prevLeftNode;
-        nodes[rightIndex].next = nextLeftNode;
+        //Right's neighbors point to left.
+        leftNode.prev.next = leftNode;
+        leftNode.next.prev = leftNode;
 
-        //left's neighbors point to right
-        nodes[rightIndex].prev.next = nodes[rightIndex];
-        nodes[rightIndex].next.prev = nodes[rightIndex];
+        //Right points to left's neighbors.
+        rightNode.prev = prevLeftNode;
+        rightNode.next = nextLeftNode;
+
+        //Left's neighbors point to right.
+        rightNode.prev.next = rightNode;
+        rightNode.next.prev = rightNode;
     }
 
-    public override string ToString(){
+    /// <summary>
+    /// Converts the route to a string where nodes are added in order of route traversal.
+    /// </summary>
+    public override string ToString()
+    {
         string r = "";
+        LocationNode currentNode = nodes[0];
+
         for (int i = 0; i < currentIndex + 1 ; i++)
         {
-            r += nodes[i].ToString() + "\n";
+            r += currentNode.ToString() + "\n";
+            currentNode = currentNode.next;
         }
         return r;
     }
@@ -134,6 +188,6 @@ class LocationNode
     }
 
     public override string ToString(){
-        return "prev = " + prev.address + "\n" + address + "\n" + "next = " + next.address;
+        return "Node { prev = " + prev.address + ", value = " + address + ", " + "next = " + next.address + " }";
     }
 }
