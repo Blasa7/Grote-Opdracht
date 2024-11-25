@@ -1,11 +1,80 @@
-﻿using System.Collections;
+﻿using System.CodeDom.Compiler;
+using System.Collections;
 
 class Solution
 {
+    //Each truck has 5 routes, one per day.
+    private Route[] Truck1 = new Route[5];
+    private Route[] Truck2 = new Route[5];
 
+    public int score; //The score in seconds
+
+    public Solution()
+    {
+        GenerateInitialSolution();
+    }
+
+    public void GenerateInitialSolution()
+    {
+        for (int i = 0; i < Truck1.Length; i++)
+        {
+            Truck1[i] = new Route();
+        }
+    }
+    public int CalculateDifference(Route route)
+    {
+        return 0;
+    }
+
+    public int CalculateScore(Route route, int oldScore)
+    {
+        int difference = CalculateDifference(route);
+        return oldScore + difference;
+    }
 }
 
-class Route //Dit is een linked list
+class Schedule
+{
+    LinkedList<Delivery>[] deliveries = new LinkedList<Delivery>[5];
+
+    
+    void ShuffleOneTimeDelivery(OneTimeDelivery delivery, Random rng)
+    {
+        delivery.node.List.Remove(delivery.node);
+
+        deliveries[rng.Next(0, 5)].AddLast(delivery.node);
+    }
+
+    void ShuffleTwoTimeDelivery(TwoTimeDeliery delivery, Random rng)
+    {
+        
+    }
+}
+
+class Delivery
+{
+    public Adress adress;
+    public LinkedListNode<Delivery> node;
+}
+
+class OneTimeDelivery : Delivery
+{
+    
+}
+class TwoTimeDeliery : Delivery
+{ 
+    TwoTimeDeliery other;
+}
+class ThreeTimeDelivery :Delivery
+{
+    ThreeTimeDelivery[] others = new ThreeTimeDelivery[2];
+}
+class FourTimeDelivery : Delivery
+{
+    FourTimeDelivery[] others = new FourTimeDelivery[3];
+}
+
+class Route // This is a linked list
 {     
     /// <summary>
     /// Array of all locations that are either included or excluded from the route.
@@ -26,15 +95,11 @@ class Route //Dit is een linked list
     /// Constructor of a route must recieve an array with all locations 
     /// with the location at position 0 being the start and end.
     /// </summary>
-    public Route(string[] locations)
+    public Route(Adress depot, int locationCount)
     {
-        nodes = new LocationNode[locations.Length];
+        nodes = new LocationNode[locationCount];
 
-        for (int i = 0; i < locations.Length; i++)
-        {
-            nodes[i] = new LocationNode(locations[i]);
-        }
-
+        nodes[0] = new LocationNode(depot);
         nodes[0].prev = nodes[0];
         nodes[0].next = nodes[0];
 
@@ -51,34 +116,26 @@ class Route //Dit is een linked list
     }
 
     /// <summary>
-    /// Returns a random index from the nodes that are not part of the route.
-    /// </summary>
-    public int getRandomExcluded(Random rng)
-    {
-        return rng.Next(currentIndex + 1, nodes.Length);
-    }
-
-    /// <summary>
     /// Inserts the node at nodeIndex after the node at prevIndex.
     /// </summary>
-    public void InsertAfter(int nodeIndex, int prevIndex)
+    public void InsertAfter(Adress address, int prevIndex)
     {
+        LocationNode current = new LocationNode(address);
+
         LocationNode prev = nodes[prevIndex];
-        LocationNode current = nodes[nodeIndex];
         LocationNode next = nodes[prevIndex].next;
 
         //Swap pointers from neighbors
-        prev.next = nodes[nodeIndex];
-        next.prev = nodes[nodeIndex];
+        prev.next = current;
+        next.prev = current;
 
         current.prev = prev;
         current.next = next;
 
         //Increase the current index before swapping the element at currentIndex
         currentIndex++;
-
-        //Swap elements of the nodes array
-        (nodes[nodeIndex], nodes[currentIndex]) = (nodes[currentIndex], nodes[nodeIndex]);
+        current.address.routeIndex = currentIndex;
+        nodes[currentIndex] = current;
     }
 
     /// <summary>
@@ -111,6 +168,9 @@ class Route //Dit is een linked list
         LocationNode nextLeftNode = nodes[leftIndex].next;
 
         LocationNode rightNode = nodes[rightIndex];
+
+        leftNode.address.routeIndex = rightIndex;
+        rightNode.address.routeIndex = leftIndex;
 
         //If the left node is the right neighbor of the right node
         //swap them to ensure the leftNode is to the left of the rightNode.
@@ -159,6 +219,11 @@ class Route //Dit is een linked list
         rightNode.next.prev = rightNode;
     }
 
+    public void AddRandomStop(Adress adress, Random rng)
+    {
+        InsertAfter(adress, getRandomIncluded(rng));
+    }
+
     /// <summary>
     /// Converts the route to a string where nodes are added in order of route traversal.
     /// </summary>
@@ -180,14 +245,30 @@ class LocationNode
 {
     public LocationNode prev;
     public LocationNode next;
-    public string address;
+    public Adress address;
 
-    public LocationNode(string address)
+    public LocationNode(Adress address)
     {
         this.address = address;
     }
 
     public override string ToString(){
         return "Node { prev = " + prev.address + ", value = " + address + ", " + "next = " + next.address + " }";
+    }
+}
+
+class Adress
+{
+    public int routeIndex;
+    public string name;
+
+    public Adress(string s)
+    {
+        name = s;
+    }
+
+    public override string ToString()
+    {
+        return name;
     }
 }
