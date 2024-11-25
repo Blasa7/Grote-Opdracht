@@ -16,9 +16,14 @@ class Solution
 
     public void GenerateInitialSolution()
     {
+        //WIP
         for (int i = 0; i < Truck1.Length; i++)
         {
-            Truck1[i] = new Route();
+            Truck1[i] = new Route(new Adress("depot"), 1000);
+        }
+        for (int i = 0; i < Truck2.Length; i++)
+        {
+            Truck2[i] = new Route(new Adress("depot"), 1000);
         }
     }
     public int CalculateDifference(Route route)
