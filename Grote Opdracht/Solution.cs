@@ -1,36 +1,49 @@
-﻿class Solution
+﻿using System.Security.Cryptography.X509Certificates;
+
+class Solution
 {
     //Each truck has 5 routes, one per day.
-    private Route[] Truck1 = new Route[5];
-    private Route[] Truck2 = new Route[5];
+    private WorkDay[] Truck1 = new WorkDay[5];
+    private WorkDay[] Truck2 = new WorkDay[5];
 
     public int score; //The score in seconds
 
     public Solution()
     {
-        GenerateInitialSolution();
+        
+    }
+
+    public static Solution Copy(Solution current)
+    {
+        Solution copy = new Solution();
+        copy.score = current.score;
+        copy.Truck1 = current.Truck1;
+        copy.Truck2 = current.Truck2;
+        
+        return copy;
     }
 
     public void GenerateInitialSolution()
     {
         //WIP
+        Address depot = new Address("depot");
         for (int i = 0; i < Truck1.Length; i++)
         {
-            Truck1[i] = new Route(new Address("depot"), 1000);
+            Truck1[i] = new WorkDay(new Delivery(depot), 1000);
         }
         for (int i = 0; i < Truck2.Length; i++)
         {
-            Truck2[i] = new Route(new Address("depot"), 1000);
+            Truck2[i] = new WorkDay(new Delivery(depot), 1000);
         }
     }
-    public int CalculateDifference(Route route)
+    public int CalculateDifference(WorkDay workDay)
     {
         return 0;
     }
 
-    public int CalculateScore(Route route, int oldScore)
+    public int CalculateScore(WorkDay workDay, int oldScore)
     {
-        int difference = CalculateDifference(route);
+        int difference = CalculateDifference(workDay);
         return oldScore + difference;
     }
 }
@@ -39,90 +52,189 @@ class Schedule
 {
     IndexedLinkedList<Delivery>[] deliveries = new IndexedLinkedList<Delivery>[5];
 
-    Route[][] routes = new Route[2][] { new Route[5], new Route[5] };
+    //5 work days for 2 trucks
+    WorkDay[][] workDays = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
     
     /// <summary>
     /// Adds a one time delivery to the given route at random.
     /// </summary>
-    void AddRandomOneTimeDelivery(OneTimeDelivery delivery, Random rng, Judge judge)
+    void AddRandomOneTimeDelivery(Address address, Random rng, Judge judge)
     {
         //First calculate variables
-        int weekDay = rng.Next(0, 5);
+        Delivery delivery = new Delivery(address);
 
+        int weekDay = rng.Next(0, 5);
         int truck = rng.Next(0, 2);
 
         //Second testify
-        int testimony = -delivery.address.emptyingTime * 3; //Assumption is that a previously unfulfilled order is added
+        float testimony = -delivery.address.emptyingTime * 3; //Assumption is that a previously unfulfilled order is added
 
         judge.Testify(testimony);
 
         //Third call other functions that need to testify
-        routes[truck][weekDay].AddRandomStop(delivery.address, rng, judge);
+        workDays[truck][weekDay].AddRandomStop(delivery, rng, judge);
+        
+        //Fourth check judgement
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            delivery.truck = truck;
+            delivery.day = weekDay;
+            deliveries[workDays[truck][weekDay].weekDay].InsertLast(delivery);
+        }
+    }
+
+    void AddRandomTwoTimeDelivery(Address address, Random rng, Judge judge)
+    {
+        Delivery delivery = new Delivery(address);
+        Delivery otherDelivery = new Delivery(address);
+
+        delivery.others[0] = otherDelivery;
+        otherDelivery.others[0] = delivery;
+        
+        int timeSlot = rng.Next(0, 2); //Monday-Thursday or Tuesday-Friday
+        int truck = rng.Next(0, 2);
+
+        //Second testify
+        float testimony = -delivery.address.emptyingTime * 3 * 3; //Assumption is that a previously unfulfilled order is added
+
+        judge.Testify(testimony);
+
+        //Third call other functions that need to testify
+        if (timeSlot == 0)
+        {
+            workDays[truck][0].AddRandomStop(delivery, rng, judge);
+            workDays[truck][3].AddRandomStop(delivery, rng, judge);
+        }
+        else
+        {
+            workDays[truck][1].AddRandomStop(delivery, rng, judge);
+            workDays[truck][4].AddRandomStop(delivery, rng, judge);
+        }       
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
-            deliveries[routes[truck][weekDay].weekDay].InsertLast(delivery);
+        {
+            delivery.truck = truck;
+            otherDelivery.truck = truck;
+            
+            if (timeSlot == 0)
+            {   
+                //NOTE:
+                //2+ Frequency Deliveries are put on the same truck here, but in therory could be on different ones 
+                
+                delivery.day = 0;
+                otherDelivery.day = 3;
+
+                deliveries[0].InsertLast(delivery);
+                deliveries[3].InsertLast(delivery);
+            }
+            else
+            {
+                delivery.day = 1;
+                otherDelivery.day = 4;
+                
+                deliveries[1].InsertLast(delivery);
+                deliveries[4].InsertLast(delivery);
+            }
+        } 
     }
 
     //Maybe add remove
+    void RemoveRandomDelivery(Random rng, Judge judge)
+    {
+        //First calculate variables
+        int weekDay = rng.Next(0, 5);
+        int index = deliveries[weekDay].getRandomIncluded(rng);
+        
+        Delivery delivery = deliveries[weekDay].nodes[index].value; //Get a random delivery
+
+        //We need to remove all the stops in all the routes in all the workdays foreach truck as well
+        workDays[delivery.truck][delivery.day].RemoveStop(delivery, rng , judge);
+
+        for (int i = 0; i < delivery.others.Length; i++)
+        {
+            workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], rng , judge);
+        }
+        
+
+        //Third call other functions that need to testify
+        //workDays[truck][weekDay].RemoveStop(delivery.address, rng, judge);
+    }
 
     //Maybe add shuffle/swap
 }
 
-abstract class Delivery
+class Delivery
 {
     public Address address;
-    public IndexedLinkedListNode<Delivery> node;
+    public int truck;
+    public int day;
+    public IndexedLinkedListNode<Route> workDayNode;
+    public IndexedLinkedListNode<Delivery> routeNode;
+    public Delivery[] others;
 
-    public Delivery(Address address, IndexedLinkedListNode<Delivery> node)
+    public Delivery(Address address)
     {
         this.address = address;
-        this.node = node;
+        this.others = new Delivery[address.frequency-1];
+    }
+} 
+
+class WorkDay // This is a linked list
+{
+    public IndexedLinkedList<Route> workDay; 
+
+    public int weekDay; // 0, 1, 2, 3, 4
+
+    public WorkDay(Delivery depot, int maximumSize)
+    {
+        Route start = new Route(depot, maximumSize);
+        workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size maybe need to be larger
+    }
+
+    public void AddRandomStop(Delivery delivery, Random rng, Judge judge)
+    {
+        int index = workDay.getRandomIncluded(rng);
+
+        delivery.workDayNode = workDay.nodes[index];
+        workDay.nodes[index].value.AddRandomStop(delivery, rng, judge);
+    }
+    
+    public void RemoveStop(Delivery delivery, Random rng, Judge judge)
+    {
+        int index = delivery.workDayNode.index;
+
+        workDay.nodes[index].value.RemoveStop(delivery, judge);
+    }
+
+    public override string ToString()
+    {
+        return workDay.ToString();
     }
 }
 
-class OneTimeDelivery(Address address, LinkedListNode<Delivery> node) : Delivery(address, node) { }
-
-class TwoTimeDeliery(Address address, LinkedListNode<Delivery> node) : Delivery(address, node)
-{ 
-    TwoTimeDeliery other;
-}
-
-class ThreeTimeDelivery(Address address, LinkedListNode<Delivery> node) : Delivery(address, node)
+class Route
 {
-    ThreeTimeDelivery[] others = new ThreeTimeDelivery[2];
-}
-
-class FourTimeDelivery(Address address, LinkedListNode<Delivery> node) : Delivery (address, node) 
-{
-    FourTimeDelivery[] others = new FourTimeDelivery[3];
-}
-
-class Route // This is a linked list
-{
-    //In the future route will need to be a day schedule of a single truck.
-    //So it will probarly either be a list of indexed linked lists or a linked list of indexed linked lists
-    public IndexedLinkedList<Address> route; 
-
-    public int weekDay; // 0, 1, 2, 3, 4
+    public IndexedLinkedList<Delivery> route;
     
     int collectedGarbage = 0;
     int maximumGarbage;
 
     int duration;
 
-    public Route(Address depot, int maximumSize)
+    public Route(Delivery depot, int maximumSize)
     {
-        route = new IndexedLinkedList<Address>(depot, maximumSize);
+        route = new IndexedLinkedList<Delivery>(depot, maximumSize);
     }
 
-    public void AddRandomStop(Address address, Random rng, Judge judge)
+    public void AddRandomStop(Delivery delivery, Random rng, Judge judge)
     {
         //First calculate variables
         int index = route.getRandomIncluded(rng);
 
-        int prevID = route.nodes[index].value.matrixID;
-        int nextID = route.nodes[index].next.value.matrixID;
+        Address address = delivery.address;
+        int prevID = route.nodes[index].value.address.matrixID;
+        int nextID = route.nodes[index].next.value.address.matrixID;
 
         //Second testify
         int testimony = 
@@ -136,12 +248,34 @@ class Route // This is a linked list
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
-            route.InsertAfter(address, index);
+        {
+            route.InsertAfter(delivery, index);
+            delivery.routeNode = route.nodes[route.currentIndex];
+        }
     }
 
-    public override string ToString()
+    public void RemoveStop(Delivery delivery, Judge judge)
     {
-        return route.ToString();
+        //First calculate variables
+        int index = delivery.routeNode.index;
+
+        Address address = delivery.address;
+        int prevID = route.nodes[index].value.address.matrixID;
+        int nextID = route.nodes[index].next.value.address.matrixID;
+
+        //Second testify
+        int testimony =
+            Input.GetTimeFromTo(prevID, nextID) - //New value
+            (Input.GetTimeFromTo(prevID, address.matrixID) + //Old values are substracted
+            Input.GetTimeFromTo(address.matrixID, nextID)); 
+
+        judge.Testify(testimony);
+
+        //Third call other functions that need to testify
+
+        //Fourth check judgement
+        if (judge.GetJudgement() == Judgement.Pass)
+            route.RemoveNode(index);
     }
 }
 
@@ -151,11 +285,26 @@ class Address
     public int matrixID;
     public int volumePerContainer;
     public int containerAmount;
-    public int emptyingTime;
+    public float emptyingTime;
+    public int frequency;
 
     public Address(string s)
     {
         name = s;
+        matrixID = 0;
+        volumePerContainer = 0;
+        containerAmount = 0;
+        emptyingTime = 0;
+    }
+
+    public Address(Order order)
+    {
+        name = order.location;
+        matrixID = order.matrixID;
+        volumePerContainer = order.containerVolume;
+        containerAmount = order.containerAmount;
+        emptyingTime = order.emptyingTime;
+        frequency = order.frequency;
     }
 
     public static bool operator == (Address a, Address b)

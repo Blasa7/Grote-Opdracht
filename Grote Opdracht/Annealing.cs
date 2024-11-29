@@ -7,18 +7,22 @@ class Annealing
     public Solution Run()
     {
         Solution currentSolution = new Solution();
+        currentSolution.GenerateInitialSolution();
+        Solution bestSolution = Solution.Copy(currentSolution);
         Solution neighbour;
         Random rng = new Random();
         float T = 10; //Dummy value for now
         int maxIter = 1000000; //1 million for now
+        Judge judge = new Judge(T, rng);
 
         for (int i=0; i < maxIter; i++)
         {
             T = GetTemperature(T);
-            neighbour = GetNeighbour(currentSolution, rng);
-            if (AcceptNeighbour(currentSolution, neighbour, T, rng))
+            judge.T = T;
+            neighbour = GetNeighbour(currentSolution, rng, judge);
+            if (currentSolution.score < bestSolution.score)
             {
-                currentSolution = neighbour;
+                bestSolution = Solution.Copy(currentSolution);
             }
         }
 
@@ -26,9 +30,11 @@ class Annealing
 
     }
 
-    public Solution GetNeighbour(Solution current, Random rng)
+    public Solution GetNeighbour(Solution current, Random rng, Judge judge)
     {
+        judge.Reset();
         //Dummy value
+
         //Things like 2-opt, swap nodes, insert here
         return current;
     }
@@ -39,25 +45,25 @@ class Annealing
         return T*alpha;
     }
 
-    public bool AcceptNeighbour(Solution current, Solution neighbour, float T, Random rng)
-    {
-        //Dummy values
-        int oldScore = 0, newScore = 0;
-
-        double frac = (newScore - oldScore) / T;
-        double res = Math.Exp(frac);
-        if (res >= rng.NextDouble())
-            return true;
-        return false;
-    }
 }
 
 class Judge
 {
-    int score;
+    float score; //newScore - oldScore (negative score suggests improvement!)
     Judgement judgement;
 
-    public void Testify(int weight)
+    public float T;
+    public Random rng;
+
+    public Judge(float T, Random rng)
+    {
+        this.T = T;
+        this.rng = rng;
+
+        Reset();
+    }
+
+    public void Testify(float weight)
     {
         score += weight;
     }
@@ -69,13 +75,22 @@ class Judge
 
     public Judgement GetJudgement()
     {
-        if (judgement == Judgement.Undecided)
+        if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            //Decide here
-            return Judgement.Pass;
+            double frac = -score / T; // '-', because we want to minimize here
+            double res = Math.Exp(frac); 
+            if (res >= rng.NextDouble())
+                return Judgement.Pass;
+            return Judgement.Fail;
         }
         else
             return judgement;
+    }
+
+    public void Reset()
+    {
+        score = 0;
+        judgement = Judgement.Undecided;
     }
 }
 

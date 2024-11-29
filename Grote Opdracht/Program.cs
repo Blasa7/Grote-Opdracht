@@ -4,22 +4,22 @@
     {
         // Input input = Input.Parse();
         
-        Route route = new Route(new Address("start"), 1000);
+        WorkDay workDay = new WorkDay(new Address("start"), 1000);
 
         //insert d
-        route.route.InsertAfter(new Address("a"), 0);
+        workDay.route.InsertAfter(new Address("a"), 0);
         //insert e
-        route.route.InsertAfter(new Address("b"), 1);
+        workDay.route.InsertAfter(new Address("b"), 1);
         //a->e->d [a, d, e]
-        route.route.InsertAfter(new Address("c"),2);
-        route.route.InsertAfter(new Address("d"), 3);
+        workDay.route.InsertAfter(new Address("c"),2);
+        workDay.route.InsertAfter(new Address("d"), 3);
 
-        route.route.SwapNodes(2, 1);
+        workDay.route.SwapNodes(2, 1);
 
         //[a, d, e, b, c]
         //a e d
         //d e a
         Console.WriteLine("\n" + "\n" + "\n");
-        Console.WriteLine(route);
+        Console.WriteLine(workDay);
     }
 }
