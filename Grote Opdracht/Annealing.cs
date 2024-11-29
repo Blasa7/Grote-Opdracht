@@ -15,7 +15,7 @@ class Annealing
         for (int i=0; i < maxIter; i++)
         {
             T = GetTemperature(T);
-            neighbour = GetNeighbour(currentSolution);
+            neighbour = GetNeighbour(currentSolution, rng);
             if (AcceptNeighbour(currentSolution, neighbour, T, rng))
             {
                 currentSolution = neighbour;
@@ -26,16 +26,17 @@ class Annealing
 
     }
 
-    public Solution GetNeighbour(Solution curry)
+    public Solution GetNeighbour(Solution current, Random rng)
     {
         //Dummy value
-        return curry;
+        //Things like 2-opt, swap nodes, insert here
+        return current;
     }
 
     public float GetTemperature(float T)
     {
-        //Dummy value
-        return T;
+        float alpha = 0.95f; //Parameter to be played around with
+        return T*alpha;
     }
 
     public bool AcceptNeighbour(Solution current, Solution neighbour, float T, Random rng)
