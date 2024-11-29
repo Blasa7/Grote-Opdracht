@@ -140,6 +140,15 @@
     }
 
     /// <summary>
+    /// Inserts a value node at the end of the linked list. 
+    /// Note it is a circular linked list so this also means before the first node.
+    /// </summary>
+    public void InsertLast(Type value)
+    {
+        InsertAfter(value, currentIndex);
+    }
+
+    /// <summary>
     /// Converts the linked list to a string where nodes are added in order of linked list traversal.
     /// </summary>
     public override string ToString()
