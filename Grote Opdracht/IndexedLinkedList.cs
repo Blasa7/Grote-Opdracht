@@ -52,7 +52,7 @@
     public void InsertAfter(Type value, int prevIndex)
     {
         //If the list is empty
-        if (nodes[currentIndex] == null) 
+        if (currentIndex == -1) 
         {
             nodes[0] = new IndexedLinkedListNode<Type>(value);
             nodes[0].prev = nodes[0];

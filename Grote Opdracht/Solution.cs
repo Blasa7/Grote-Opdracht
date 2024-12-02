@@ -10,7 +10,10 @@ class Solution
 
     public Solution()
     {
-        
+        for (int i = 0; i < Input.orderCount; i++)
+        {
+            score += Input.orders[i].emptyingTime * Input.orders[i].frequency * 3;
+        }
     }
 
     public void UpdateSolution(Schedule schedule, float score)
@@ -58,7 +61,15 @@ class Schedule
 
     public Schedule(Order[] orders)
     {
+        for (int i = 0; i < deliveries.Length; i++)
+            deliveries[i] = new IndexedLinkedList<Delivery>(Input.orderCount);
+
         unfulfilledAddresses = new IndexedLinkedList<Address>(orders.Length);
+
+        for (int i = 0; i < orders.Length; i++)
+        {
+            unfulfilledAddresses.InsertLast(new Address(orders[i]));
+        }
     }
 
     public void AddRandomDelivery(Random rng, Judge judge)
@@ -275,6 +286,10 @@ class Schedule
     {
         //First calculate variables
         int weekDay = rng.Next(0, 5);
+
+        if (deliveries[weekDay].currentIndex == -1)
+            return;
+
         int index = deliveries[weekDay].getRandomIncluded(rng);
         
         Delivery delivery = deliveries[weekDay].nodes[index].value; //Get a random delivery
