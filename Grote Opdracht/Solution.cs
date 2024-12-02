@@ -143,7 +143,7 @@ class Schedule
             deliveries[day1].InsertLast(delivery1);
             deliveries[day2].InsertLast(delivery2);
             //NOTE:
-            //2+ Frequency Deliveries are put on the same truck here, but in therory could be on different ones 
+            //2+ Frequency Deliveries are put on the same truck here, but in practice could be split
         } 
     }
 
@@ -276,13 +276,48 @@ class Schedule
         {
             workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], rng , judge);
         }
-        
-
-        //Third call other functions that need to testify
-        //workDays[truck][weekDay].RemoveStop(delivery.address, rng, judge);
     }
 
-    //Maybe add shuffle/swap
+    //TO DO: Swap between routes, work days, work weeks and trucks
+
+
+    /// <summary>
+    /// Takes two nodes from separate Indexed Linked Lists and warps space and time itself to swap them.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="node1"></param>
+    /// <param name="node2"></param>
+    /// <param name="list1"></param>
+    /// <param name="list2"></param>
+    public void InterdimensionallySwapNodesBetweenIndexedLinkedLists<T>(IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2)
+    {
+        //Nodes are from the same list, call the existing swap function in IndexedLinkedList.cs
+        if (list1 == list2)
+            list1.SwapNodes(node1.index, node2.index);
+
+        //create temp values for swapping
+        IndexedLinkedListNode<T> prevNode1 = node1.prev;
+        IndexedLinkedListNode<T> nextNode1 = node1.next;
+
+        //swap the node's indices
+        (node1.index, node2.index) = (node2.index, node1.index);
+
+        //First points to Second's neighbors.
+        node1.prev = node2.prev;
+        node1.next = node2.next;
+
+        //Second's neighbors point to First.
+        node1.prev.next = node1;
+        node1.next.prev = node1;
+
+        //Second points to First's neighbors.
+        node2.prev = prevNode1;
+        node2.next = nextNode1;
+
+        //First's neighbors point to Second.
+        node2.prev.next = node2;
+        node2.next.prev = node2;
+    }
 
     public Schedule Clone()
     {
@@ -412,6 +447,32 @@ class Route
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
             route.RemoveNode(index);
+    }
+
+    public void SwapStops(Delivery del1, Delivery del2, Judge judge)
+    {
+        int index1 = del1.routeNode.index;
+        int index2 = del2.routeNode.index;
+
+        Address address1 = del1.address;
+        Address address2 = del2.address;
+
+        int thisID1 = address1.matrixID;
+        int thisID2 = address2.matrixID;
+        int prevID1 = route.nodes[index1].value.address.matrixID;
+        int nextID1 = route.nodes[index1].next.value.address.matrixID;
+        int prevID2 = route.nodes[index2].value.address.matrixID;
+        int nextID2 = route.nodes[index2].next.value.address.matrixID;
+
+        int oldValue = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2);
+        int newValue = Input.GetTimeFromTo(prevID1, thisID2) + Input.GetTimeFromTo(thisID2, nextID1) + Input.GetTimeFromTo(prevID2, thisID1) + Input.GetTimeFromTo(thisID1, nextID2);
+
+        int testimony = newValue - oldValue;
+
+        judge.Testify(testimony);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+            route.SwapNodes(del1.routeNode.index, del2.routeNode.index);
     }
 
     public Route Clone()

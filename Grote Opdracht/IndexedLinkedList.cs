@@ -128,7 +128,7 @@
             return;
         }
 
-        //Default case where two nodes are not neighboring eachother.
+        //Default case where two nodes are not neighboring each other.
 
         //Left points to right's neighbors.
         leftNode.prev = rightNode.prev;
