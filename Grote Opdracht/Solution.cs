@@ -289,7 +289,31 @@ class Schedule
     }
 
     //TO DO: Swap between routes, work days, work weeks and trucks
+    //public void SwapStops<T>(Delivery del1, Delivery del2, Judge judge)
+    //{
+    //    int index1 = del1.routeNode.index;
+    //    int index2 = del2.routeNode.index;
 
+    //    Address address1 = del1.address;
+    //    Address address2 = del2.address;
+
+    //    int thisID1 = address1.matrixID;
+    //    int thisID2 = address2.matrixID;
+    //    int prevID1 = list.nodes[index1].prev.value.address.matrixID;
+    //    int nextID1 = list.nodes[index1].next.value.address.matrixID;
+    //    int prevID2 = route.nodes[index2].prev.value.address.matrixID;
+    //    int nextID2 = route.nodes[index2].next.value.address.matrixID;
+
+    //    int oldValue = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2);
+    //    int newValue = Input.GetTimeFromTo(prevID1, thisID2) + Input.GetTimeFromTo(thisID2, nextID1) + Input.GetTimeFromTo(prevID2, thisID1) + Input.GetTimeFromTo(thisID1, nextID2);
+
+    //    int testimony = newValue - oldValue;
+
+    //    judge.Testify(testimony);
+
+    //    if (judge.GetJudgement() == Judgement.Pass)
+    //        route.SwapNodes(del1.routeNode.index, del2.routeNode.index);
+    //}
 
     /// <summary>
     /// Takes two nodes from separate Indexed Linked Lists and warps space and time itself to swap them.
@@ -299,7 +323,7 @@ class Schedule
     /// <param name="node2"></param>
     /// <param name="list1"></param>
     /// <param name="list2"></param>
-    public void InterdimensionallySwapNodesBetweenIndexedLinkedLists<T>(IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2)
+    public void InterdimensionallySwapNodesBetweenIndexedLinkedLists<T>(IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2) where T : IClonable<T>
     {
         //Nodes are from the same list, call the existing swap function in IndexedLinkedList.cs
         if (list1 == list2)
@@ -490,7 +514,8 @@ class Route : IClonable<Route>
             route.RemoveNode(index);
         }
     }
-
+    
+    //Swaps two deliveries in the same route (depot cycle)
     public void SwapStops(Delivery del1, Delivery del2, Judge judge)
     {
         int index1 = del1.routeNode.index;
