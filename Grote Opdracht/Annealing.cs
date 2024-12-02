@@ -6,10 +6,10 @@ class Annealing
 {
     public Solution Run()
     {
-        Solution currentSolution = new Solution();
-        currentSolution.GenerateInitialSolution();
-        Solution bestSolution = Solution.Copy(currentSolution);
-        Solution neighbour;
+        Solution workingSolution = new Solution();
+        Schedule workingSchedule = new Schedule(Input.orders);
+        //currentSolution.GenerateInitialSolution();
+        Solution bestSolution = workingSolution.Clone();
         Random rng = new Random();
         float T = 10; //Dummy value for now
         int maxIter = 1000000; //1 million for now
@@ -19,24 +19,16 @@ class Annealing
         {
             T = GetTemperature(T);
             judge.T = T;
-            neighbour = GetNeighbour(currentSolution, rng, judge);
-            if (currentSolution.score < bestSolution.score)
+
+            TryIterate(workingSolution, workingSchedule, rng, judge);
+
+            if (workingSolution.score < bestSolution.score)
             {
-                bestSolution = Solution.Copy(currentSolution);
+                bestSolution = workingSolution.Clone();
             }
         }
 
-        return currentSolution;
-
-    }
-
-    public Solution GetNeighbour(Solution current, Random rng, Judge judge)
-    {
-        judge.Reset();
-        //Dummy value
-
-        //Things like 2-opt, swap nodes, insert here
-        return current;
+        return workingSolution;
     }
 
     public float GetTemperature(float T)
@@ -45,11 +37,32 @@ class Annealing
         return T*alpha;
     }
 
+    public void TryIterate(Solution solution, Schedule schedule, Random rng, Judge judge)
+    {
+        int weight = rng.Next(0, 2);
+
+        if (weight < 1)
+        {
+            if (schedule.unfulfilledAddresses.currentIndex > 0)
+            {
+                schedule.AddRandomDelivery(rng, judge);
+            }
+        }
+        if (weight < 2)
+        {
+            schedule.RemoveRandomDelivery(rng, judge);
+        }
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            solution.score += judge.score;
+        }
+    }
 }
 
 class Judge
 {
-    float score; //newScore - oldScore (negative score suggests improvement!)
+    public float score; //newScore - oldScore (negative score suggests improvement!)
     Judgement judgement;
 
     public float T;
@@ -98,5 +111,5 @@ enum Judgement
 {
     Fail = 0,
     Pass = 1,
-    Undecided
+    Undecided = -1
 }

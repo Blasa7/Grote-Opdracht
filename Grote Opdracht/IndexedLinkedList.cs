@@ -5,6 +5,8 @@
     /// </summary>
     public IndexedLinkedListNode<Type>[] nodes;
 
+    public int startIndex = 0;
+
     /// <summary>
     /// Index of the last node that is part of the linked list.
     /// </summary>
@@ -23,7 +25,13 @@
         nodes[0].prev = nodes[0];
         nodes[0].next = nodes[0];
 
+        startIndex = 1;
         currentIndex = 0;
+    }
+
+    public IndexedLinkedList(int maximumSize)
+    {
+
     }
 
     /// <summary>
@@ -32,7 +40,7 @@
     /// </summary>
     public int getRandomIncluded(Random rng)
     {
-        return rng.Next(1, currentIndex + 1);
+        return rng.Next(startIndex, currentIndex + 1);
     }
 
     /// <summary>
@@ -148,6 +156,11 @@
         InsertAfter(value, currentIndex);
     }
 
+    public IndexedLinkedList<Type> Clone()
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Converts the linked list to a string where nodes are added in order of linked list traversal.
     /// </summary>
@@ -175,6 +188,11 @@ class IndexedLinkedListNode<Type>
     public IndexedLinkedListNode(Type value)
     {
         this.value = value;
+    }
+
+    public IndexedLinkedListNode<Type> Clone()
+    {
+        throw new NotImplementedException();
     }
 
     public override string ToString()

@@ -4,7 +4,7 @@
     {
         // Input input = Input.Parse();
         
-        WorkDay workDay = new WorkDay(new Address("start"), 1000);
+        /*WorkDay workDay = new WorkDay(new Address("start"), 1000);
 
         //insert d
         workDay.route.InsertAfter(new Address("a"), 0);
@@ -20,6 +20,6 @@
         //a e d
         //d e a
         Console.WriteLine("\n" + "\n" + "\n");
-        Console.WriteLine(workDay);
+        Console.WriteLine(workDay);*/
     }
 }
