@@ -13,13 +13,18 @@ class Solution
         
     }
 
-    public Solution Clone()
+    public void UpdateSolution(Schedule schedule, int score)
     {
-        Solution copy = new Solution();
-        
-        //TODO, keep in mind you need to clone all reference types (classes) to not use the same pointers
+        this.score = score;
 
-        return copy;
+        WorkDay[][] copy = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
+        for (int i = 0; i < copy.Length; i++)
+        {
+            for (int j = 0; j < copy[i].Length; j++)
+                copy[i][j] = schedule.workDays[i][j].Clone();
+        }
+
+        solution = copy;
     }
 
     public void GenerateInitialSolution()
@@ -45,6 +50,11 @@ class Schedule
     public WorkDay[][] workDays = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
 
     public IndexedLinkedList<Address> unfulfilledAddresses;
+
+    public Schedule()
+    {
+
+    }
 
     public Schedule(Order[] orders)
     {
@@ -283,11 +293,6 @@ class Schedule
     }
 
     //Maybe add shuffle/swap
-
-    public Schedule Clone()
-    {
-        throw new NotImplementedException();
-    }
 }
 
 class Delivery
@@ -333,6 +338,7 @@ class WorkDay // This is a linked list
     
     public void RemoveStop(Delivery delivery, Random rng, Judge judge)
     {
+        // remove rng parameter
         int index = delivery.workDayNode.index;
 
         workDay.nodes[index].value.RemoveStop(delivery, judge);
@@ -340,7 +346,12 @@ class WorkDay // This is a linked list
 
     public WorkDay Clone()
     {
-        throw new NotImplementedException();
+        WorkDay copy = new WorkDay(new Delivery(new Address("depot")), 1000);
+
+        copy.workDay = workDay.Clone();
+        copy.weekDay = weekDay;
+
+        return copy;
     }
 
     public override string ToString()

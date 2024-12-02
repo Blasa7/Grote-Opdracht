@@ -158,7 +158,16 @@
 
     public IndexedLinkedList<Type> Clone()
     {
-        throw new NotImplementedException();
+        IndexedLinkedList<Type> copy = new IndexedLinkedList<Type>(nodes.Length);
+        IndexedLinkedListNode<Type> currentNode = nodes[0];
+
+        for (int i = 0; i < currentIndex + 1; i++)
+        {
+            copy.InsertAfter(nodes[i].value, i); // add value.Clone()
+            currentNode = currentNode.next;
+        }
+
+        return copy;
     }
 
     /// <summary>
