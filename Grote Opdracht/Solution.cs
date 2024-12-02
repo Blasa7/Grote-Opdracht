@@ -328,8 +328,6 @@ class Schedule
         node2.prev.next = node2;
         node2.next.prev = node2;
     }
-
-    //Maybe add shuffle/swap
 }
 
 class Delivery : IClonable<Delivery>
@@ -470,7 +468,7 @@ class Route : IClonable<Route>
         int index = delivery.routeNode.index;
 
         Address address = delivery.address;
-        int prevID = route.nodes[index].value.address.matrixID;
+        int prevID = route.nodes[index].prev.value.address.matrixID;
         int nextID = route.nodes[index].next.value.address.matrixID;
 
         //Second testify
@@ -503,9 +501,9 @@ class Route : IClonable<Route>
 
         int thisID1 = address1.matrixID;
         int thisID2 = address2.matrixID;
-        int prevID1 = route.nodes[index1].value.address.matrixID;
+        int prevID1 = route.nodes[index1].prev.value.address.matrixID;
         int nextID1 = route.nodes[index1].next.value.address.matrixID;
-        int prevID2 = route.nodes[index2].value.address.matrixID;
+        int prevID2 = route.nodes[index2].prev.value.address.matrixID;
         int nextID2 = route.nodes[index2].next.value.address.matrixID;
 
         int oldValue = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2);
