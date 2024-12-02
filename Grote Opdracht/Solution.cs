@@ -13,7 +13,7 @@ class Solution
         
     }
 
-    public void UpdateSolution(Schedule schedule, int score)
+    public void UpdateSolution(Schedule schedule, float score)
     {
         this.score = score;
 
@@ -295,7 +295,7 @@ class Schedule
     //Maybe add shuffle/swap
 }
 
-class Delivery
+class Delivery : IClonable<Delivery>
 {
     public Address address;
     public int truck;
@@ -312,11 +312,11 @@ class Delivery
 
     public Delivery Clone()
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("This shouldn't be called");
     }
 } 
 
-class WorkDay // This is a linked list
+class WorkDay : IClonable<WorkDay> // This is a linked list
 {
     public IndexedLinkedList<Route> workDay; 
 
@@ -372,7 +372,7 @@ class WorkDay // This is a linked list
     }
 }
 
-class Route
+class Route : IClonable<Route>
 {
     public IndexedLinkedList<Delivery> route;
     
@@ -380,6 +380,12 @@ class Route
     int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
 
     float duration;
+
+
+    public Route()
+    {
+
+    }
 
     public Route(Delivery depot, int maximumSize)
     {
@@ -452,11 +458,18 @@ class Route
 
     public Route Clone()
     {
-        throw new NotImplementedException();
+        Route copy = new Route();
+
+        copy.route = route.Clone();
+        copy.collectedGarbage = collectedGarbage;
+        copy.duration = duration;
+        copy.maximumGarbage = maximumGarbage;
+
+        return copy;
     }
 }
 
-class Address
+class Address : IClonable<Address>
 {
     public string name;
     public int matrixID;
@@ -465,6 +478,11 @@ class Address
     public int garbageAmount; //Amount of garbage to be picked up at this location
     public float emptyingTime;
     public int frequency;
+
+    public Address()
+    {
+
+    }
 
     public Address(string s)
     {
@@ -504,7 +522,15 @@ class Address
 
     public Address Clone()
     {
-        throw new NotImplementedException();
+        Address clone = new Address();
+
+        clone.name = name;
+        clone.matrixID = matrixID;
+        clone.garbageAmount = garbageAmount;
+        clone.emptyingTime = emptyingTime;
+        clone.frequency = frequency;
+
+        return clone;
     }
 
     public override string ToString()

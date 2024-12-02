@@ -1,4 +1,4 @@
-﻿class IndexedLinkedList<Type>
+﻿class IndexedLinkedList<Type> where Type: IClonable<Type>
 {
     /// <summary>
     /// Array of all potential nodes that are either included or excluded from the route.
@@ -176,7 +176,7 @@
 
         for (int i = 0; i < currentIndex + 1; i++)
         {
-            copy.InsertAfter(nodes[i].value, i); // add value.Clone()
+            copy.InsertAfter(nodes[i].value.Clone(), i);
             currentNode = currentNode.next;
         }
 
