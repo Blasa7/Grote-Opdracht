@@ -8,8 +8,8 @@ class Annealing
     {
         Solution workingSolution = new Solution();
         Schedule workingSchedule = new Schedule(Input.orders);
+        Solution bestSolution = workingSolution;
         //currentSolution.GenerateInitialSolution();
-        Solution bestSolution = workingSolution.Clone();
         Random rng = new Random();
         float T = 10; //Dummy value for now
         int maxIter = 1000000; //1 million for now
@@ -24,7 +24,7 @@ class Annealing
 
             if (workingSolution.score < bestSolution.score)
             {
-                bestSolution = workingSolution.Clone();
+                bestSolution.UpdateSolution(workingSchedule, workingSolution.score);
             }
         }
 

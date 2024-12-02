@@ -6,6 +6,7 @@ class Input
 {
     public static Order[] orders = new Order[1177];
     public static DistancesMatrix distancesMatrix;
+    public static int orderCount = 1177;
 
     public static int GetTimeFromTo(int matrixID1, int matrixID2)
     {
