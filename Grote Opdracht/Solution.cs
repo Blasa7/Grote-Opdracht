@@ -25,12 +25,12 @@ class Solution
     public void GenerateInitialSolution()
     {
         //WIP
-        Address depot = new Address("depot");
+        /*Address depot = new Address("depot");
         for (int i = 0; i < solution.Length; i++)
         {
             for (int j = 0; j < solution[i].Length; j++)
                 solution[i][j] = new WorkDay(new Delivery(depot), 1000);
-        }
+        }*/
     }
 }
 
@@ -48,7 +48,7 @@ class Schedule
 
     public Schedule(Order[] orders)
     {
-        unfulfilledAddresses = new IndexedLinkedList<Address>(new Address("Depot"), orders.Length + 1);
+        unfulfilledAddresses = new IndexedLinkedList<Address>(orders.Length);
     }
 
     public void AddRandomDelivery(Random rng, Judge judge)
@@ -317,20 +317,32 @@ class WorkDay // This is a linked list
 
     public int weekDay; // 0, 1, 2, 3, 4
 
-    public WorkDay(Delivery depot, int maximumSize)
+    float totalDuration = 0;
+    float maximumDuration = 690; //in minutes aka 11.5 hours in a work day
+
+    public WorkDay(int maximumSize)
     {
-        Route start = new Route(depot, maximumSize);
-        workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size maybe need to be larger
+        Route start = new Route(new Delivery(Address.Depot()), Input.orderCount);
+        workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size may need to be larger
     }
 
     public void AddRandomStop(Delivery delivery, Random rng, Judge judge)
     {
+        //First calculate variables
         int index = workDay.getRandomIncluded(rng);
 
+        float maximumTimeLeft = maximumDuration - totalDuration;
+
+        //Second testify
+
+        //Third call other functions that need to testify
+
         delivery.workDayNode = workDay.nodes[index];
-        workDay.nodes[index].value.AddRandomStop(delivery, rng, judge);
+        workDay.nodes[index].value.AddRandomStop(delivery, maximumTimeLeft, rng, judge);
+
+        //Fourth check judgement
     }
-    
+
     public void RemoveStop(Delivery delivery, Random rng, Judge judge)
     {
         int index = delivery.workDayNode.index;
@@ -354,16 +366,16 @@ class Route
     public IndexedLinkedList<Delivery> route;
     
     int collectedGarbage = 0;
-    int maximumGarbage;
+    int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
 
-    int duration;
+    float duration;
 
     public Route(Delivery depot, int maximumSize)
     {
         route = new IndexedLinkedList<Delivery>(depot, maximumSize);
     }
 
-    public void AddRandomStop(Delivery delivery, Random rng, Judge judge)
+    public void AddRandomStop(Delivery delivery, float maximumTimeLeft, Random rng, Judge judge)
     {
         //First calculate variables
         int index = route.getRandomIncluded(rng);
@@ -372,11 +384,16 @@ class Route
         int prevID = route.nodes[index].value.address.matrixID;
         int nextID = route.nodes[index].next.value.address.matrixID;
 
+        int newGarbageAmount = collectedGarbage += delivery.address.garbageAmount;
+
         //Second testify
         int testimony = 
             Input.GetTimeFromTo(prevID, address.matrixID) + //New values are added
             Input.GetTimeFromTo(address.matrixID, nextID) - 
             Input.GetTimeFromTo(prevID, nextID); //Old value is substracted
+
+        if (newGarbageAmount > maximumGarbage || testimony > maximumTimeLeft) //Hard limits
+            judge.OverrideJudge(Judgement.Fail);
 
         judge.Testify(testimony);
 
@@ -385,6 +402,9 @@ class Route
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            collectedGarbage += delivery.address.garbageAmount;
+            duration += testimony; //Same value as testimony as it just calculates the time change in the route.
+
             route.InsertAfter(delivery, index);
             delivery.routeNode = route.nodes[route.currentIndex];
         }
@@ -411,7 +431,12 @@ class Route
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
+        {
+            collectedGarbage -= delivery.address.garbageAmount;
+            duration += testimony; //Same value as testimony as it just calculates the time change in the route.
+
             route.RemoveNode(index);
+        }
     }
 
     public Route Clone()
@@ -424,8 +449,9 @@ class Address
 {
     public string name;
     public int matrixID;
-    public int volumePerContainer;
-    public int containerAmount;
+    //public int volumePerContainer; replaced by garbage amount
+    //public int containerAmount; replaced by garbage amount
+    public int garbageAmount; //Amount of garbage to be picked up at this location
     public float emptyingTime;
     public int frequency;
 
@@ -433,8 +459,9 @@ class Address
     {
         name = s;
         matrixID = 0;
-        volumePerContainer = 0;
-        containerAmount = 0;
+        garbageAmount = 0;
+        //volumePerContainer = 0;
+        //containerAmount = 0;
         emptyingTime = 0;
     }
 
@@ -442,10 +469,16 @@ class Address
     {
         name = order.location;
         matrixID = order.matrixID;
-        volumePerContainer = order.containerVolume;
-        containerAmount = order.containerAmount;
+        //volumePerContainer = order.containerVolume;
+        //containerAmount = order.containerAmount;
+        garbageAmount = order.containerVolume * order.containerAmount;
         emptyingTime = order.emptyingTime;
         frequency = order.frequency;
+    }
+
+    public static Address Depot()
+    {
+        return new Address("Depot");
     }
 
     public static bool operator == (Address a, Address b)

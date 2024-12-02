@@ -31,7 +31,10 @@
 
     public IndexedLinkedList(int maximumSize)
     {
+        nodes = new IndexedLinkedListNode<Type>[maximumSize];
 
+        startIndex = 0;
+        currentIndex = -1;
     }
 
     /// <summary>
@@ -48,6 +51,16 @@
     /// </summary>
     public void InsertAfter(Type value, int prevIndex)
     {
+        //If the list is empty
+        if (nodes[currentIndex] == null) 
+        {
+            nodes[0] = new IndexedLinkedListNode<Type>(value);
+            nodes[0].prev = nodes[0];
+            nodes[0].next = nodes[0];
+
+            return;
+        }
+
         IndexedLinkedListNode<Type> current = new IndexedLinkedListNode<Type>(value);
 
         IndexedLinkedListNode<Type> prev = nodes[prevIndex];
