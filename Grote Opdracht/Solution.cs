@@ -458,6 +458,11 @@ class Delivery : IClonable<Delivery>
     public IndexedLinkedListNode<Delivery> routeNode;
     public Delivery[] others;
 
+    public Delivery()
+    {
+
+    }
+
     public Delivery(Address address)
     {
         this.address = address;
@@ -466,7 +471,12 @@ class Delivery : IClonable<Delivery>
 
     public Delivery Clone()
     {
-        throw new NotImplementedException("This shouldn't be called");
+        Delivery copy = new Delivery();
+
+        copy.address = address.Clone();
+
+        return copy;
+        // throw new NotImplementedException("This shouldn't be called");
     }
 
     public override string ToString()

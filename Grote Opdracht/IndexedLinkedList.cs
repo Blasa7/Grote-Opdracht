@@ -66,7 +66,7 @@
         IndexedLinkedListNode<Type> current = new IndexedLinkedListNode<Type>(value);
 
         IndexedLinkedListNode<Type> prev = nodes[prevIndex];
-        IndexedLinkedListNode<Type> next = nodes[prevIndex].next;
+        IndexedLinkedListNode<Type> next = nodes[prevIndex].next; // TODO: Error here, prev == null
 
         //Swap pointers from neighbors
         prev.next = current;
