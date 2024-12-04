@@ -8,5 +8,7 @@
         Solution solution = annealing.Run();
 
         Console.WriteLine(solution.score.ToString());
+
+        // solution.PrintSolution();
     }
 }

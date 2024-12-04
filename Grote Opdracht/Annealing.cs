@@ -13,17 +13,20 @@ class Annealing
         //currentSolution.GenerateInitialSolution();
         Random rng = new Random();
         float T = 10; //Dummy value for now
-        int maxIter = 100000000; //1 million for now
+        int maxIter = 100000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
+        float workingScore;
 
         for (int i = 0; i < maxIter; i++)
         {
             T = GetTemperature(T);
             judge.T = T;
 
+            workingScore = workingSolution.score;
+
             TryIterate(workingSolution, workingSchedule, rng, judge);
 
-            if (workingSolution.score < bestSolution.score)
+            if (workingScore < bestSolution.score)
             {
                 bestSolution.UpdateSolution(workingSchedule, workingSolution.score);
             }
@@ -58,7 +61,11 @@ class Annealing
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            // if (judge.score < 0)
+            //    Console.WriteLine(judge.score);
             solution.score += judge.score;
+
+
         }
     }
 }

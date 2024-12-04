@@ -22,25 +22,50 @@ class Solution
         this.score = score;
 
         WorkDay[][] copy = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
-        for (int i = 0; i < copy.Length; i++)
+        for (int i = 0; i < copy.Length; i++) // foreach truck
         {
-            for (int j = 0; j < copy[i].Length; j++)
+            for (int j = 0; j < copy[i].Length; j++) // foreach workday
                 copy[i][j] = schedule.workDays[i][j].Clone();
         }
 
         solution = copy;
     }
 
-    public void GenerateInitialSolution()
+    /// <summary>
+    /// Prints the solution as specified in Format-invoer-checker.docx
+    /// Truck.no;Day.no;#Address;AddressID
+    /// </summary>
+    public string PrintSolution()
     {
-        //WIP
-        /*Address depot = new Address("depot");
-        for (int i = 0; i < solution.Length; i++)
+        int truck, day;
+        Tuple<string, string>[] addresses;
+        int startAddressNumber = 1;
+
+        for (int i = 0; i < solution.Length; i++) // foreach truck
         {
-            for (int j = 0; j < solution[i].Length; j++)
-                solution[i][j] = new WorkDay(new Delivery(depot), 1000);
-        }*/
+            truck = i;
+            for (int j = 0; j < solution[i].Length; j++) // foreach workday
+            {
+                WorkDay w = solution[i][j];
+                day = w.weekDay;
+                for (int k = 0; k < w.workDay.nodes.Length; k++) // foreach route
+                {
+                    addresses = w.workDay.nodes[k].value.GetAddresses(startAddressNumber);
+
+                    foreach (Tuple<string, string> address in addresses)
+                    {
+                        Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                        startAddressNumber++;
+                    }
+
+                }
+                
+            }
+        }
+
+        return "";
     }
+
 }
 
 class Schedule
@@ -683,6 +708,27 @@ class Route : IClonable<Route>
         copy.maximumGarbage = maximumGarbage;
 
         return copy;
+    }
+
+    /// <summary>
+    /// Returns the each of the Address.no and the AddressID of a Route as a array of tuples
+    /// (To be used in Solution.PrintSolution())
+    /// </summary>
+    public Tuple<string, string>[] GetAddresses(int startAddressNumber)
+    {
+        // Make an array with length of the amount of nodes (currentIndex + 1)
+        Tuple<string, string>[] addresses = new Tuple<string, string>[this.route.currentIndex + 1];
+
+        IndexedLinkedListNode<Delivery> currentNode = this.route.nodes[0];
+        for (int i = 0; i < this.route.currentIndex + 1; i++)
+        {
+            string addressID = currentNode.value.address.matrixID.ToString();
+            int addressNumber = startAddressNumber + i + 1;
+            addresses[i] = Tuple.Create(addressNumber.ToString(), addressID);
+            currentNode = currentNode.next;
+        }
+
+        return addresses;
     }
 }
 
