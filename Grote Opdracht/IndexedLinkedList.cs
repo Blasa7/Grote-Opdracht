@@ -119,6 +119,9 @@
 
         leftNode.index = rightIndex;
         rightNode.index = leftIndex;
+        //moet dit niet ook? Dat je ze daadwerkelijk swapt in de array.
+        //nodes[leftIndex] = rightNode;
+        //nodes[rightIndex] = leftNode;
 
         //If the left node is the right neighbor of the right node
         //swap them to ensure the leftNode is to the left of the rightNode.

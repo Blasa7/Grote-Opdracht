@@ -350,13 +350,44 @@ class Schedule
         }
     }
 
-    //TO DO: Swap between routes, work days, work weeks and trucks
+    /// <summary>
+    /// Capable of swapping places of two deliveries between any route lists.
+    /// </summary>
+    public void SwapDeliveries(Delivery del1, Delivery del2, IndexedLinkedList<Delivery> list1, IndexedLinkedList<Delivery> list2, Judge judge)
+    {
+        int index1 = del1.routeNode.index;
+        int index2 = del2.routeNode.index;
 
+        Address address1 = del1.address;
+        Address address2 = del2.address;
+
+        int thisID1 = address1.matrixID;
+        int thisID2 = address2.matrixID;
+        int prevID1 = list1.nodes[index1].prev.value.address.matrixID;
+        int nextID1 = list1.nodes[index1].next.value.address.matrixID;
+        int prevID2 = list2.nodes[index2].prev.value.address.matrixID;
+        int nextID2 = list2.nodes[index2].next.value.address.matrixID;
+
+        //initial distances between the nodes and their neighbors
+        float oldValue = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2);
+        //new distances between the nodes and their new neighbors
+        float newValue = Input.GetTimeFromTo(prevID1, thisID2) + Input.GetTimeFromTo(thisID2, nextID1) + Input.GetTimeFromTo(prevID2, thisID1) + Input.GetTimeFromTo(thisID1, nextID2);
+
+        float testimony = newValue - oldValue;
+
+        judge.Testify(testimony);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+            SwapNodes(del1.routeNode, del2.routeNode, list1, list2);
+    }
 
     /// <summary>
     /// Takes two nodes from separate Indexed Linked Lists and warps space and time itself to swap them.
     /// </summary>
-    /*public void InterdimensionallySwapNodesBetweenIndexedLinkedLists<T>(IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2)
+
+    public void SwapNodes<T>
+        (IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2) 
+            where T : IClonable<T>
     {
         //Nodes are from the same list, call the existing swap function in IndexedLinkedList.cs
         if (list1 == list2)
@@ -384,7 +415,12 @@ class Schedule
         //First's neighbors point to Second.
         node2.prev.next = node2;
         node2.next.prev = node2;
-    }*/
+
+        //Physically swap the nodes from one array to the other
+        list1.nodes[node1.index] = node2;
+        list2.nodes[node2.index] = node1;
+        (node1.index, node2.index) = (node2.index, node1.index);
+    }
 }
 
 class Delivery : IClonable<Delivery>
@@ -609,7 +645,8 @@ class Route : IClonable<Route>
             route.RemoveNode(index);
         }
     }
-
+    
+    //Swaps two deliveries in the same route (depot cycle)
     public void SwapStops(Delivery del1, Delivery del2, Judge judge)
     {
         int index1 = del1.routeNode.index;
