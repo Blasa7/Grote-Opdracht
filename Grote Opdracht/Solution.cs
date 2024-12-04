@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 
 class Solution
@@ -47,7 +48,7 @@ class Schedule
     /// <summary>
     /// 5 indexed linked lists track which deliveries are being made on each day.
     /// </summary>
-    public IndexedLinkedList<Delivery>[] deliveries = new IndexedLinkedList<Delivery>[5];
+    public IndexedLinkedList<Delivery>[] schedule = new IndexedLinkedList<Delivery>[5];
 
     //2 trucks each 5 workdays
     public WorkDay[][] workDays = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
@@ -61,8 +62,16 @@ class Schedule
 
     public Schedule(Order[] orders)
     {
-        for (int i = 0; i < deliveries.Length; i++)
-            deliveries[i] = new IndexedLinkedList<Delivery>(Input.orderCount);
+        for (int i = 0; i < schedule.Length; i++)
+            schedule[i] = new IndexedLinkedList<Delivery>(Input.orderCount);
+
+        for (int i = 0; i < workDays.Length; i++)
+        {
+            for (int j = 0; j < workDays[i].Length; j++)
+            {
+                workDays[i][j] = new WorkDay(Input.orderCount);
+            }
+        }
 
         unfulfilledAddresses = new IndexedLinkedList<Address>(orders.Length);
 
@@ -80,16 +89,16 @@ class Schedule
 
         switch (address.frequency)
         {
-            case 0:
+            case 1:
                 AddRandomOneTimeDelivery(address, rng, judge);
                 break;
-            case 1:
+            case 2:
                 AddRandomTwoTimeDelivery(address, rng, judge);
                 break;
-            case 2:
+            case 3:
                 AddRandomThreeTimeDelivery(address, rng, judge);
                 break;
-            case 3:
+            case 4:
                 AddRandomFourTimeDelivery(address, rng, judge);
                 break;
         }
@@ -124,7 +133,7 @@ class Schedule
         {
             delivery.truck = truck;
             delivery.day = weekDay;
-            deliveries[workDays[truck][weekDay].weekDay].InsertLast(delivery);
+            delivery.scheduleNode = schedule[weekDay].InsertLast(delivery);
         }
     }
 
@@ -149,20 +158,26 @@ class Schedule
         judge.Testify(testimony);
 
         //Third call other functions that need to testify
-        workDays[truck][day1].AddRandomStop(delivery1, rng, judge);
-        workDays[truck][day2].AddRandomStop(delivery2, rng, judge);    
+        //workDays[truck][day1].AddRandomStop(delivery1, rng, judge);
+        //workDays[truck][day2].AddRandomStop(delivery2, rng, judge);
+        workDays[truck][day1].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out float timeDelta1);
+        workDays[truck][day2].StageRandomStop(delivery2 , rng, judge, out int workDayIndex2, out int routeIndex2, out float timeDelta2);
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            workDays[truck][day1].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
+            workDays[truck][day2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
+
             delivery1.truck = truck;
             delivery2.truck = truck;
 
             delivery1.day = day1;
             delivery2.day = day2;
 
-            deliveries[day1].InsertLast(delivery1);
-            deliveries[day2].InsertLast(delivery2);
+            delivery1.scheduleNode = schedule[day1].InsertLast(delivery1);
+            delivery2.scheduleNode = schedule[day2].InsertLast(delivery2);
+
             //NOTE:
             //2+ Frequency Deliveries are put on the same truck here, but in practice could be split
         } 
@@ -192,13 +207,21 @@ class Schedule
         judge.Testify(testimony);
 
         //Third call other functions that need to testify
-        workDays[truck][0].AddRandomStop(delivery1, rng, judge);
-        workDays[truck][2].AddRandomStop(delivery2, rng, judge);
-        workDays[truck][4].AddRandomStop(delivery3, rng, judge);
+        //workDays[truck][0].AddRandomStop(delivery1, rng, judge);
+        //workDays[truck][2].AddRandomStop(delivery2, rng, judge);
+        //workDays[truck][4].AddRandomStop(delivery3, rng, judge);
+
+        workDays[truck][0].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out float timeDelta1);
+        workDays[truck][2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out float timeDelta2);
+        workDays[truck][4].StageRandomStop(delivery1, rng, judge, out int workDayIndex3, out int routeIndex3, out float timeDelta3);
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            workDays[truck][0].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
+            workDays[truck][2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
+            workDays[truck][4].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
+
             delivery1.truck = truck;
             delivery2.truck = truck;
             delivery3.truck = truck;
@@ -207,9 +230,9 @@ class Schedule
             delivery2.day = 2;
             delivery3.day = 4;
 
-            deliveries[0].InsertLast(delivery1);
-            deliveries[2].InsertLast(delivery2);
-            deliveries[4].InsertLast(delivery3);
+            delivery1.scheduleNode = schedule[0].InsertLast(delivery1);
+            delivery2.scheduleNode = schedule[2].InsertLast(delivery2);
+            delivery3.scheduleNode = schedule[4].InsertLast(delivery3);
         }
     }
 
@@ -256,14 +279,25 @@ class Schedule
         judge.Testify(testimony);
 
         //Third call other functions that need to testify
-        workDays[truck][days[0]].AddRandomStop(delivery1, rng, judge);
-        workDays[truck][days[1]].AddRandomStop(delivery2, rng, judge);
-        workDays[truck][days[2]].AddRandomStop(delivery3, rng, judge);
-        workDays[truck][days[3]].AddRandomStop(delivery4 , rng, judge);
+        //workDays[truck][days[0]].AddRandomStop(delivery1, rng, judge);
+        //workDays[truck][days[1]].AddRandomStop(delivery2, rng, judge);
+        //workDays[truck][days[2]].AddRandomStop(delivery3, rng, judge);
+        //workDays[truck][days[3]].AddRandomStop(delivery4 , rng, judge);
+
+        workDays[truck][days[0]].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out float timeDelta1);
+        workDays[truck][days[1]].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out float timeDelta2);
+        workDays[truck][days[2]].StageRandomStop(delivery1, rng, judge, out int workDayIndex3, out int routeIndex3, out float timeDelta3);
+        workDays[truck][days[3]].StageRandomStop(delivery1, rng, judge, out int workDayIndex4, out int routeIndex4, out float timeDelta4);
+
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            workDays[truck][days[0]].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
+            workDays[truck][days[1]].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
+            workDays[truck][days[2]].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
+            workDays[truck][days[3]].AddStop(delivery4, workDayIndex4, routeIndex4, timeDelta4);
+
             delivery1.truck = truck;
             delivery2.truck = truck;
             delivery3.truck = truck;
@@ -274,10 +308,10 @@ class Schedule
             delivery3.day = days[2];
             delivery4.day = days[3];
 
-            deliveries[days[0]].InsertLast(delivery1);
-            deliveries[days[1]].InsertLast(delivery2);
-            deliveries[days[2]].InsertLast(delivery3);
-            deliveries[days[3]].InsertLast(delivery4); 
+            delivery1.scheduleNode = schedule[days[0]].InsertLast(delivery1);
+            delivery2.scheduleNode = schedule[days[1]].InsertLast(delivery2);
+            delivery3.scheduleNode = schedule[days[2]].InsertLast(delivery3);
+            delivery4.scheduleNode = schedule[days[3]].InsertLast(delivery4);
         }
     }
 
@@ -287,19 +321,32 @@ class Schedule
         //First calculate variables
         int weekDay = rng.Next(0, 5);
 
-        if (deliveries[weekDay].currentIndex == -1)
+        if (schedule[weekDay].currentIndex == -1)
             return;
 
-        int index = deliveries[weekDay].getRandomIncluded(rng);
+        int index = schedule[weekDay].getRandomIncluded(rng);
         
-        Delivery delivery = deliveries[weekDay].nodes[index].value; //Get a random delivery
+        Delivery delivery = schedule[weekDay].nodes[index].value; //Get a random delivery
 
-        //We need to remove all the stops in all the routes in all the workdays foreach truck as well
-        workDays[delivery.truck][delivery.day].RemoveStop(delivery, rng , judge);
+        //Second testify
+        float testimony = delivery.address.emptyingTime * delivery.address.frequency * 3;
 
-        for (int i = 0; i < delivery.others.Length; i++)
+        judge.Testify(testimony);
+
+
+        if (judge.GetJudgement() == Judgement.Pass)
         {
-            workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], rng , judge);
+            //We need to remove all the stops in all the routes in all the workdays foreach truck as well
+            schedule[delivery.day].RemoveNode(delivery.scheduleNode.index);
+            workDays[delivery.truck][delivery.day].RemoveStop(delivery, rng, judge);
+
+            for (int i = 0; i < delivery.others.Length; i++)
+            {
+                schedule[delivery.others[i].day].RemoveNode(delivery.others[i].scheduleNode.index);
+                workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], rng, judge);
+            }
+
+            unfulfilledAddresses.InsertLast(delivery.address); //Only once!
         }
     }
 
@@ -309,12 +356,7 @@ class Schedule
     /// <summary>
     /// Takes two nodes from separate Indexed Linked Lists and warps space and time itself to swap them.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="node1"></param>
-    /// <param name="node2"></param>
-    /// <param name="list1"></param>
-    /// <param name="list2"></param>
-    public void InterdimensionallySwapNodesBetweenIndexedLinkedLists<T>(IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2)
+    /*public void InterdimensionallySwapNodesBetweenIndexedLinkedLists<T>(IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2)
     {
         //Nodes are from the same list, call the existing swap function in IndexedLinkedList.cs
         if (list1 == list2)
@@ -342,7 +384,7 @@ class Schedule
         //First's neighbors point to Second.
         node2.prev.next = node2;
         node2.next.prev = node2;
-    }
+    }*/
 }
 
 class Delivery : IClonable<Delivery>
@@ -350,6 +392,7 @@ class Delivery : IClonable<Delivery>
     public Address address;
     public int truck;
     public int day;
+    public IndexedLinkedListNode<Delivery> scheduleNode;
     public IndexedLinkedListNode<Route> workDayNode;
     public IndexedLinkedListNode<Delivery> routeNode;
     public Delivery[] others;
@@ -364,6 +407,11 @@ class Delivery : IClonable<Delivery>
     {
         throw new NotImplementedException("This shouldn't be called");
     }
+
+    public override string ToString()
+    {
+        return address.ToString();
+    }
 } 
 
 class WorkDay : IClonable<WorkDay> // This is a linked list
@@ -377,9 +425,32 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
 
     public WorkDay(int maximumSize)
     {
-        Route start = new Route(new Delivery(Address.Depot()), Input.orderCount);
+        Route start = new Route();//TODO MAKE SOME SYSTEM TO ADD MORE ROUTES TO A WORKDDAY ITS ALWAYS 1
         workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size may need to be larger
+        workDay.InsertLast(new Route()); //TODO maybe add some smarter way to do this
+        workDay.InsertLast(new Route());
+        workDay.InsertLast(new Route());
     }
+
+    /// <summary>
+    /// This functions only testifies the changes to the judge and return the values to enact the changes in AddStop
+    /// </summary>
+    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out float timeDelta)
+    {
+        //First calculate variables
+        workDayIndex = workDay.getRandomIncluded(rng);
+
+        float maximumTimeLeft = maximumDuration - totalDuration;
+
+        workDay.nodes[workDayIndex].value.StageRandomStop(delivery, maximumTimeLeft, rng, judge, out routeIndex, out timeDelta);
+    }
+
+    public void AddStop(Delivery delivery, int workDayIndex, int routeIndex, float timeDelta)
+    {
+        delivery.workDayNode = workDay.nodes[workDayIndex];
+        workDay.nodes[workDayIndex].value.AddStop(delivery, routeIndex, timeDelta);
+    }
+
 
     public void AddRandomStop(Delivery delivery, Random rng, Judge judge)
     {
@@ -431,30 +502,64 @@ class Route : IClonable<Route>
 
     float duration;
 
-
     public Route()
     {
-
+        route = new IndexedLinkedList<Delivery>(new Delivery(Address.Depot()), Input.orderCount + 1);
+        route.startIndex = 1;
     }
 
-    public Route(Delivery depot, int maximumSize)
+    public void StageRandomStop(Delivery delivery, float maximumTimeLeft, Random rng, Judge judge, out int routeIndex, out float timeDelta)
     {
-        route = new IndexedLinkedList<Delivery>(depot, maximumSize);
+        //First calculate variables
+        routeIndex = 0;
+
+        if (route.startIndex <= route.currentIndex)
+            routeIndex = route.getRandomIncluded(rng);
+
+        Address address = delivery.address;
+        int prevID = route.nodes[routeIndex].value.address.matrixID;
+        int nextID = route.nodes[routeIndex].next.value.address.matrixID;
+
+        int newGarbageAmount = collectedGarbage + delivery.address.garbageAmount;
+
+        //Second testify
+        float testimony =
+            Input.GetTimeFromTo(prevID, address.matrixID) + //New values are added
+            Input.GetTimeFromTo(address.matrixID, nextID) -
+            Input.GetTimeFromTo(prevID, nextID); //Old value is substracted
+
+        if (newGarbageAmount > maximumGarbage || testimony > maximumTimeLeft) //Hard limits
+            judge.OverrideJudge(Judgement.Fail);
+
+        judge.Testify(testimony);
+
+        timeDelta = testimony;
+    }
+
+    public void AddStop(Delivery delivery, int routeIndex, float timeDelta)
+    {
+        collectedGarbage += delivery.address.garbageAmount;
+        duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
+
+        delivery.routeNode = route.InsertAfter(delivery, routeIndex);
     }
 
     public void AddRandomStop(Delivery delivery, float maximumTimeLeft, Random rng, Judge judge)
     {
         //First calculate variables
-        int index = route.getRandomIncluded(rng);
+        int index = 0;
+        
+        if (route.startIndex <= route.currentIndex)
+            index = route.getRandomIncluded(rng);
 
         Address address = delivery.address;
         int prevID = route.nodes[index].value.address.matrixID;
         int nextID = route.nodes[index].next.value.address.matrixID;
 
-        int newGarbageAmount = collectedGarbage += delivery.address.garbageAmount;
+        int newGarbageAmount = collectedGarbage + delivery.address.garbageAmount;
 
         //Second testify
-        int testimony = 
+        float testimony = 
             Input.GetTimeFromTo(prevID, address.matrixID) + //New values are added
             Input.GetTimeFromTo(address.matrixID, nextID) - 
             Input.GetTimeFromTo(prevID, nextID); //Old value is substracted
@@ -472,8 +577,7 @@ class Route : IClonable<Route>
             collectedGarbage += delivery.address.garbageAmount;
             duration += testimony; //Same value as testimony as it just calculates the time change in the route.
 
-            route.InsertAfter(delivery, index);
-            delivery.routeNode = route.nodes[route.currentIndex];
+            delivery.routeNode = route.InsertAfter(delivery, index);
         }
     }
 
@@ -487,7 +591,7 @@ class Route : IClonable<Route>
         int nextID = route.nodes[index].next.value.address.matrixID;
 
         //Second testify
-        int testimony =
+        float testimony =
             Input.GetTimeFromTo(prevID, nextID) - //New value
             (Input.GetTimeFromTo(prevID, address.matrixID) + //Old values are substracted
             Input.GetTimeFromTo(address.matrixID, nextID)); 
@@ -521,10 +625,10 @@ class Route : IClonable<Route>
         int prevID2 = route.nodes[index2].prev.value.address.matrixID;
         int nextID2 = route.nodes[index2].next.value.address.matrixID;
 
-        int oldValue = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2);
-        int newValue = Input.GetTimeFromTo(prevID1, thisID2) + Input.GetTimeFromTo(thisID2, nextID1) + Input.GetTimeFromTo(prevID2, thisID1) + Input.GetTimeFromTo(thisID1, nextID2);
+        float oldValue = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2);
+        float newValue = Input.GetTimeFromTo(prevID1, thisID2) + Input.GetTimeFromTo(thisID2, nextID1) + Input.GetTimeFromTo(prevID2, thisID1) + Input.GetTimeFromTo(thisID1, nextID2);
 
-        int testimony = newValue - oldValue;
+        float testimony = newValue - oldValue;
 
         judge.Testify(testimony);
 
@@ -568,6 +672,7 @@ class Address : IClonable<Address>
         //volumePerContainer = 0;
         //containerAmount = 0;
         emptyingTime = 0;
+        frequency = 1;
     }
 
     public Address(Order order)

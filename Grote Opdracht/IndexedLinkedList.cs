@@ -25,7 +25,7 @@
         nodes[0].prev = nodes[0];
         nodes[0].next = nodes[0];
 
-        startIndex = 1;
+        startIndex = 0;
         currentIndex = 0;
     }
 
@@ -49,7 +49,7 @@
     /// <summary>
     /// Inserts the node at nodeIndex after the node at prevIndex.
     /// </summary>
-    public void InsertAfter(Type value, int prevIndex)
+    public IndexedLinkedListNode<Type> InsertAfter(Type value, int prevIndex)
     {
         //If the list is empty
         if (currentIndex == -1) 
@@ -58,7 +58,9 @@
             nodes[0].prev = nodes[0];
             nodes[0].next = nodes[0];
 
-            return;
+            currentIndex++;
+
+            return nodes[0];
         }
 
         IndexedLinkedListNode<Type> current = new IndexedLinkedListNode<Type>(value);
@@ -77,6 +79,8 @@
         currentIndex++;
         current.index = currentIndex;
         nodes[currentIndex] = current;
+
+        return current;
     }
 
     /// <summary>
@@ -87,6 +91,9 @@
         //Removing the node from the linked list.
         nodes[nodeIndex].prev.next = nodes[nodeIndex].next;
         nodes[nodeIndex].next.prev = nodes[nodeIndex].prev;
+
+        //Swap the indexes
+        nodes[currentIndex].index = nodes[nodeIndex].index;
 
         //Swap the to be deleted node with the last node in the used nodes.
         (nodes[nodeIndex], nodes[currentIndex]) = (nodes[currentIndex], nodes[nodeIndex]);
@@ -164,19 +171,21 @@
     /// Inserts a value node at the end of the linked list. 
     /// Note it is a circular linked list so this also means before the first node.
     /// </summary>
-    public void InsertLast(Type value)
+    public IndexedLinkedListNode<Type> InsertLast(Type value)
     {
-        InsertAfter(value, currentIndex);
+        return InsertAfter(value, currentIndex);
     }
 
     public IndexedLinkedList<Type> Clone()
     {
         IndexedLinkedList<Type> copy = new IndexedLinkedList<Type>(nodes.Length);
+        copy.startIndex = startIndex;
+
         IndexedLinkedListNode<Type> currentNode = nodes[0];
 
         for (int i = 0; i < currentIndex + 1; i++)
         {
-            copy.InsertAfter(nodes[i].value.Clone(), i);
+            copy.InsertAfter(currentNode.value.Clone(), currentNode.prev.index);
             currentNode = currentNode.next;
         }
 

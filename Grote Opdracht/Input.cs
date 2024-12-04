@@ -8,9 +8,9 @@ class Input
     public static DistancesMatrix distancesMatrix;
     public static int orderCount = 1177;
 
-    public static int GetTimeFromTo(int matrixID1, int matrixID2)
+    public static float GetTimeFromTo(int matrixID1, int matrixID2)
     {
-        return distancesMatrix.matrix[matrixID1, matrixID2].time;
+        return distancesMatrix.matrix[matrixID1, matrixID2].time / 60f; //Converted to minutes for consistency
     }
 
     /// <summary>

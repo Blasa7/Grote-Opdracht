@@ -7,15 +7,16 @@ class Annealing
     public Solution Run()
     {
         Solution workingSolution = new Solution();
+        Console.WriteLine(workingSolution.score);
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = workingSolution;
         //currentSolution.GenerateInitialSolution();
         Random rng = new Random();
         float T = 10; //Dummy value for now
-        int maxIter = 1000000; //1 million for now
+        int maxIter = 100000000; //1 million for now
         Judge judge = new Judge(T, rng);
 
-        for (int i=0; i < maxIter; i++)
+        for (int i = 0; i < maxIter; i++)
         {
             T = GetTemperature(T);
             judge.T = T;
@@ -26,9 +27,11 @@ class Annealing
             {
                 bestSolution.UpdateSolution(workingSchedule, workingSolution.score);
             }
+
+            judge.Reset();
         }
 
-        return workingSolution;
+        return bestSolution;
     }
 
     public float GetTemperature(float T)
@@ -91,13 +94,14 @@ class Judge
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
             double frac = -score / T; // '-', because we want to minimize here
-            double res = Math.Exp(frac); 
+            double res = Math.Exp(frac);
             if (res >= rng.NextDouble())
-                return Judgement.Pass;
-            return Judgement.Fail;
+                judgement = Judgement.Pass;//return Judgement.Pass;
+            else
+                judgement = Judgement.Fail;
         }
-        else
-            return judgement;
+
+        return judgement;
     }
 
     public void Reset()
