@@ -9,6 +9,6 @@
 
         Console.WriteLine(solution.score.ToString());
 
-        // solution.PrintSolution();
+        solution.PrintSolution();
     }
 }

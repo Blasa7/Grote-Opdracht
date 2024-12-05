@@ -12,7 +12,6 @@
     /// </summary>
     public int currentIndex;
 
-
     /// <summary>
     /// Constructor of a route must recieve an array with all locations 
     /// with the location at position 0 being the start and end.
@@ -188,7 +187,8 @@
 
         for (int i = 0; i < currentIndex + 1; i++)
         {
-            copy.InsertAfter(currentNode.value.Clone(), currentNode.prev.index);
+            //copy.InsertAfter(currentNode.value.Clone(), currentNode.prev.index);
+            copy.InsertLast(currentNode.value.Clone()); // Kan je het ook zo doen?
             currentNode = currentNode.next;
         }
 

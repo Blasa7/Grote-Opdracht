@@ -43,11 +43,11 @@ class Solution
 
         for (int i = 0; i < solution.Length; i++) // foreach truck
         {
-            truck = i;
+            truck = i + 1; // 0,1 -> 1,2
             for (int j = 0; j < solution[i].Length; j++) // foreach workday
             {
                 WorkDay w = solution[i][j];
-                day = w.weekDay;
+                day = w.weekDay + 1;
                 for (int k = 0; k < w.workDay.nodes.Length; k++) // foreach route
                 {
                     addresses = w.workDay.nodes[k].value.GetAddresses(startAddressNumber);
@@ -733,7 +733,7 @@ class Route : IClonable<Route>
         for (int i = 0; i < this.route.currentIndex + 1; i++)
         {
             string addressID = currentNode.value.address.matrixID.ToString();
-            int addressNumber = startAddressNumber + i + 1;
+            int addressNumber = startAddressNumber + i;
             addresses[i] = Tuple.Create(addressNumber.ToString(), addressID);
             currentNode = currentNode.next;
         }
