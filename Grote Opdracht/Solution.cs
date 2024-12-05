@@ -48,9 +48,13 @@ class Solution
             {
                 WorkDay w = solution[i][j];
                 day = w.weekDay + 1;
-                for (int k = 0; k < w.workDay.nodes.Length; k++) // foreach route
+
+                int currentIndex = w.workDay.currentIndex;
+                IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
+                for (int k = 0; k < currentIndex + 1; k++) // foreach route
                 {
-                    addresses = w.workDay.nodes[k].value.GetAddresses(startAddressNumber);
+                    addresses = currentNode.value.GetAddresses(startAddressNumber);
+                    currentNode = currentNode.next;
 
                     foreach (Tuple<string, string> address in addresses)
                     {
