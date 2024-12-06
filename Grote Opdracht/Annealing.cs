@@ -10,7 +10,7 @@ class Annealing
         Solution bestSolution = new Solution();
         Random rng = new Random();
         float T = 10; //Dummy value for now
-        int maxIter = 10000000; //1 million for now (100000000)
+        int maxIter = 1000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
         float workingScore = bestSolution.score;
         Console.WriteLine(workingScore);

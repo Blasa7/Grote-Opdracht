@@ -35,40 +35,51 @@ class Solution
     /// Prints the solution as specified in Format-invoer-checker.docx
     /// Truck.no;Day.no;#Address;AddressID
     /// </summary>
-    public string PrintSolution()
+    public string PrintSolution(bool write)
     {
-        int truck, day;
-        Tuple<string, string>[] addresses;
-        int startAddressNumber = 1;
-
-        for (int i = 0; i < solution.Length; i++) // foreach truck
+        using (StreamWriter sw = new StreamWriter(@"..\\..\\..\\solution.txt"))
         {
-            truck = i + 1; // 0,1 -> 1,2
-            for (int j = 0; j < solution[i].Length; j++) // foreach workday
+            int truck, day;
+            Tuple<string, string>[] addresses;
+            int startAddressNumber = 1;
+
+            for (int i = 0; i < solution.Length; i++) // foreach truck
             {
-                WorkDay w = solution[i][j];
-                day = w.weekDay + 1;
-
-                int currentIndex = w.workDay.currentIndex;
-                IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
-                for (int k = 0; k < currentIndex + 1; k++) // foreach route
+                truck = i + 1; // 0,1 -> 1,2
+                for (int j = 0; j < solution[i].Length; j++) // foreach workday
                 {
-                    addresses = currentNode.value.GetAddresses(startAddressNumber);
-                    currentNode = currentNode.next;
+                    WorkDay w = solution[i][j];
+                    day = w.weekDay + 1;
 
-                    foreach (Tuple<string, string> address in addresses)
+                    int currentIndex = w.workDay.currentIndex;
+                    IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
+                    for (int k = 0; k < currentIndex + 1; k++) // foreach route
                     {
-                        Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
-                        startAddressNumber++;
+                        addresses = currentNode.value.GetAddresses(startAddressNumber);
+                        currentNode = currentNode.next;
+
+                        foreach (Tuple<string, string> address in addresses)
+                        {
+                            if (write)
+                            {
+                                sw.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                            }
+                            startAddressNumber++;
+                        }
+
                     }
 
                 }
-                
             }
         }
-
         return "";
     }
+
+  
 
 }
 
