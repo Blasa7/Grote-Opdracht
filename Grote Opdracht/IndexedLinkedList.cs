@@ -212,8 +212,7 @@
 
         for (int i = 0; i < currentIndex + 1; i++)
         {
-            //copy.InsertAfter(currentNode.value.Clone(), currentNode.prev.index);
-            copy.InsertLast(currentNode.value.Clone()); // Kan je het ook zo doen?
+            copy.InsertLast(currentNode.value.Clone());
             currentNode = currentNode.next;
         }
 

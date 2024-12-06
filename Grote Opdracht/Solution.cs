@@ -35,40 +35,53 @@ class Solution
     /// Prints the solution as specified in Format-invoer-checker.docx
     /// Truck.no;Day.no;#Address;AddressID
     /// </summary>
-    public string PrintSolution()
+    public string PrintSolution(bool write)
     {
-        int truck, day;
-        Tuple<string, string>[] addresses;
-        int startAddressNumber = 1;
-
-        for (int i = 0; i < solution.Length; i++) // foreach truck
+        using (StreamWriter sw = new StreamWriter(@"..\\..\\..\\solution.txt"))
         {
-            truck = i + 1; // 0,1 -> 1,2
-            for (int j = 0; j < solution[i].Length; j++) // foreach workday
+            int truck, day;
+            Tuple<string, string>[] addresses;
+            int startAddressNumber = 1;
+
+            for (int i = 0; i < solution.Length; i++) // foreach truck
             {
-                WorkDay w = solution[i][j];
-                day = w.weekDay + 1;
-
-                int currentIndex = w.workDay.currentIndex;
-                IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
-                for (int k = 0; k < currentIndex + 1; k++) // foreach route
+                truck = i + 1; // 0,1 -> 1,2
+                for (int j = 0; j < solution[i].Length; j++) // foreach workday
                 {
-                    addresses = currentNode.value.GetAddresses(startAddressNumber);
-                    currentNode = currentNode.next;
+                    startAddressNumber = 1;
 
-                    foreach (Tuple<string, string> address in addresses)
+                    WorkDay w = solution[i][j];
+                    day = w.weekDay + 1;
+
+                    int currentIndex = w.workDay.currentIndex;
+                    IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
+                    for (int k = 0; k < currentIndex + 1; k++) // foreach route
                     {
-                        Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
-                        startAddressNumber++;
+                        addresses = currentNode.value.GetAddresses(startAddressNumber);
+                        currentNode = currentNode.next;
+
+                        foreach (Tuple<string, string> address in addresses)
+                        {
+                            if (write)
+                            {
+                                sw.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                            }
+                            startAddressNumber++;
+                        }
+
                     }
 
                 }
-                
             }
         }
-
         return "";
     }
+
+  
 
 }
 
@@ -98,7 +111,7 @@ class Schedule
         {
             for (int j = 0; j < workDays[i].Length; j++)
             {
-                workDays[i][j] = new WorkDay(Input.orderCount);
+                workDays[i][j] = new WorkDay(j, Input.orderCount);
             }
         }
 
@@ -513,8 +526,9 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
     float totalDuration = 0;
     float maximumDuration = 690; //in minutes aka 11.5 hours in a work day
 
-    public WorkDay(int maximumSize)
+    public WorkDay(int weekDay, int maximumSize)
     {
+        this.weekDay = weekDay;
         Route start = new Route();//TODO MAKE SOME SYSTEM TO ADD MORE ROUTES TO A WORKDDAY ITS ALWAYS 1
         workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size may need to be larger
         workDay.InsertLast(new Route()); //TODO maybe add some smarter way to do this
@@ -569,7 +583,7 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
 
     public WorkDay Clone()
     {
-        WorkDay copy = new WorkDay(Input.orderCount);
+        WorkDay copy = new WorkDay(0 ,Input.orderCount);
 
         copy.workDay = workDay.Clone();
         copy.weekDay = weekDay;
@@ -748,12 +762,12 @@ class Route : IClonable<Route>
         // Make an array with length of the amount of nodes (currentIndex + 1)
         Tuple<string, string>[] addresses = new Tuple<string, string>[this.route.currentIndex + 1];
 
-        IndexedLinkedListNode<Delivery> currentNode = this.route.nodes[0];
+        IndexedLinkedListNode<Delivery> currentNode = this.route.nodes[0].next;
         for (int i = 0; i < this.route.currentIndex + 1; i++)
         {
-            string addressID = currentNode.value.address.matrixID.ToString();
+            string orderId = currentNode.value.address.orderID.ToString();
             int addressNumber = startAddressNumber + i;
-            addresses[i] = Tuple.Create(addressNumber.ToString(), addressID);
+            addresses[i] = Tuple.Create(addressNumber.ToString(), orderId);
             currentNode = currentNode.next;
         }
 
@@ -764,6 +778,7 @@ class Route : IClonable<Route>
 class Address : IClonable<Address>
 {
     public string name;
+    public int orderID;
     public int matrixID;
     //public int volumePerContainer; replaced by garbage amount
     //public int containerAmount; replaced by garbage amount
@@ -779,6 +794,7 @@ class Address : IClonable<Address>
     public Address(string s)
     {
         name = s;
+        orderID = 0;
         matrixID = 0;
         garbageAmount = 0;
         //volumePerContainer = 0;
@@ -790,6 +806,7 @@ class Address : IClonable<Address>
     public Address(Order order)
     {
         name = order.location;
+        orderID = order.id;
         matrixID = order.matrixID;
         //volumePerContainer = order.containerVolume;
         //containerAmount = order.containerAmount;
@@ -818,6 +835,7 @@ class Address : IClonable<Address>
         Address clone = new Address();
 
         clone.name = name;
+        clone.orderID = orderID;
         clone.matrixID = matrixID;
         clone.garbageAmount = garbageAmount;
         clone.emptyingTime = emptyingTime;
