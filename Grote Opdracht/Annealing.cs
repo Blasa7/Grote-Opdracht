@@ -6,29 +6,25 @@ class Annealing
 {
     public Solution Run()
     {
-        Solution workingSolution = new Solution();
-        Console.WriteLine(workingSolution.score);
         Schedule workingSchedule = new Schedule(Input.orders);
-        Solution bestSolution = workingSolution;
-        //currentSolution.GenerateInitialSolution();
+        Solution bestSolution = new Solution();
         Random rng = new Random();
         float T = 10; //Dummy value for now
-        int maxIter = 100000; //1 million for now (100000000)
+        int maxIter = 10000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
-        float workingScore;
+        float workingScore = bestSolution.score;
+        Console.WriteLine(workingScore);
 
         for (int i = 0; i < maxIter; i++)
         {
             T = GetTemperature(T);
             judge.T = T;
 
-            workingScore = workingSolution.score;
-
-            TryIterate(workingSolution, workingSchedule, rng, judge);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
 
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingSolution.score);
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
             }
 
             judge.Reset();
@@ -43,7 +39,7 @@ class Annealing
         return T*alpha;
     }
 
-    public void TryIterate(Solution solution, Schedule schedule, Random rng, Judge judge)
+    public float TryIterate(float workingScore, Schedule schedule, Random rng, Judge judge)
     {
         int weight = rng.Next(0, 2);
 
@@ -54,19 +50,17 @@ class Annealing
                 schedule.AddRandomDelivery(rng, judge);
             }
         }
-        if (weight < 2)
+        else if (weight < 2)
         {
             schedule.RemoveRandomDelivery(rng, judge);
         }
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
-            // if (judge.score < 0)
-            //    Console.WriteLine(judge.score);
-            solution.score += judge.score;
-
+            return workingScore + judge.score;
 
         }
+        return workingScore;
     }
 }
 

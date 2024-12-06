@@ -98,7 +98,7 @@ class Schedule
         {
             for (int j = 0; j < workDays[i].Length; j++)
             {
-                workDays[i][j] = new WorkDay(Input.orderCount);
+                workDays[i][j] = new WorkDay(j, Input.orderCount);
             }
         }
 
@@ -498,8 +498,9 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
     float totalDuration = 0;
     float maximumDuration = 690; //in minutes aka 11.5 hours in a work day
 
-    public WorkDay(int maximumSize)
+    public WorkDay(int weekDay, int maximumSize)
     {
+        this.weekDay = weekDay;
         Route start = new Route();//TODO MAKE SOME SYSTEM TO ADD MORE ROUTES TO A WORKDDAY ITS ALWAYS 1
         workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size may need to be larger
         workDay.InsertLast(new Route()); //TODO maybe add some smarter way to do this
@@ -554,7 +555,7 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
 
     public WorkDay Clone()
     {
-        WorkDay copy = new WorkDay(Input.orderCount);
+        WorkDay copy = new WorkDay(0 ,Input.orderCount);
 
         copy.workDay = workDay.Clone();
         copy.weekDay = weekDay;
