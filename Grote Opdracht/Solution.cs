@@ -464,10 +464,14 @@ class Schedule
         (node1.index, node2.index) = (node2.index, node1.index);
     }
 
+    /// <summary>
+    /// Take node from one list, and insert it in another list after atNode
+    /// </summary>
     public void ShuffleNode<T>
         (IndexedLinkedListNode<T> node, IndexedLinkedList<T> fromList, IndexedLinkedList<T> toList, IndexedLinkedListNode<T> atNode)
             where T : IClonable<T>
     {
+        //if lists are the same, just use the existing shuffle function within IndexedLinkedList
         if(fromList == toList)
         {
             fromList.ShuffleNode(node.index, atNode.index);
@@ -475,8 +479,6 @@ class Schedule
 
         fromList.RemoveNode(node.index);
         toList.InsertAfter(node.value, atNode.index);
-
-        //help what in the fuck
     }
 }
 
