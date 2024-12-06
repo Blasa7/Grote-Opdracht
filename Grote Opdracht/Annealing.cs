@@ -56,7 +56,7 @@ class Annealing
         }
         else // shuffle half the time (for now)
         {
-            schedule.ShuffleNode(rng, judge);
+            schedule.ShuffleNode2(rng, judge);
         }
 
         if (judge.GetJudgement() == Judgement.Pass)
