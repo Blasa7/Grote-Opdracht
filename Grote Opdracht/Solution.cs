@@ -606,7 +606,7 @@ class Schedule
             workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], timeDeltas[i + 1]);
         }
 
-        unfulfilledAddresses.InsertLast(delivery.address); //Only once!
+        //unfulfilledAddresses.InsertLast(delivery.address); //Only once!
     }
 
     //Maybe add remove
@@ -728,6 +728,10 @@ class Schedule
     public void ShuffleNode2(Random rng, Judge judge)
     {
         Delivery removedDelivery = StageRemoveRandomDelivery(rng, judge, out float[] removeTimeDeltas);
+
+        if (removedDelivery == null)
+            return;
+
         StageDelivery(removedDelivery.address, rng, judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] addTimeDeltas);
 
         if (judge.GetJudgement() == Judgement.Pass)
