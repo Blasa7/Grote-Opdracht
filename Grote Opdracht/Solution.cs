@@ -476,6 +476,10 @@ class Schedule
         int randomRouteIndexFrom = wFrom.workDay.getRandomIncluded(rng);
         Route rFrom = wFrom.workDay.nodes[randomRouteIndexFrom].value;
         int randomNodeFrom = rFrom.route.getRandomIncluded(rng);
+
+        IndexedLinkedListNode<Delivery> node = rFrom.route.nodes[randomNodeFrom]
+        IndexedLinkedList<Delivery> fromList = rFrom.route;
+
         // To
         int randomTruckTo = rng.Next(0, 2);
         int randomDayTo = rng.Next(0, 5);
@@ -483,17 +487,24 @@ class Schedule
         int randomRouteIndexTo = wTo.workDay.getRandomIncluded(rng);
         Route rTo = wTo.workDay.nodes[randomRouteIndexTo].value;
         int randomNodeTo = rTo.route.getRandomIncluded(rng);
-
-        IndexedLinkedListNode<Delivery> node = rFrom.route.nodes[randomNodeFrom];
-
-        IndexedLinkedList<Delivery> fromList = rFrom.route;
+        
+        IndexedLinkedListNode<Delivery> atNode = rTo.route.nodes[randomNodeTo];
         IndexedLinkedList<Delivery> toList = rTo.route;
 
-        IndexedLinkedListNode<Delivery> atNode = rTo.route.nodes[randomNodeTo];
+        int fromID = node.value.address.matrixID;
+        int toID = atNode.value.address.matrixID;
+        int fromPrevID = node.prev.value.address.matrixID;
+        int fromNextID = node.next.value.address.matrixID;
+        int toPrevID = atNode.prev.value.address.matrixID;
+        int toNextID = atNode.next.value.address.matrixID;
 
 
-        //Second testify
-        float testimony = 0; // TODO: FIll in the correct testimony
+        float oldValue = Input.GetTimeFromTo(fromPrevID, fromID) + Input.GetTimeFromTo(fromID, fromNextID) + Input.GetTimeFromTo(toID, toNextID);
+        float newValue = Input.GetTimeFromTo(fromPrevID, fromNextID) + Input.GetTimeFromTo(toID, fromID) + Input.GetTimeFromTo(fromID, toNextID);
+
+        float testimony = newValue - oldValue;
+        // TO DO: Potentially add penalty for bas delivery schedule
+
         judge.Testify(testimony);
 
 
