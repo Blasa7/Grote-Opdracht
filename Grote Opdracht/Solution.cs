@@ -35,51 +35,53 @@ class Solution
     /// Prints the solution as specified in Format-invoer-checker.docx
     /// Truck.no;Day.no;#Address;AddressID
     /// </summary>
-    public string PrintSolution()
+    public string PrintSolution(bool write)
     {
-        for (int i = 0; i < solution.Length; i++)
+        using (StreamWriter sw = new StreamWriter(@"..\\..\\..\\solution.txt"))
         {
-            for (int j = 0; j < solution[i].Length; j++)
+            int truck, day;
+            Tuple<string, string>[] addresses;
+            int startAddressNumber = 1;
+
+            for (int i = 0; i < solution.Length; i++) // foreach truck
             {
-                for (int k = 0; k < solution[i][j].workDay.currentIndex + 1; k++)
-                    Console.WriteLine(solution[i][j].workDay.nodes[k].value.route.nodes[0].value);
-            }
-        }
-
-        int truck, day;
-        Tuple<string, string>[] addresses;
-        int startAddressNumber = 1;
-
-        for (int i = 0; i < solution.Length; i++) // foreach truck
-        {
-            truck = i + 1; // 0,1 -> 1,2
-            for (int j = 0; j < solution[i].Length; j++) // foreach workday
-            {
-                startAddressNumber = 1;
-
-                WorkDay w = solution[i][j];
-                day = w.weekDay + 1;
-
-                int currentIndex = w.workDay.currentIndex;
-                IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
-                for (int k = 0; k < currentIndex + 1; k++) // foreach route
+                truck = i + 1; // 0,1 -> 1,2
+                for (int j = 0; j < solution[i].Length; j++) // foreach workday
                 {
-                    addresses = currentNode.value.GetAddresses(startAddressNumber);
-                    currentNode = currentNode.next;
+                    startAddressNumber = 1;
 
-                    foreach (Tuple<string, string> address in addresses)
+                    WorkDay w = solution[i][j];
+                    day = w.weekDay + 1;
+
+                    int currentIndex = w.workDay.currentIndex;
+                    IndexedLinkedListNode<Route> currentNode = w.workDay.nodes[0];
+                    for (int k = 0; k < currentIndex + 1; k++) // foreach route
                     {
-                        Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
-                        startAddressNumber++;
+                        addresses = currentNode.value.GetAddresses(startAddressNumber);
+                        currentNode = currentNode.next;
+
+                        foreach (Tuple<string, string> address in addresses)
+                        {
+                            if (write)
+                            {
+                                sw.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"{truck};{day};{address.Item1};{address.Item2}");
+                            }
+                            startAddressNumber++;
+                        }
+
                     }
 
                 }
-                
             }
         }
-
         return "";
     }
+
+  
 
 }
 
