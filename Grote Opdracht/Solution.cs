@@ -492,7 +492,7 @@ class Schedule
         Route rFrom = wFrom.workDay.nodes[randomRouteIndexFrom].value;
         int randomNodeFrom = rFrom.route.getRandomIncluded(rng);
 
-        IndexedLinkedListNode<Delivery> node = rFrom.route.nodes[randomNodeFrom]
+        IndexedLinkedListNode<Delivery> node = rFrom.route.nodes[randomNodeFrom];
         IndexedLinkedList<Delivery> fromList = rFrom.route;
 
         // To
