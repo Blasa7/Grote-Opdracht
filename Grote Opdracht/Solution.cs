@@ -37,6 +37,15 @@ class Solution
     /// </summary>
     public string PrintSolution()
     {
+        for (int i = 0; i < solution.Length; i++)
+        {
+            for (int j = 0; j < solution[i].Length; j++)
+            {
+                for (int k = 0; k < solution[i][j].workDay.currentIndex + 1; k++)
+                    Console.WriteLine(solution[i][j].workDay.nodes[k].value.route.nodes[0].value);
+            }
+        }
+
         int truck, day;
         Tuple<string, string>[] addresses;
         int startAddressNumber = 1;
@@ -46,6 +55,8 @@ class Solution
             truck = i + 1; // 0,1 -> 1,2
             for (int j = 0; j < solution[i].Length; j++) // foreach workday
             {
+                startAddressNumber = 1;
+
                 WorkDay w = solution[i][j];
                 day = w.weekDay + 1;
 
@@ -734,12 +745,12 @@ class Route : IClonable<Route>
         // Make an array with length of the amount of nodes (currentIndex + 1)
         Tuple<string, string>[] addresses = new Tuple<string, string>[this.route.currentIndex + 1];
 
-        IndexedLinkedListNode<Delivery> currentNode = this.route.nodes[0];
+        IndexedLinkedListNode<Delivery> currentNode = this.route.nodes[0].next;
         for (int i = 0; i < this.route.currentIndex + 1; i++)
         {
-            string addressID = currentNode.value.address.matrixID.ToString();
+            string orderId = currentNode.value.address.orderID.ToString();
             int addressNumber = startAddressNumber + i;
-            addresses[i] = Tuple.Create(addressNumber.ToString(), addressID);
+            addresses[i] = Tuple.Create(addressNumber.ToString(), orderId);
             currentNode = currentNode.next;
         }
 
@@ -750,6 +761,7 @@ class Route : IClonable<Route>
 class Address : IClonable<Address>
 {
     public string name;
+    public int orderID;
     public int matrixID;
     //public int volumePerContainer; replaced by garbage amount
     //public int containerAmount; replaced by garbage amount
@@ -765,6 +777,7 @@ class Address : IClonable<Address>
     public Address(string s)
     {
         name = s;
+        orderID = 0;
         matrixID = 0;
         garbageAmount = 0;
         //volumePerContainer = 0;
@@ -776,6 +789,7 @@ class Address : IClonable<Address>
     public Address(Order order)
     {
         name = order.location;
+        orderID = order.id;
         matrixID = order.matrixID;
         //volumePerContainer = order.containerVolume;
         //containerAmount = order.containerAmount;
@@ -804,6 +818,7 @@ class Address : IClonable<Address>
         Address clone = new Address();
 
         clone.name = name;
+        clone.orderID = orderID;
         clone.matrixID = matrixID;
         clone.garbageAmount = garbageAmount;
         clone.emptyingTime = emptyingTime;
