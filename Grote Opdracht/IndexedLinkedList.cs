@@ -1,7 +1,7 @@
 ﻿class IndexedLinkedList<Type> where Type: IClonable<Type>
 {
     /// <summary>
-    /// Array of all potential nodes that are either included or excluded from the route.
+    /// Array of all potential nodes that are either included or excluded from the linked list (route).
     /// </summary>
     public IndexedLinkedListNode<Type>[] nodes;
 
@@ -13,7 +13,7 @@
     public int currentIndex;
 
     /// <summary>
-    /// Constructor of a route must recieve an array with all locations 
+    /// Constructor of an indexed linked list (route) must recieve an array with all locations 
     /// with the location at position 0 being the start and end.
     /// </summary>
     public IndexedLinkedList(Type head, int maximumSize)
@@ -108,7 +108,13 @@
     {
         //A node is not allowed to swap with itself.
         if (leftIndex == rightIndex)
-            throw new System.Exception("Cannot swap a node with itself!");
+            throw new System.Exception("leftIndex is the same as rightIndex. Cannot swap a node with itself!");
+
+        //If the list is empty
+        if (currentIndex == -1)
+        {
+            throw new System.Exception("This list is empty. Cannot swap nodes in an empty list!");
+        }
 
         IndexedLinkedListNode<Type> prevLeftNode = nodes[leftIndex].prev;
         IndexedLinkedListNode<Type> leftNode = nodes[leftIndex];
@@ -167,6 +173,25 @@
         //Left's neighbors point to right.
         rightNode.prev.next = rightNode;
         rightNode.next.prev = rightNode;
+    }
+
+    /// <summary>
+    /// Takes the node at shuffleFrom and inserts it after shuffleTo
+    /// </summary>
+    public void ShuffleNode(int shuffleFrom, int shuffleTo)
+    {
+        IndexedLinkedListNode<Type> node1 = nodes[shuffleFrom];
+        IndexedLinkedListNode<Type> node2 = nodes[shuffleTo];
+
+        //Removing the node from the linked list.
+        node1.prev.next = node1.next;
+        node1.next.prev = node1.prev;
+
+        //Then inserting it at a different position.
+        node1.next = node2.next;
+        node1.prev = node2;
+        node2.next.prev = node1;
+        node2.next = node1;
     }
 
     /// <summary>

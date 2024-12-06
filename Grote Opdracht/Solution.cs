@@ -478,6 +478,51 @@ class Schedule
         list2.nodes[node2.index] = node1;
         (node1.index, node2.index) = (node2.index, node1.index);
     }
+
+    public void ShuffleNode(Random rng, Judge judge)
+    {
+
+        // First calculate variables
+
+        // From
+        int randomTruckFrom = rng.Next(0, 2);
+        int randomDayFrom = rng.Next(0, 5);
+        WorkDay wFrom = workDays[randomTruckFrom][randomDayFrom];
+        int randomRouteIndexFrom = wFrom.workDay.getRandomIncluded(rng);
+        Route rFrom = wFrom.workDay.nodes[randomRouteIndexFrom].value;
+        int randomNodeFrom = rFrom.route.getRandomIncluded(rng);
+        // To
+        int randomTruckTo = rng.Next(0, 2);
+        int randomDayTo = rng.Next(0, 5);
+        WorkDay wTo = workDays[randomTruckFrom][randomDayFrom];
+        int randomRouteIndexTo = wTo.workDay.getRandomIncluded(rng);
+        Route rTo = wTo.workDay.nodes[randomRouteIndexTo].value;
+        int randomNodeTo = rTo.route.getRandomIncluded(rng);
+
+        IndexedLinkedListNode<Delivery> node = rFrom.route.nodes[randomNodeFrom];
+
+        IndexedLinkedList<Delivery> fromList = rFrom.route;
+        IndexedLinkedList<Delivery> toList = rTo.route;
+
+        IndexedLinkedListNode<Delivery> atNode = rTo.route.nodes[randomNodeTo];
+
+
+        //Second testify
+        float testimony = 0; // TODO: FIll in the correct testimony
+        judge.Testify(testimony);
+
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            if (fromList == toList)
+            {
+                fromList.ShuffleNode(node.index, atNode.index);
+            }
+
+            fromList.RemoveNode(node.index);
+            toList.InsertAfter(node.value, atNode.index);
+        }
+    }
 }
 
 class Delivery : IClonable<Delivery>
