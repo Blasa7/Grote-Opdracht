@@ -450,6 +450,21 @@ class Schedule
         list2.nodes[node2.index] = node1;
         (node1.index, node2.index) = (node2.index, node1.index);
     }
+
+    public void ShuffleNode<T>
+        (IndexedLinkedListNode<T> node, IndexedLinkedList<T> fromList, IndexedLinkedList<T> toList, IndexedLinkedListNode<T> atNode)
+            where T : IClonable<T>
+    {
+        if(fromList == toList)
+        {
+            fromList.ShuffleNode(node.index, atNode.index);
+        }
+
+        fromList.RemoveNode(node.index);
+        toList.InsertAfter(node.value, atNode.index);
+
+        //help what in the fuck
+    }
 }
 
 class Delivery : IClonable<Delivery>
