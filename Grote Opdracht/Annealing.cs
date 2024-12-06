@@ -41,18 +41,22 @@ class Annealing
 
     public float TryIterate(float workingScore, Schedule schedule, Random rng, Judge judge)
     {
-        int weight = rng.Next(0, 2);
+        float weight = rng.NextSingle();
 
-        if (weight < 1)
+        if (weight < 0.5 && weight > 0.2)
         {
             if (schedule.unfulfilledAddresses.currentIndex > 0)
             {
                 schedule.AddRandomDelivery(rng, judge);
             }
         }
-        else if (weight < 2)
+        else if (weight < 0.2)
         {
             schedule.RemoveRandomDelivery(rng, judge);
+        }
+        else // shuffle half the time (for now)
+        {
+            schedule.ShuffleNode(rng, judge);
         }
 
         if (judge.GetJudgement() == Judgement.Pass)
