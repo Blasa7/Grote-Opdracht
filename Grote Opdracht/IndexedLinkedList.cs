@@ -236,7 +236,7 @@
     }
 }
 
-class IndexedLinkedListNode<Type>
+class IndexedLinkedListNode<Type> where Type: IClonable<Type>
 {
     public Type value;
     public int index;

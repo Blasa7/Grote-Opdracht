@@ -21,9 +21,18 @@
 
     public Delivery Clone()
     {
+        if (address.orderID == 0)
+            return new Delivery(Address.Depot());
+
         Delivery copy = new Delivery();
 
         copy.address = address.Clone();
+        copy.truck = truck;
+        copy.day = day;
+        //copy.scheduleNode = scheduleNode.Clone();
+        //copy.workDayNode = workDayNode.Clone();
+        //copy.routeNode = routeNode.Clone();
+        //copy.others = others; // Maybe need to clone otherss aswell
 
         return copy;
         // throw new NotImplementedException("This shouldn't be called");

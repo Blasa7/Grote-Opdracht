@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-class Annealing
+﻿class Annealing
 {
     public Solution Run()
     {
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
-        Random rng = new Random(1);
+        Random rng = new Random(4);
         float T = 10; //Dummy value for now
-        int maxIter = 1000000; //1 million for now (100000000)
+        int maxIter = 100000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
         float workingScore = bestSolution.score;
         Console.WriteLine(workingScore);
@@ -93,24 +89,24 @@ class Annealing
     {
         float weight = rng.NextSingle();
 
-        if (weight < 0.2)
+        if (weight < 0.1)
         {
             if (schedule.unfulfilledAddresses.currentIndex > 0)
             {
-                //schedule.AddRandomDelivery(rng, judge);
+                schedule.AddRandomDelivery(rng, judge);
             }
         }
-        else if (weight > 1)
+        else if (weight < 0)
         {
             //schedule.RemoveRandomDelivery(rng, judge);
         }
-        else if (weight < 0.45) //Not too many times
+        else if (weight < 0.25) //Not too many times
         {
-            //schedule.ShuffleSchedule(rng, judge);
+            schedule.ShuffleSchedule(rng, judge);
         }
-        else if (weight < 0.5)
+        else if (weight < 0.4)
         {
-            //schedule.ShuffleWorkDay(rng, judge);
+            schedule.ShuffleWorkDay(rng, judge);
         }
         else
         {
