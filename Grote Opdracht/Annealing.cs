@@ -9,32 +9,32 @@ class Annealing
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
         Random rng = new Random();
-        float T = 0.99999f; //Dummy value for now
+        float T = 10; //Dummy value for now
         int maxIter = 1000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
         float workingScore = bestSolution.score;
         Console.WriteLine(workingScore);
 
         //Initial solution
-
-        /*for (int i = 0; i < Input.orderCount; i++)
+        for (int i = 0; i < 5000; i++)
         {
+            judge.Reset();
             judge.OverrideJudge(Judgement.Pass);
-
             workingSchedule.AddRandomDelivery(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
+                workingScore += judge.score;
         }
 
-        workingScore += judge.score;
         bestSolution.UpdateSolution(workingSchedule, workingScore);
 
-        judge.Reset();*/
+        Console.WriteLine(workingScore);
 
         //Start iterating
-
         for (int i = 0; i < maxIter; i++)
         {
-            T = GetTemperature(T);
-            judge.T = T;
+            if (i % 1000 == 0)
+                judge.T = GetTemperature(T);
 
             float neighborScore = TryIterate(workingScore, workingSchedule, rng, judge);
 
@@ -61,8 +61,8 @@ class Annealing
                 {
                     IndexedLinkedListNode<Delivery> d = r.value.route.nodes[0];
 
-                    for (int l = 0; l <r.value.route.currentIndex; l++)
-                    { 
+                    for (int l = 0; l < r.value.route.currentIndex; l++)
+                    {
                         d = d.next;
                     }
 
@@ -95,15 +95,15 @@ class Annealing
                 schedule.AddRandomDelivery(rng, judge);
             }
         }
-        else if (weight < 0.4)
+        else if (weight > 1)
         {
             schedule.RemoveRandomDelivery(rng, judge);
         }
-        else if (weight < 0.6)
+        else if (weight < 0.45) //Not too many times
         {
             schedule.ShuffleSchedule(rng, judge);
         }
-        else if (weight < 0.8)
+        else if (weight < 0.5)
         {
             schedule.ShuffleWorkDay(rng, judge);
         }

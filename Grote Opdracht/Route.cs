@@ -94,61 +94,67 @@ class Route : IClonable<Route>
         route.RemoveNode(delivery.routeNode.index);
     }
 
-    public void ShuffleRoute(Random rng, Judge judge, out float timeDelta)
+
+    /// <summary>
+    /// Shuffle a node within the same Route
+    /// </summary>
+    public void StageShuffleRoute(Random rng, Judge judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out float removeTimeDelta, out float addTimeDelta, out float timeDelta)
     {
+
         if (route.currentIndex <= 1) //2 or less nodes means no shuffling.
         {
             judge.OverrideJudge(Judgement.Fail);
+            changedDelivery = null;
+            newIndexDelivery = null;
+            removeTimeDelta = 0;
+            addTimeDelta = 0;
             timeDelta = 0;
             return;
         }
 
-        int index = route.getRandomIncluded(rng); //1 - currentindex
-        int newIndex = route.getRandomIncluded(rng);//(index + rng.Next(1, route.currentIndex)) % route.currentIndex + 1; // 1 - currentindex idk fix this
+        int index = route.getRandomIncluded(rng); //The node that will be inserted
+        int newIndex = (index + rng.Next(0, route.currentIndex - 2)) % route.currentIndex + 1; //The position that 'index' will be put after
 
-        while (newIndex == index)
-            newIndex = route.getRandomIncluded(rng);
-        
-        Delivery delivery = route.nodes[index].value;
+        changedDelivery = route.nodes[index].value;
+        newIndexDelivery = route.nodes[newIndex].value;
 
         int currentID = route.nodes[index].value.address.matrixID;
 
         int removePrevID = route.nodes[index].prev.value.address.matrixID;
         int removeNextID = route.nodes[index].next.value.address.matrixID;
 
-        float removeTimeDelta =
+        removeTimeDelta =
             Input.GetTimeFromTo(removePrevID, removeNextID) - //New value
             (Input.GetTimeFromTo(removePrevID, currentID) + //Old values are substracted
             Input.GetTimeFromTo(currentID, removeNextID)) -
-            delivery.address.emptyingTime;
+            changedDelivery.address.emptyingTime;
 
         int addPrevID = route.nodes[newIndex].prev.value.address.matrixID;
+        int addID = route.nodes[newIndex].value.address.matrixID;
         int addNextID = route.nodes[newIndex].next.value.address.matrixID;
 
-        if (addPrevID == currentID) //This means the current node is swapped with its right neighbor
+       if (addNextID == currentID) //This means the current node is swapped with its left neighbor
         {
-            addPrevID = removeNextID;
-        }
-        else if (addNextID == currentID) //This means the current node is swapped with its left neighbor
-        {
-            addNextID = removePrevID;
+            addNextID = removeNextID;
         }
 
-        float addTimeDelta =
-            Input.GetTimeFromTo(addPrevID, currentID) + //New values are added
+        addTimeDelta =
+            Input.GetTimeFromTo(addID, currentID) + //New values are added
             Input.GetTimeFromTo(currentID, addNextID) -
-            Input.GetTimeFromTo(addPrevID, addNextID) +
-            delivery.address.emptyingTime; //Old value is substracted
+            Input.GetTimeFromTo(addID, addNextID) +
+            changedDelivery.address.emptyingTime; //Old value is substracted
 
         timeDelta = removeTimeDelta + addTimeDelta;
 
         judge.Testify(timeDelta);
-
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            route.SwapNodes(index, newIndex);
-        }
     }
+
+    public void ShuffleRoute(Delivery changedDelivery, Delivery newIndexDelivery, float removeTimeDelta, float addTimeDelta)
+    {
+        RemoveStop(changedDelivery, removeTimeDelta);
+        AddStop(changedDelivery, newIndexDelivery.routeNode.index, addTimeDelta);
+    }
+
 
     public Route Clone()
     {

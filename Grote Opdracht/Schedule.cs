@@ -422,10 +422,10 @@
             case 4:
                 {
                     int offset = rng.Next(0, 4);
-                    weekDays[0] = oldDelivery.day + offset % 5;
-                    weekDays[1] = oldDelivery.others[0].day + offset % 5;
-                    weekDays[2] = oldDelivery.others[1].day + offset % 5;
-                    weekDays[3] = oldDelivery.others[2].day + offset % 5;
+                    weekDays[0] = (oldDelivery.day + offset) % 5;
+                    weekDays[1] = (oldDelivery.others[0].day + offset) % 5;
+                    weekDays[2] = (oldDelivery.others[1].day + offset) % 5;
+                    weekDays[3] = (oldDelivery.others[2].day + offset) % 5;
                     break;
                 }
         }
@@ -461,7 +461,7 @@
         int truck = rng.Next(0, 2);
         int day = rng.Next(0, 5);
 
-        workDays[truck][day].ShuffleRoute(rng, judge);
+        workDays[truck][day].ShuffleWorkDay(rng, judge);
     }
 
     public void ShuffleRoute(Random rng, Judge judge)

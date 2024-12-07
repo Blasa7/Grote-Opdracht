@@ -10,11 +10,13 @@
     public WorkDay(int weekDay, int maximumSize)
     {
         this.weekDay = weekDay;
-        Route start = new Route();//TODO MAKE SOME SYSTEM TO ADD MORE ROUTES TO A WORKDDAY ITS ALWAYS 1
-        workDay = new IndexedLinkedList<Route>(start, 10); //Hard coded size may need to be larger
-        workDay.InsertLast(new Route()); //TODO maybe add some smarter way to do this
-        workDay.InsertLast(new Route());
-        workDay.InsertLast(new Route());
+        int numRoutes = 10;
+        workDay = new IndexedLinkedList<Route>(numRoutes); //Hard coded size may need to be larger
+
+        for (int i = 0; i < numRoutes; i++)
+        {
+            workDay.InsertLast(new Route());
+        }
     }
 
     /// <summary>
@@ -108,10 +110,15 @@
     {
         int workDayIndex = workDay.getRandomIncluded(rng);
 
-        workDay.nodes[workDayIndex].value.ShuffleRoute(rng, judge, out float timeDelta);
+        workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out float removeTimeDelta, out float addTimeDelta, out float timeDelta);
 
         if (totalDuration + timeDelta > maximumDuration)
             judge.OverrideJudge(Judgement.Fail);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            workDay.nodes[workDayIndex].value.ShuffleRoute(changedDelivery, newIndexDelivery, removeTimeDelta, addTimeDelta);
+        }
     }
 
     public WorkDay Clone()
