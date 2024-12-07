@@ -88,7 +88,7 @@ class Solution
     }
 }
 
-class Schedule
+/*class Schedule
 {
     /// <summary>
     /// 5 indexed linked lists track which deliveries are being made on each day.
@@ -126,7 +126,7 @@ class Schedule
         }
     }
 
-    public void StageDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
+    public void StageShuffleDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
     {
         //int index = unfulfilledAddresses.getRandomIncluded(rng);
         //IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
@@ -149,7 +149,7 @@ class Schedule
         }
     }
 
-    public void StageRandomOneTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
+    public void StageShuffleOneTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
     {
         //First calculate variables
         deliveries = new Delivery[1];
@@ -174,7 +174,7 @@ class Schedule
         deliveries[0].day = weekDay;
     }
 
-    public void StageRandomTwoTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
+    public void StageShuffleTwoTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
     {
         //First calculate variables
         deliveries = new Delivery[2];
@@ -210,7 +210,7 @@ class Schedule
         deliveries[1].day = day2;
     }
 
-    public void StageRandomThreeTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
+    public void StageShuffleThreeTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
     {
         //First calculate variables
         deliveries = new Delivery[3];
@@ -255,7 +255,7 @@ class Schedule
         deliveries[2].day = 4;
     }
 
-    public void StageRandomFourTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
+    public void StageShuffleFourTimeDelivery(Address address, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
     {
         //First calculate variables
         deliveries = new Delivery[3];
@@ -800,7 +800,7 @@ class Schedule
         }
     }
 }
-
+*/
 class Delivery : IClonable<Delivery>
 {
     public Address address;
@@ -844,8 +844,8 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
 
     public int weekDay; // 0, 1, 2, 3, 4
 
-    float totalDuration = 0;
-    float maximumDuration = 690; //in minutes aka 11.5 hours in a work day
+    public float totalDuration = 0;
+    public float maximumDuration = 690; //in minutes aka 11.5 hours in a work day
 
     public WorkDay(int weekDay, int maximumSize)
     {
@@ -920,7 +920,7 @@ class Route : IClonable<Route>
     int collectedGarbage = 0;
     int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
 
-    float duration = 30; //Time to empty at depot is 30 min
+    public float duration; //Time to empty at depot is 30 min
 
     public Route()
     {
@@ -1087,7 +1087,7 @@ class Address : IClonable<Address>
     {
         name = s;
         orderID = 0;
-        matrixID = 0;
+        matrixID = 287;
         garbageAmount = 0;
         emptyingTime = 0;
         containerAmount = 0;
