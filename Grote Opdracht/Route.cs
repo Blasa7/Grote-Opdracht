@@ -104,11 +104,10 @@ class Route : IClonable<Route>
         }
 
         int index = route.getRandomIncluded(rng); //1 - currentindex
-        int newIndex = (index + rng.Next(1, route.currentIndex)) % route.currentIndex + 1; // 1 - currentindex idk fix this
-            
-            //(index % route.currentIndex) + rng.Next(1, route.currentIndex);//index + (rng.Next(1, route.currentIndex) % route.currentIndex) + 1;//1 or 2 -> 2 or 1 .... index + 1 % currentindex = 0 or 1
-            
-            //((index + (rng.Next(1, route.currentIndex))) % (route.currentIndex)) + 1; //Test this a bit
+        int newIndex = route.getRandomIncluded(rng);//(index + rng.Next(1, route.currentIndex)) % route.currentIndex + 1; // 1 - currentindex idk fix this
+
+        while (newIndex == index)
+            newIndex = route.getRandomIncluded(rng);
         
         Delivery delivery = route.nodes[index].value;
 
