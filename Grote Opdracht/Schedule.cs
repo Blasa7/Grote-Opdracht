@@ -317,14 +317,14 @@
     #endregion RemoveRandom
 
     #region Shuffle
-    public void ShuffleNode(Random rng, Judge judge)
+    public void ShuffleSchedule(Random rng, Judge judge)
     {
-        Delivery removedDelivery = StageRemoveShuffleDelivery(rng, judge, out float[] removeTimeDeltas);
+        Delivery removedDelivery = StageRemoveShuffleSchedule(rng, judge, out float[] removeTimeDeltas);
 
         if (removedDelivery == null)
             return;
 
-        StageShuffleDelivery(removedDelivery, rng, judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] addTimeDeltas);
+        StageShuffleSchedule(removedDelivery, rng, judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] addTimeDeltas);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
@@ -333,7 +333,7 @@
         }
     }
 
-    public Delivery StageRemoveShuffleDelivery(Random rng, Judge judge, out float[] timeDeltas)
+    Delivery StageRemoveShuffleSchedule(Random rng, Judge judge, out float[] timeDeltas)
     {
         //First calculate variables
         int weekDay = rng.Next(0, 5);
@@ -368,7 +368,7 @@
     }
 
     //Only call if the judgement is pass!
-    public void RemoveDelivery(Delivery delivery, float[] timeDeltas)
+    void RemoveDelivery(Delivery delivery, float[] timeDeltas)
     {
         //We need to remove all the stops in all the routes in all the workdays foreach truck as well
         schedule[delivery.day].RemoveNode(delivery.scheduleNode.index);
@@ -383,7 +383,7 @@
         //unfulfilledAddresses.InsertLast(delivery.address); //Only once!
     }
 
-    public void StageShuffleDelivery(Delivery oldDelivery, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
+    void StageShuffleSchedule(Delivery oldDelivery, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out float[] timeDeltas)
     {
         deliveries = new Delivery[oldDelivery.address.frequency];
         workDayIndexes = new int[oldDelivery.address.frequency];
@@ -442,7 +442,7 @@
         }
     }
 
-    public void AddDeliveries(Delivery[] deliveries, int[] workDayIndexes, int[] routeIndexes, float[] timeDeltas)
+    void AddDeliveries(Delivery[] deliveries, int[] workDayIndexes, int[] routeIndexes, float[] timeDeltas)
     {
         for (int i = 0; i < deliveries.Length; i++)
         {
@@ -452,4 +452,26 @@
     }
 
     #endregion Shuffle
+
+    #region ShuffleLowerLevel
+
+    public void ShuffleWorkDay(Random rng, Judge judge)
+    {
+        //Get a random workday.
+        int truck = rng.Next(0, 2);
+        int day = rng.Next(0, 5);
+
+        workDays[truck][day].ShuffleRoute(rng, judge);
+    }
+
+    public void ShuffleRoute(Random rng, Judge judge)
+    {
+        //Get a random workday.
+        int truck = rng.Next(0, 2);
+        int day = rng.Next(0, 5);
+
+        workDays[truck][day].ShuffleRoute(rng, judge);
+    }
+
+    #endregion ShuffleLowerLevel
 }

@@ -801,7 +801,7 @@ class Solution
     }
 }
 */
-class Delivery : IClonable<Delivery>
+/*class Delivery : IClonable<Delivery>
 {
     public Address address;
     public int truck;
@@ -837,8 +837,8 @@ class Delivery : IClonable<Delivery>
         return address.ToString();
     }
 } 
-
-class WorkDay : IClonable<WorkDay> // This is a linked list
+*/
+/*class WorkDay : IClonable<WorkDay> // This is a linked list
 {
     public IndexedLinkedList<Route> workDay; 
 
@@ -911,9 +911,9 @@ class WorkDay : IClonable<WorkDay> // This is a linked list
     {
         return workDay.ToString();
     }
-}
+}*/
 
-class Route : IClonable<Route>
+/*class Route : IClonable<Route>
 {
     public IndexedLinkedList<Delivery> route;
     
@@ -1066,9 +1066,9 @@ class Route : IClonable<Route>
 
         return addresses;
     }
-}
+}*/
 
-class Address : IClonable<Address>
+/*class Address : IClonable<Address>
 {
     public string name;
     public int orderID;
@@ -1138,4 +1138,4 @@ class Address : IClonable<Address>
     {
         return name;
     }
-}
+}*/

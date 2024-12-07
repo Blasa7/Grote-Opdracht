@@ -88,20 +88,28 @@ class Annealing
     {
         float weight = rng.NextSingle();
 
-        if (weight < 0.3)
+        if (weight < 0.2)
         {
             if (schedule.unfulfilledAddresses.currentIndex > 0)
             {
                 schedule.AddRandomDelivery(rng, judge);
             }
         }
-        else if (weight < 0.6)
+        else if (weight < 0.4)
         {
             schedule.RemoveRandomDelivery(rng, judge);
         }
-        else // shuffle half the time (for now)
+        else if (weight < 0.6)
         {
-            schedule.ShuffleNode(rng, judge);
+            schedule.ShuffleSchedule(rng, judge);
+        }
+        else if (weight < 0.8)
+        {
+            schedule.ShuffleWorkDay(rng, judge);
+        }
+        else
+        {
+            schedule.ShuffleRoute(rng, judge);
         }
 
         if (judge.GetJudgement() == Judgement.Pass)
