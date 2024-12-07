@@ -8,8 +8,8 @@
         float T = 10; //Dummy value for now
         int maxIter = 100000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
-        float workingScore = bestSolution.score;
-        Console.WriteLine(workingScore);
+        int workingScore = bestSolution.score;
+        Console.WriteLine(workingScore / 60 / 1000);
 
         //Initial solution
         for (int i = 0; i < 5000; i++)
@@ -26,7 +26,7 @@
 
         judge.Reset();
 
-        Console.WriteLine(workingScore);
+        Console.WriteLine(workingScore / 60 / 1000);
 
         //Start iterating
         for (int i = 0; i < maxIter; i++)
@@ -34,7 +34,7 @@
             if (i % 1000 == 0)
                 judge.T = GetTemperature(T);
 
-            float neighborScore = TryIterate(workingScore, workingSchedule, rng, judge);
+            int neighborScore = TryIterate(workingScore, workingSchedule, rng, judge);
 
             if (neighborScore < bestSolution.score)
             {
@@ -85,7 +85,7 @@
         return T*alpha;
     }
 
-    public float TryIterate(float workingScore, Schedule schedule, Random rng, Judge judge)
+    public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
     {
         float weight = rng.NextSingle();
 
@@ -123,7 +123,7 @@
 
 class Judge
 {
-    public float score; //newScore - oldScore (negative score suggests improvement!)
+    public int score; //newScore - oldScore (negative score suggests improvement!)
     Judgement judgement;
 
     public float T;
@@ -137,7 +137,7 @@ class Judge
         Reset();
     }
 
-    public void Testify(float weight)
+    public void Testify(int weight)
     {
         score += weight;
     }

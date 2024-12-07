@@ -15,7 +15,7 @@
         Annealing annealing = new Annealing();
         Solution solution = annealing.Run();
 
-        Console.WriteLine(solution.score.ToString());
+        Console.WriteLine(solution.score / 60 / 1000);
 
         solution.PrintSolution(write);
 

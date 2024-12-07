@@ -7,7 +7,7 @@ class Route : IClonable<Route>
     int collectedGarbage = 0;
     int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
 
-    public float duration; //Time to empty at depot is 30 min
+    public int duration; //Time to empty at depot is 30 min
 
     public Route()
     {
@@ -15,7 +15,7 @@ class Route : IClonable<Route>
         route.startIndex = 1;
     }
 
-    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int routeIndex, out float timeDelta)
+    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int routeIndex, out int timeDelta)
     {
         //First calculate variables
         routeIndex = 0;
@@ -30,14 +30,14 @@ class Route : IClonable<Route>
         int newGarbageAmount = collectedGarbage + delivery.address.garbageAmount;
 
         //Second testify
-        float testimony =
+        int testimony =
             Input.GetTimeFromTo(prevID, address.matrixID) + //New values are added
             Input.GetTimeFromTo(address.matrixID, nextID) -
             Input.GetTimeFromTo(prevID, nextID) +
             delivery.address.emptyingTime; //Old value is substracted
 
         if (routeIndex == 0)
-            testimony += 30; //Because the emptying time at depot is 30 min
+            testimony += 1800000;//30; //Because the emptying time at depot is 30 min
 
         if (newGarbageAmount > maximumGarbage) //Hard limits
             judge.OverrideJudge(Judgement.Fail);
@@ -47,7 +47,7 @@ class Route : IClonable<Route>
         timeDelta = testimony;
     }
 
-    public void AddStop(Delivery delivery, int routeIndex, float timeDelta)
+    public void AddStop(Delivery delivery, int routeIndex, int timeDelta)
     {
         collectedGarbage += delivery.address.garbageAmount;
         duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
@@ -58,7 +58,7 @@ class Route : IClonable<Route>
     /// <summary>
     /// Call this before RemoveStop and pass the corresponding arguments
     /// </summary>
-    public void StageRemoveStop(Delivery delivery, Judge judge, out float timeDelta)
+    public void StageRemoveStop(Delivery delivery, Judge judge, out int timeDelta)
     {
         //First calculate variables
         int index = delivery.routeNode.index;
@@ -68,14 +68,14 @@ class Route : IClonable<Route>
         int nextID = route.nodes[index].next.value.address.matrixID;
 
         //Second testify
-        float testimony =
+        int testimony =
             Input.GetTimeFromTo(prevID, nextID) - //New value
             (Input.GetTimeFromTo(prevID, address.matrixID) + //Old values are substracted
             Input.GetTimeFromTo(address.matrixID, nextID)) -
             delivery.address.emptyingTime;
 
         if (route.currentIndex == 1) //There are two nodes
-            testimony -= 30; //Minus 30 minutes because you no longer have the 30 min emptying time.
+            testimony -= 1800000;//30; //Minus 30 minutes because you no longer have the 30 min emptying time.
 
         judge.Testify(testimony);
 
@@ -86,7 +86,7 @@ class Route : IClonable<Route>
     /// Call tgis after calling StageRemoveStop and use the correspoding returns.
     /// The judgement is assumed to be passed (check before calling).
     /// </summary>
-    public void RemoveStop(Delivery delivery, float timeDelta)
+    public void RemoveStop(Delivery delivery, int timeDelta)
     {
         collectedGarbage -= delivery.address.garbageAmount;
         duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
@@ -98,7 +98,7 @@ class Route : IClonable<Route>
     /// <summary>
     /// Shuffle a node within the same Route
     /// </summary>
-    public void StageShuffleRoute(Random rng, Judge judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out float removeTimeDelta, out float addTimeDelta, out float timeDelta)
+    public void StageShuffleRoute(Random rng, Judge judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta)
     {
 
         if (route.currentIndex <= 1) //2 or less nodes means no shuffling.
@@ -149,7 +149,7 @@ class Route : IClonable<Route>
         judge.Testify(timeDelta);
     }
 
-    public void ShuffleRoute(Delivery changedDelivery, Delivery newIndexDelivery, float removeTimeDelta, float addTimeDelta)
+    public void ShuffleRoute(Delivery changedDelivery, Delivery newIndexDelivery, int removeTimeDelta, int addTimeDelta)
     {
         RemoveStop(changedDelivery, removeTimeDelta);
         AddStop(changedDelivery, newIndexDelivery.routeNode.index, addTimeDelta);

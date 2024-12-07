@@ -8,9 +8,9 @@ class Input
     public static DistancesMatrix distancesMatrix;
     public static int orderCount = 1177;
 
-    public static float GetTimeFromTo(int matrixID1, int matrixID2)
+    public static int GetTimeFromTo(int matrixID1, int matrixID2)
     {
-        return distancesMatrix.matrix[matrixID1, matrixID2].time / 60f; //Converted to minutes for consistency
+        return distancesMatrix.matrix[matrixID1, matrixID2].time * 1000; //Converted to miliseconds for consistency
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ class Order
     public int frequency;
     public int containerAmount;
     public int containerVolume;
-    public float emptyingTime;
+    public int emptyingTime;
     public int matrixID;
     public int x, y;
 
@@ -79,7 +79,7 @@ class Order
         order.frequency = int.Parse(input[2][0].ToString());
         order.containerAmount = int.Parse(input[3]);
         order.containerVolume = int.Parse(input[4]);
-        order.emptyingTime = float.Parse(input[5]);
+        order.emptyingTime = (int)(double.Parse(input[5]) * 60 * 1000);
         order.matrixID = int.Parse(input[6]);
         order.x = int.Parse(input[7]);
         order.y = int.Parse(input[8]);

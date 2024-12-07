@@ -4,8 +4,8 @@
 
     public int weekDay; // 0, 1, 2, 3, 4
 
-    public float totalDuration = 0;
-    public float maximumDuration = 690; //in minutes aka 11.5 hours in a work day
+    public int totalDuration = 0;
+    public int maximumDuration = 43200000; // 720 min, 432000 sec //in minutes aka 11.5 hours in a work day
 
     public WorkDay(int weekDay, int maximumSize)
     {
@@ -22,7 +22,7 @@
     /// <summary>
     /// This functions only testifies the changes to the judge and return the values to enact the changes in AddStop
     /// </summary>
-    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out float timeDelta)
+    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta)
     {
         //First calculate variables
         workDayIndex = workDay.getRandomIncluded(rng);
@@ -33,7 +33,7 @@
             judge.OverrideJudge(Judgement.Fail);
     }
 
-    public void AddStop(Delivery delivery, int workDayIndex, int routeIndex, float timeDelta)
+    public void AddStop(Delivery delivery, int workDayIndex, int routeIndex, int timeDelta)
     {
         totalDuration += timeDelta;
 
@@ -41,7 +41,7 @@
         workDay.nodes[workDayIndex].value.AddStop(delivery, routeIndex, timeDelta);
     }
 
-    public void StageRemoveStop(Delivery delivery, Judge judge, out float timeDelta)
+    public void StageRemoveStop(Delivery delivery, Judge judge, out int timeDelta)
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, judge, out timeDelta);
 
@@ -49,7 +49,7 @@
             judge.OverrideJudge(Judgement.Fail);
     }
 
-    public void RemoveStop(Delivery delivery, float timeDelta)
+    public void RemoveStop(Delivery delivery, int timeDelta)
     {
         totalDuration += timeDelta;
 
@@ -61,12 +61,12 @@
     /// </summary>
     public void ShuffleWorkDay(Random rng, Judge judge)
     {
-        Delivery changedDelivery = StageRemoveShuffleWorkDay(rng, judge, out float removeTimeDelta);
+        Delivery changedDelivery = StageRemoveShuffleWorkDay(rng, judge, out int removeTimeDelta);
 
         if (changedDelivery == null)
             return;
 
-        StageShuffleWorkDay(changedDelivery, rng, judge, out int workDayIndex, out int routeIndex, out float addTimeDelta);
+        StageShuffleWorkDay(changedDelivery, rng, judge, out int workDayIndex, out int routeIndex, out int addTimeDelta);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
@@ -75,7 +75,7 @@
         }
     }
 
-    Delivery StageRemoveShuffleWorkDay(Random rng, Judge judge, out float timeDelta)
+    Delivery StageRemoveShuffleWorkDay(Random rng, Judge judge, out int timeDelta)
     {
         int workDayIndex = workDay.getRandomIncluded(rng);
 
@@ -95,7 +95,7 @@
         return removedDelivery;
     }
 
-    void StageShuffleWorkDay(Delivery oldDelivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out float timeDelta)
+    void StageShuffleWorkDay(Delivery oldDelivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta)
     {
         //First calculate variables
         workDayIndex = (oldDelivery.workDayNode.index + rng.Next(1, workDay.currentIndex + 1)) % (workDay.currentIndex + 1);
@@ -111,7 +111,7 @@
         int workDayIndex = workDay.getRandomIncluded(rng);
 
         // Stage and testify
-        workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out float removeTimeDelta, out float addTimeDelta, out float timeDelta);
+        workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);
 
         if (totalDuration + timeDelta > maximumDuration)
             judge.OverrideJudge(Judgement.Fail);

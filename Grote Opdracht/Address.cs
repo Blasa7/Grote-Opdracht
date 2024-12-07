@@ -4,7 +4,7 @@
     public int orderID;
     public int matrixID;
     public int garbageAmount; //Total amount of garbage to be picked up at this location
-    public float emptyingTime;
+    public int emptyingTime;
     public int containerAmount;
     public int frequency;
 

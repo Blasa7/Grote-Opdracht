@@ -7,7 +7,7 @@ class Solution
     //Each truck has 5 routes, one per day.
     private WorkDay[][] solution = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
 
-    public float score; //The score in seconds
+    public int score; //The score in seconds
 
     public Solution()
     {
@@ -17,7 +17,7 @@ class Solution
         }
     }
 
-    public void UpdateSolution(Schedule schedule, float score)
+    public void UpdateSolution(Schedule schedule, int score)
     {
         this.score = score;
 
