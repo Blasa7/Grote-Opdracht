@@ -126,23 +126,23 @@ class Route : IClonable<Route>
         removeTimeDelta =
             Input.GetTimeFromTo(removePrevID, removeNextID) - //New value
             (Input.GetTimeFromTo(removePrevID, currentID) + //Old values are substracted
-            Input.GetTimeFromTo(currentID, removeNextID)) -
-            changedDelivery.address.emptyingTime;
+            Input.GetTimeFromTo(currentID, removeNextID)); //-
+            //changedDelivery.address.emptyingTime;
 
         int addPrevID = route.nodes[newIndex].prev.value.address.matrixID;
         int addID = route.nodes[newIndex].value.address.matrixID;
         int addNextID = route.nodes[newIndex].next.value.address.matrixID;
 
-       if (addNextID == currentID) //This means the current node is swapped with its left neighbor
-        {
+       if (route.nodes[newIndex].next.index == route.nodes[index].index)//addNextID == currentID) //This means the current node is swapped with its left neighbor
+       {
             addNextID = removeNextID;
-        }
+       }
 
         addTimeDelta =
             Input.GetTimeFromTo(addID, currentID) + //New values are added
             Input.GetTimeFromTo(currentID, addNextID) -
-            Input.GetTimeFromTo(addID, addNextID) +
-            changedDelivery.address.emptyingTime; //Old value is substracted
+            Input.GetTimeFromTo(addID, addNextID);// +
+            //changedDelivery.address.emptyingTime; //Old value is substracted
 
         timeDelta = removeTimeDelta + addTimeDelta;
 

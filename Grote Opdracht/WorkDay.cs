@@ -110,6 +110,7 @@
     {
         int workDayIndex = workDay.getRandomIncluded(rng);
 
+        // Stage and testify
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out float removeTimeDelta, out float addTimeDelta, out float timeDelta);
 
         if (totalDuration + timeDelta > maximumDuration)
@@ -117,6 +118,7 @@
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            totalDuration += timeDelta;
             workDay.nodes[workDayIndex].value.ShuffleRoute(changedDelivery, newIndexDelivery, removeTimeDelta, addTimeDelta);
         }
     }

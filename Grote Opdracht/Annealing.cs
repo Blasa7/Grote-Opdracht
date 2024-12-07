@@ -8,7 +8,7 @@ class Annealing
     {
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
-        Random rng = new Random();
+        Random rng = new Random(1);
         float T = 10; //Dummy value for now
         int maxIter = 1000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
@@ -27,6 +27,8 @@ class Annealing
         }
 
         bestSolution.UpdateSolution(workingSchedule, workingScore);
+
+        judge.Reset();
 
         Console.WriteLine(workingScore);
 
@@ -69,11 +71,14 @@ class Annealing
                     sumDuration += r.value.duration;
                     Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
 
+
                     r = r.next;
                 }
 
             }
         }
+
+
 
         return bestSolution;
     }
@@ -92,20 +97,20 @@ class Annealing
         {
             if (schedule.unfulfilledAddresses.currentIndex > 0)
             {
-                schedule.AddRandomDelivery(rng, judge);
+                //schedule.AddRandomDelivery(rng, judge);
             }
         }
         else if (weight > 1)
         {
-            schedule.RemoveRandomDelivery(rng, judge);
+            //schedule.RemoveRandomDelivery(rng, judge);
         }
         else if (weight < 0.45) //Not too many times
         {
-            schedule.ShuffleSchedule(rng, judge);
+            //schedule.ShuffleSchedule(rng, judge);
         }
         else if (weight < 0.5)
         {
-            schedule.ShuffleWorkDay(rng, judge);
+            //schedule.ShuffleWorkDay(rng, judge);
         }
         else
         {
