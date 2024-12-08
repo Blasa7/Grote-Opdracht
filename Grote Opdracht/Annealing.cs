@@ -1,12 +1,14 @@
 ﻿class Annealing
 {
+    Statistics statistics;
+
     public Solution Run()
     {
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
         Random rng = new Random();
         float T = 10; //Dummy value for now
-        int randomWalks = 10;
+        int randomWalks = 50;
         ulong randomWalkIterations = 100;
         ulong maxIter = 10000000;//50000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
@@ -139,6 +141,21 @@
         return T*alpha;
     }
 
+    public void IteratedLocalSearch(Schedule workingSchedule, Solution bestSolution, ulong iterations)
+    {
+
+    }
+
+    public void SimmulatedAnnealing(Schedule workingSchedule, Solution bestSolution, ulong iterations, int T)
+    {
+
+    }
+
+    public void RandomWalk(Schedule workingSchedule, Solution solution, ulong iterations)
+    {
+
+    }
+
     int addWeight = 20;
     int removeWeight = 7;
     int shuffleScheduleWeight = 15;
@@ -241,4 +258,28 @@ enum Judgement
     Fail = 0,
     Pass = 1,
     Undecided = -1
+}
+
+class Statistics()
+{
+    public long addScoreDelta;
+    public long addSuccessCount;
+    public long addFailCount;
+
+    public long removeScoreDelta;
+    public long removeSuccessCount;
+    public long removeFailCount;
+
+    public long shuffleScheduleScoreDelta;
+    public long shuffleScheduleSuccessCount;
+    public long shuffleScheduleFailCount;
+
+    public long shuffleWorkDayScoreDelta;
+    public long shuffleWorkDaySuccessCount;
+    public long shuffleWorkDayFailCount;
+
+    public long shuffleRouteScoreDelta;
+    public long shuffleRouteSuccessCount;
+    public long shuffleRouteFailCount;
+
 }
