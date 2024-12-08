@@ -6,10 +6,19 @@
         Solution bestSolution = new Solution();
         Random rng = new Random();
         float T = 10; //Dummy value for now
-        ulong maxIter = 50000000; //1 million for now (100000000)
+        int randomWalks = 10;
+        ulong randomWalkIterations = 100;
+        ulong maxIter = 10000000;//50000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
         int workingScore = bestSolution.score;
         Console.WriteLine(workingScore / 60 / 1000);
+
+        addWeightSum = addWeight;
+        removeWeightSum = addWeightSum + removeWeight;
+        shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
+        shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
+        shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
+        totalWeightSum = shuffleRouteWeightSum + 1;
 
         //Initial solution
         for (int i = 0; i < 5000; i++)
@@ -29,14 +38,54 @@
         Console.WriteLine(workingScore / 60 / 1000);
 
         //Start iterating
+
+        for (int w = 0; w < randomWalks; w++)
+        {
+            Console.WriteLine("Random walk: " + w);
+            Console.WriteLine(workingScore / 60 / 1000);
+            for (ulong i = 0; i < randomWalkIterations; i++)
+            {
+                judge.OverrideJudge(Judgement.Pass);
+
+                workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
+
+                if (workingScore < bestSolution.score)
+                {
+                    bestSolution.UpdateSolution(workingSchedule, workingScore);
+                    workingScore = bestSolution.score;
+                }
+
+                judge.Reset();
+            }
+
+            Console.WriteLine(workingScore / 60 / 1000);
+
+            for (ulong i = 0; i < maxIter; i++)
+            {
+                if (i % 10000 == 0)
+                {
+                    judge.T = GetTemperature(judge.T);
+                }
+
+                workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
+
+                if (workingScore < bestSolution.score)
+                {
+                    bestSolution.UpdateSolution(workingSchedule, workingScore);
+                    workingScore = bestSolution.score;
+                }
+
+                judge.Reset();
+            }
+
+            Console.WriteLine(workingScore / 60 / 1000);
+        }
+
         for (ulong i = 0; i < maxIter; i++)
         {
             if (i % 10000 == 0)
             {
-                judge.T = GetTemperature(T);
-                //Console.WriteLine(bestSolution.score / 60 / 1000);
-                if (bestSolution.score < 357000000)
-                    break;
+                judge.T = GetTemperature(judge.T);
             }
 
             int neighborScore = TryIterate(workingScore, workingSchedule, rng, judge);
@@ -49,6 +98,8 @@
 
             judge.Reset();
         }
+
+
 
         for (int i = 0; i < workingSchedule.workDays.Length; i++)
         {
@@ -79,8 +130,6 @@
             }
         }
 
-
-
         return bestSolution;
     }
 
@@ -90,30 +139,43 @@
         return T*alpha;
     }
 
+    int addWeight = 20;
+    int removeWeight = 7;
+    int shuffleScheduleWeight = 15;
+    int shuffleWorkDayWeight = 20;
+    int shuffleRouteWeight = 50;
+
+    int addWeightSum;
+    int removeWeightSum;
+    int shuffleScheduleSum;
+    int shuffleWorkDayWeightSum;
+    int shuffleRouteWeightSum;
+    int totalWeightSum;
+
     public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
     {
-        float weight = rng.NextSingle();
+        int weight = rng.Next(0, totalWeightSum);//rng.NextSingle();
 
-        if (weight < 0.1)
+        if (weight < addWeightSum)
         {
             if (schedule.unfulfilledAddresses.currentIndex > 0)
             {
                 schedule.AddRandomDelivery(rng, judge);
             }
         }
-        else if (weight < 0.15)
+        else if (weight < removeWeightSum)
         {
             schedule.RemoveRandomDelivery(rng, judge);
         }
-        else if (weight < 0.3) //Not too many times
+        else if (weight < shuffleScheduleSum) //Not too many times
         {
             schedule.ShuffleSchedule(rng, judge);
         }
-        else if (weight < 0.5)
+        else if (weight < shuffleWorkDayWeightSum)
         {
             schedule.ShuffleWorkDay(rng, judge);
         }
-        else
+        else if (weight < shuffleRouteWeightSum)
         {
             schedule.ShuffleRoute(rng, judge);
         }

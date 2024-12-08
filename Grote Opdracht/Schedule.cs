@@ -111,7 +111,10 @@
         delivery2.others[0] = delivery1;
 
         int timeSlot = rng.Next(0, 2); //Monday-Thursday or Tuesday-Friday
-        int truck = rng.Next(0, 2);
+        int[] trucks = new int[2] { rng.Next(0, 2), rng.Next(0, 2) };
+
+        trucks[0] = rng.Next(0, 2);
+        trucks[1] = rng.Next(0, 2);
 
         int day1 = 0 + timeSlot; //0 or 1
         int day2 = 3 + timeSlot; //3 or 4
@@ -122,17 +125,17 @@
         judge.Testify(testimony);
 
         //Third call other functions that need to testify
-        workDays[truck][day1].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
-        workDays[truck][day2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
+        workDays[trucks[0]][day1].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
+        workDays[trucks[1]][day2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
-            workDays[truck][day1].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
-            workDays[truck][day2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
+            workDays[trucks[0]][day1].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
+            workDays[trucks[1]][day2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
 
-            delivery1.truck = truck;
-            delivery2.truck = truck;
+            delivery1.truck = trucks[0];
+            delivery2.truck = trucks[1];
 
             delivery1.day = day1;
             delivery2.day = day2;
@@ -161,7 +164,7 @@
         delivery3.others[0] = delivery1;
         delivery3.others[1] = delivery2;
 
-        int truck = rng.Next(0, 2);
+        int[] trucks = new int[3] { rng.Next(0, 2), rng.Next(0, 2), rng.Next(0, 2) };
 
         //Second testify
         int testimony = -address.emptyingTime * 3 * 3;
@@ -170,20 +173,20 @@
 
         //Third call other functions that need to testify
 
-        workDays[truck][0].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
-        workDays[truck][2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
-        workDays[truck][4].StageRandomStop(delivery3, rng, judge, out int workDayIndex3, out int routeIndex3, out int timeDelta3);
+        workDays[trucks[0]][0].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
+        workDays[trucks[1]][2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
+        workDays[trucks[2]][4].StageRandomStop(delivery3, rng, judge, out int workDayIndex3, out int routeIndex3, out int timeDelta3);
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
-            workDays[truck][0].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
-            workDays[truck][2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
-            workDays[truck][4].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
+            workDays[trucks[0]][0].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
+            workDays[trucks[1]][2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
+            workDays[trucks[2]][4].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
 
-            delivery1.truck = truck;
-            delivery2.truck = truck;
-            delivery3.truck = truck;
+            delivery1.truck = trucks[0];
+            delivery2.truck = trucks[1];
+            delivery3.truck = trucks[2];
 
             delivery1.day = 0;
             delivery2.day = 2;
@@ -219,7 +222,7 @@
         delivery4.others[1] = delivery2;
         delivery4.others[2] = delivery3;
 
-        int truck = rng.Next(0, 2);
+        int[] trucks = new int[4] { rng.Next(0, 2), rng.Next(0, 2), rng.Next(0, 2), rng.Next(0, 2) };
 
         int skipDay = rng.Next(0, 5);
         int[] days = new int[4];
@@ -239,24 +242,24 @@
 
         //Third call other functions that need to testify
 
-        workDays[truck][days[0]].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
-        workDays[truck][days[1]].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
-        workDays[truck][days[2]].StageRandomStop(delivery3, rng, judge, out int workDayIndex3, out int routeIndex3, out int timeDelta3);
-        workDays[truck][days[3]].StageRandomStop(delivery4, rng, judge, out int workDayIndex4, out int routeIndex4, out int timeDelta4);
+        workDays[trucks[0]][days[0]].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
+        workDays[trucks[1]][days[1]].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
+        workDays[trucks[2]][days[2]].StageRandomStop(delivery3, rng, judge, out int workDayIndex3, out int routeIndex3, out int timeDelta3);
+        workDays[trucks[3]][days[3]].StageRandomStop(delivery4, rng, judge, out int workDayIndex4, out int routeIndex4, out int timeDelta4);
 
 
         //Fourth check judgement
         if (judge.GetJudgement() == Judgement.Pass)
         {
-            workDays[truck][days[0]].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
-            workDays[truck][days[1]].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
-            workDays[truck][days[2]].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
-            workDays[truck][days[3]].AddStop(delivery4, workDayIndex4, routeIndex4, timeDelta4);
+            workDays[trucks[0]][days[0]].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
+            workDays[trucks[1]][days[1]].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
+            workDays[trucks[2]][days[2]].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
+            workDays[trucks[3]][days[3]].AddStop(delivery4, workDayIndex4, routeIndex4, timeDelta4);
 
-            delivery1.truck = truck;
-            delivery2.truck = truck;
-            delivery3.truck = truck;
-            delivery4.truck = truck;
+            delivery1.truck = trucks[0];
+            delivery2.truck = trucks[1];
+            delivery3.truck = trucks[2];
+            delivery4.truck = trucks[3];
 
             delivery1.day = days[0];
             delivery2.day = days[1];
@@ -402,9 +405,9 @@
             deliveries[i].truck = rng.Next(0, 2);
         }
 
-        for (int i = 0; i < oldDelivery.address.frequency; i++) 
+        for (int i = 0; i < oldDelivery.address.frequency; i++)
         {
-            for (int j = 0; j < oldDelivery.address.frequency - 1; j++) 
+            for (int j = 0; j < oldDelivery.address.frequency - 1; j++)
             {
                 deliveries[i].others[j] = deliveries[(i + j + 1) % oldDelivery.address.frequency]; //Maybe double check this
             }
@@ -413,7 +416,7 @@
         switch (oldDelivery.address.frequency) //Frequency 3 is not allowed to switch.
         {
             case 1:
-                weekDays[0]= (oldDelivery.day + rng.Next(1, 4)) % 5; //Get shifted by 0-3 mod 4 sot it is on a different day of the week.
+                weekDays[0] = (oldDelivery.day + rng.Next(1, 4)) % 5; //Get shifted by 0-3 mod 4 sot it is on a different day of the week.
                 break;
             case 2:
                 {
@@ -435,7 +438,7 @@
         }
 
         int testimony = -oldDelivery.address.emptyingTime * 3 * oldDelivery.address.frequency; //Not strictly needed for shuffle
-        
+
         judge.Testify(testimony);
 
         for (int i = 0; i < oldDelivery.address.frequency; i++)
