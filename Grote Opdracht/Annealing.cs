@@ -7,7 +7,7 @@
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
         Random rng = new Random();
-        float T = 1000; //Dummy value for now
+        float T = 100000; //Dummy value for now
         ulong million = 5000000;
         ulong maxIter = 10 * million; // How many iterations: x * 1.000.000
         Judge judge = new Judge(T, rng);
@@ -27,6 +27,7 @@
         {
             judge.Reset();
             judge.OverrideJudge(Judgement.Pass);
+            //workingSchedule.AddRandomDelivery(rng, judge);
             workingSchedule.AddRandomDelivery(rng, judge);
 
             if (judge.GetJudgement() == Judgement.Pass)
@@ -88,7 +89,7 @@
     }
 
     public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float T)
-    {
+    { 
         int previousScore = -1;
 
         for (ulong i = 0; i < iterations; i++)
@@ -137,7 +138,7 @@
     int shuffleScheduleWeight = 15;
     int shuffleWorkDayWeight = 20;
     int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 0;
+    int swapDeliveriesWeight = 20;
 
     int addWeightSum;
     int removeWeightSum;
@@ -174,10 +175,10 @@
         {
             schedule.ShuffleRoute(rng, judge);
         }
-        else //if (weight < swapDeliveriesSum)
+        else if (weight < swapDeliveriesSum)
         {
-            //schedule.SwapDeliveries(rng, judge);
-        }
+            schedule.SwapDeliveries(rng, judge);
+        } 
 
         if (judge.GetJudgement() == Judgement.Pass)
         {

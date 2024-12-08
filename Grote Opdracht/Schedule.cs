@@ -40,6 +40,69 @@ class Schedule
 
     #region AddRandom
 
+    public void AddRandomTwoTimeDelivery(Random rng, Judge judge)
+    {
+        int index = unfulfilledAddresses.getRandomIncluded(rng);
+        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
+        Address address = node.value;
+
+        if (address.frequency == 2)
+        {
+            AddRandomTwoTimeDelivery(address, rng, judge);
+        }
+        else
+        {
+            judge.OverrideJudge(Judgement.Fail);
+        }
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            unfulfilledAddresses.RemoveNode(index);
+        }
+    }
+
+    public void AddRandomThreeTimeDelivery(Random rng, Judge judge)
+    {
+        int index = unfulfilledAddresses.getRandomIncluded(rng);
+        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
+        Address address = node.value;
+
+        if (address.frequency == 3)
+        {
+            AddRandomThreeTimeDelivery(address, rng, judge);
+        }
+        else
+        {
+            judge.OverrideJudge(Judgement.Fail);
+        }
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            unfulfilledAddresses.RemoveNode(index);
+        }
+    }
+
+    public void AddRandomFourTimeDelivery(Random rng, Judge judge)
+    {
+        int index = unfulfilledAddresses.getRandomIncluded(rng);
+        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
+        Address address = node.value;
+
+        if (address.frequency == 4)
+        {
+            AddRandomFourTimeDelivery(address, rng, judge);
+        }
+        else
+        {
+            judge.OverrideJudge(Judgement.Fail);
+        }
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            unfulfilledAddresses.RemoveNode(index);
+        }
+    }
+
     public void AddRandomDelivery(Random rng, Judge judge)
     {
         int index = unfulfilledAddresses.getRandomIncluded(rng);
@@ -575,7 +638,6 @@ class Schedule
         if (judge.GetJudgement() == Judgement.Pass)
         {            
             //Swapping values of the Deliveries, this isn't done in the generic SwapNodes function
-            (delivery.truck, otherDelivery.truck) = (otherDelivery.truck, delivery.truck);
 
             //Updating the collected garbage
             delivery.workDayNode.value.collectedGarbage += garbage1Delta;
@@ -590,6 +652,7 @@ class Schedule
 
             SwapNodes<Delivery>(delivery.routeNode, otherDelivery.routeNode, delivery.workDayNode.value.route, otherDelivery.workDayNode.value.route);
             (delivery.workDayNode, otherDelivery.workDayNode) = (otherDelivery.workDayNode, delivery.workDayNode);
+            (delivery.truck, otherDelivery.truck) = (otherDelivery.truck, delivery.truck);
 
         }
     }
