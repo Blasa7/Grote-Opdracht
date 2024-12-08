@@ -44,7 +44,7 @@
         for (int w = 0; w < randomWalks; w++)
         {
             Console.WriteLine("Random walk: " + w);
-            Console.WriteLine(workingScore / 60 / 1000);
+            Console.WriteLine("Before random walk: " + workingScore / 60 / 1000);
             for (ulong i = 0; i < randomWalkIterations; i++)
             {
                 judge.OverrideJudge(Judgement.Pass);
@@ -60,7 +60,7 @@
                 judge.Reset();
             }
 
-            Console.WriteLine(workingScore / 60 / 1000);
+            Console.WriteLine("After random walk: " + workingScore / 60 / 1000);
 
             for (ulong i = 0; i < maxIter; i++)
             {
@@ -80,7 +80,7 @@
                 judge.Reset();
             }
 
-            Console.WriteLine(workingScore / 60 / 1000);
+            Console.WriteLine("After simmulated annealing: " + workingScore / 60 / 1000);
         }
 
         for (ulong i = 0; i < maxIter; i++)
