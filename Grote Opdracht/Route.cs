@@ -4,8 +4,8 @@ class Route : IClonable<Route>
 {
     public IndexedLinkedList<Delivery> route;
 
-    int collectedGarbage = 0;
-    int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
+    public int collectedGarbage = 0;
+    public int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
 
     public int duration; //Time to empty at depot is 30 min
 

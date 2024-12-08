@@ -1,4 +1,6 @@
-﻿class Schedule
+﻿using System.Security.Cryptography;
+
+class Schedule
 {
     /// <summary>
     /// 5 indexed linked lists track which deliveries are being made on each day.
@@ -481,4 +483,156 @@
     }
 
     #endregion ShuffleLowerLevel
+
+    public void SwapDeliveries(Random rng, Judge judge)
+    {
+        //First calculate variables
+        int weekDay = rng.Next(0, 5);
+
+        if (schedule[weekDay].currentIndex == -1)
+        {
+            judge.OverrideJudge(Judgement.Fail);
+            return;
+        }
+
+        int index = schedule[weekDay].getRandomIncluded(rng);
+
+        Delivery delivery = schedule[weekDay].nodes[index].value;
+
+        int otherTruck = rng.Next(0, 2);
+
+        int randomWorkDayIndex = workDays[otherTruck][weekDay].workDay.getRandomIncluded(rng);
+
+        while (otherTruck == delivery.truck && randomWorkDayIndex == delivery.workDayNode.index)
+        {
+            randomWorkDayIndex = workDays[otherTruck][weekDay].workDay.getRandomIncluded(rng);
+        }
+
+        if (workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.currentIndex < workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.startIndex)
+        {
+            judge.OverrideJudge(Judgement.Fail);
+            return;
+        }
+
+        int randomRouteIndex = workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.getRandomIncluded(rng);
+
+        Delivery otherDelivery = workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.nodes[randomRouteIndex].value;
+
+        int index1 = delivery.routeNode.index;
+        int index2 = otherDelivery.routeNode.index;
+
+        Address address1 = delivery.address;
+        Address address2 = otherDelivery.address;
+
+        int thisID1 = address1.matrixID;
+        int thisID2 = address2.matrixID;
+        int prevID1 = delivery.routeNode.prev.value.address.matrixID;//list1.nodes[index1].prev.value.address.matrixID;
+        int nextID1 = delivery.routeNode.next.value.address.matrixID;
+        int prevID2 = otherDelivery.routeNode.prev.value.address.matrixID;
+        int nextID2 = otherDelivery.routeNode.next.value.address.matrixID;
+
+        //initial distances between the nodes and their neighbors + emptying time
+        int oldValue1 = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + address1.emptyingTime;
+        int oldValue2 = Input.GetTimeFromTo(prevID2, thisID2) + Input.GetTimeFromTo(thisID2, nextID2) + address2.emptyingTime;
+        //new distances between the nodes and their new neighbors + swapped emptying time
+        int newValue1 = Input.GetTimeFromTo(prevID1, thisID2) + Input.GetTimeFromTo(thisID2, nextID1) + address2.emptyingTime;
+        int newValue2 = Input.GetTimeFromTo(prevID2, thisID1) + Input.GetTimeFromTo(thisID1, nextID2) + address1.emptyingTime;
+
+        int list1Delta = newValue1 - oldValue1; //difference in score for truck 1
+        int list2Delta = newValue2 - oldValue2; //difference in score for truck 2
+
+        int garbage1Delta = address2.garbageAmount - address1.garbageAmount; //difference in garbage for truck 1
+        int garbage2Delta = -garbage1Delta;                                  //difference in garbage for truck 2
+
+        // The same workday and the same truck
+        if (delivery.workDayNode.index == otherDelivery.workDayNode.index && delivery.truck == otherDelivery.truck)
+        {
+            // Check if the new time on the same workday is within time
+            if (workDays[delivery.truck][weekDay].totalDuration + list1Delta + list2Delta > workDays[delivery.truck][weekDay].maximumDuration)
+                judge.OverrideJudge(Judgement.Fail);
+
+            // Check garbage
+            if (delivery.workDayNode.value.collectedGarbage + garbage1Delta > delivery.workDayNode.value.maximumGarbage)
+                judge.OverrideJudge(Judgement.Fail);
+
+            if (otherDelivery.workDayNode.value.collectedGarbage + garbage2Delta > otherDelivery.workDayNode.value.maximumGarbage)
+                judge.OverrideJudge(Judgement.Fail);
+        }
+        else
+        {
+            if (workDays[delivery.truck][weekDay].totalDuration + list1Delta > workDays[delivery.truck][weekDay].maximumDuration ||
+                delivery.workDayNode.value.collectedGarbage + garbage1Delta > delivery.workDayNode.value.maximumGarbage)
+                judge.OverrideJudge(Judgement.Fail);
+
+
+            if (workDays[otherTruck][weekDay].totalDuration + list2Delta > workDays[otherTruck][weekDay].maximumDuration ||
+                otherDelivery.workDayNode.value.collectedGarbage + garbage2Delta > otherDelivery.workDayNode.value.maximumGarbage)
+                judge.OverrideJudge(Judgement.Fail);
+        }
+
+        judge.Testify(list1Delta + list2Delta);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {            
+            //Swapping values of the Deliveries, this isn't done in the generic SwapNodes function
+            (delivery.truck, otherDelivery.truck) = (otherDelivery.truck, delivery.truck);
+
+            //Updating the collected garbage
+            delivery.workDayNode.value.collectedGarbage += garbage1Delta;
+            otherDelivery.workDayNode.value.collectedGarbage += garbage2Delta;
+
+            //Updating the duration
+            workDays[delivery.truck][weekDay].totalDuration += list1Delta;
+            workDays[otherTruck][weekDay].totalDuration += list2Delta;
+
+            delivery.workDayNode.value.duration += list1Delta;
+            otherDelivery.workDayNode.value.duration += list2Delta;
+
+            SwapNodes<Delivery>(delivery.routeNode, otherDelivery.routeNode, delivery.workDayNode.value.route, otherDelivery.workDayNode.value.route);
+            (delivery.workDayNode, otherDelivery.workDayNode) = (otherDelivery.workDayNode, delivery.workDayNode);
+
+        }
+    }
+
+    public void SwapNodes<T>
+    (IndexedLinkedListNode<T> node1, IndexedLinkedListNode<T> node2, IndexedLinkedList<T> list1, IndexedLinkedList<T> list2)
+        where T : IClonable<T>
+    {
+        //Nodes are from the same list, call the existing swap function in IndexedLinkedList.cs
+        if (list1 == list2)
+            list1.SwapNodes(node1.index, node2.index);
+
+        //create temp values for swapping
+        IndexedLinkedListNode<T> prevNode1 = node1.prev;
+        IndexedLinkedListNode<T> nextNode1 = node1.next;
+
+        //swap the node's indices
+        //(node1.index, node2.index) = (node2.index, node1.index);
+
+        //First points to Second's neighbors.
+        node1.prev = node2.prev;
+        node1.next = node2.next;
+
+        //Second's neighbors point to First.
+        node1.prev.next = node1;
+        node1.next.prev = node1;
+
+        //Second points to First's neighbors.
+        node2.prev = prevNode1;
+        node2.next = nextNode1;
+
+        //First's neighbors point to Second.
+        node2.prev.next = node2;
+        node2.next.prev = node2;
+
+        //Physically swap the nodes from one array to the other
+        list1.nodes[node1.index] = node2;
+        list2.nodes[node2.index] = node1;
+        //(node1.index, node2.index) = (node2.index, node1.index);
+
+        int tempIndex = node1.index;
+
+        node1.index = node2.index;
+        node2.index = tempIndex;
+    }
 }
