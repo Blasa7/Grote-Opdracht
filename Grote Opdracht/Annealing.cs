@@ -4,9 +4,9 @@
     {
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
-        Random rng = new Random(4);
+        Random rng = new Random();
         float T = 10; //Dummy value for now
-        int maxIter = 100000; //1 million for now (100000000)
+        ulong maxIter = 50000000; //1 million for now (100000000)
         Judge judge = new Judge(T, rng);
         int workingScore = bestSolution.score;
         Console.WriteLine(workingScore / 60 / 1000);
@@ -29,10 +29,15 @@
         Console.WriteLine(workingScore / 60 / 1000);
 
         //Start iterating
-        for (int i = 0; i < maxIter; i++)
+        for (ulong i = 0; i < maxIter; i++)
         {
-            if (i % 1000 == 0)
+            if (i % 10000 == 0)
+            {
                 judge.T = GetTemperature(T);
+                //Console.WriteLine(bestSolution.score / 60 / 1000);
+                if (bestSolution.score < 357000000)
+                    break;
+            }
 
             int neighborScore = TryIterate(workingScore, workingSchedule, rng, judge);
 
@@ -96,15 +101,15 @@
                 schedule.AddRandomDelivery(rng, judge);
             }
         }
-        else if (weight < 0)
+        else if (weight < 0.15)
         {
-            //schedule.RemoveRandomDelivery(rng, judge);
+            schedule.RemoveRandomDelivery(rng, judge);
         }
-        else if (weight < 0.25) //Not too many times
+        else if (weight < 0.3) //Not too many times
         {
             schedule.ShuffleSchedule(rng, judge);
         }
-        else if (weight < 0.4)
+        else if (weight < 0.5)
         {
             schedule.ShuffleWorkDay(rng, judge);
         }
