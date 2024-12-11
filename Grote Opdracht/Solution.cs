@@ -146,24 +146,34 @@ class Solution
                     // Also solution.solution[i][j].workDay.totalDuration = sum
                 }
             }
+
+        solution.score = 0;
+
         return solution;
     }
 
-    public static WorkDay FillWorkday(int truck, int day, int routeNum, int matrixID, List<(int, int)> tuples)
+    public static WorkDay FillWorkday(int truck, int day, int routeNum, int orderID, List<(int, int)> tuples)
     {
         WorkDay workDay = new WorkDay(day);
-        workDay.workDay = FillRoute(truck, workDay, routeNum, matrixID, tuples);
+        workDay.workDay = FillRoute(truck, workDay, routeNum, orderID, tuples);
+        //workDay.AddStop(delivery,);
         return workDay;
     }
 
-    public static IndexedLinkedList<Route> FillRoute(int truck, WorkDay workDay, int routeNum, int matrixID, List<(int, int)> tuples)
+    public static IndexedLinkedList<Route> FillRoute(int truck, WorkDay workDay, int routeNum, int orderID, List<(int, int)> tuples)
     {
         IndexedLinkedList<Route> routes = new IndexedLinkedList<Route>(10);
 
+        Route route = new Route();
+
         for (int i = 0; i < tuples.Count; i++)
         {
+            Address address;
+
             Delivery delivery = new Delivery();
+            route.AddStop(delivery, 0, 0);
         }
+        //routes.InsertAfter(route);
 
 
         //IndexedLinkedListNode<Delivery> currentNode = FillDelivery();
