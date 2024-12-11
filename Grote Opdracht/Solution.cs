@@ -87,7 +87,7 @@ class Solution
         return "";
     }
 
-    public static List<(int, int)>[][] MakeFileArray()
+    /*public static List<(int, int)>[][] MakeFileArray()
     {
         string line;
         string[] split;
@@ -142,7 +142,7 @@ class Solution
                 tuples = file[i][j]; // A 'Route'
                 for (int k = 0; k < tuples.Count; k++)
                 {
-                    solution.solution[i][j] = FillWorkday(i, j, tuples[k].Item1, tuples[k].Item2, tuples);
+                    //solution.solution[i][j] = FillWorkday(i, j, tuples[k].Item1, tuples[k].Item2, tuples);
                     // Also solution.solution[i][j].workDay.totalDuration = sum
                 }
             }
@@ -194,7 +194,7 @@ class Solution
 
 
         return routes;
-    }
+    }*/
 
 }
 

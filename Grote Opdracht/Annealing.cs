@@ -1,19 +1,52 @@
 ﻿class Annealing
 {
+    public Solution bestSolution = new Solution();
+    Schedule workingSchedule = new Schedule();
+    int workingScore;
+
+    float T;
+    ulong iterations = 0; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
+
+    Random rng = new Random();
+    Judge judge;
+
+    bool insertRandomStart = false; //Wether or not to inser a number of nodes regardless of score before local search.
+
+    bool debugMessages = true;
+
     Statistics statistics = new Statistics();
 
-    public Solution Run()
-    {
-        Schedule workingSchedule = new Schedule(Input.orders);
-        Solution bestSolution = new Solution();
-        Random rng = new Random();
-        float T = 100; //Dummy value for now
-        ulong million = 5000000;
-        ulong maxIter = 50 * million; // How many iterations: x * 1.000.000
-        Judge judge = new Judge(T, rng);
-        int workingScore = bestSolution.score;
-        Console.WriteLine(workingScore / 60 / 1000);
+    /// <summary>
+    /// Make new Annealing through the static factory functions.
+    /// </summary>
+    private Annealing() { RecalculateWeights(); }
 
+    public static Annealing FromRandom()
+    {
+        Annealing annealing = new Annealing();
+
+        annealing.workingScore = annealing.bestSolution.score;
+        
+        annealing.judge = new Judge(annealing.T, annealing.rng);
+
+        return annealing;
+    }
+
+    public static Annealing FromFile(string path)
+    {
+        Annealing annealing = new Annealing();
+
+        annealing.workingSchedule = Schedule.LoadSchedule(path, out annealing.workingScore);
+
+        annealing.judge = new Judge(annealing.T, annealing.rng);
+
+        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
+
+        return annealing;
+    }
+
+    private void RecalculateWeights()
+    {
         addWeightSum = addWeight;
         removeWeightSum = addWeightSum + removeWeight;
         shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
@@ -21,60 +54,40 @@
         shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
         swapDeliveriesWeightSum = shuffleRouteWeightSum + swapDeliveriesWeight;
         totalWeightSum = swapDeliveriesWeightSum + 1;
+    }
+
+    public Solution Run()
+    {
+        Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
         //Initial solution
-        for (int i = 0; i < 5000; i++)
+
+        if (insertRandomStart)
         {
+            for (int i = 0; i < 5000; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                //workingSchedule.AddRandomDelivery(rng, judge);
+                workingSchedule.AddRandomDelivery(rng, judge);
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.score;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore);
+
             judge.Reset();
-            judge.OverrideJudge(Judgement.Pass);
-            //workingSchedule.AddRandomDelivery(rng, judge);
-            workingSchedule.AddRandomDelivery(rng, judge);
 
-            if (judge.GetJudgement() == Judgement.Pass)
-                workingScore += judge.score;
+            Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
         }
-
-        bestSolution.UpdateSolution(workingSchedule, workingScore);
-
-        judge.Reset();
-
-        Console.WriteLine(workingScore / 60 / 1000);
 
         //Start iterating
 
-        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, maxIter, T);
+        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, T);
 
-
-        for (int i = 0; i < workingSchedule.workDays.Length; i++)
-        {
-            for (int j = 0; j < workingSchedule.workDays[i].Length; j++)
-            {
-                IndexedLinkedListNode<Route> r = workingSchedule.workDays[i][j].workDay.nodes[0];
-
-                Console.WriteLine(workingSchedule.workDays[i][j].totalDuration);
-
-                float sumDuration = 0;
-
-                for (int k = 0; k < workingSchedule.workDays[i][j].workDay.currentIndex + 1; k++)
-                {
-                    IndexedLinkedListNode<Delivery> d = r.value.route.nodes[0];
-
-                    for (int l = 0; l < r.value.route.currentIndex; l++)
-                    {
-                        d = d.next;
-                    }
-
-                    sumDuration += r.value.duration;
-                    Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
-
-
-                    r = r.next;
-                }
-
-            }
-        }
-
-        Console.WriteLine(statistics);
+        if (debugMessages)
+            DebugMessages();
 
         return bestSolution;
     }
@@ -140,7 +153,7 @@
     int shuffleScheduleWeight = 15;
     int shuffleWorkDayWeight = 20;
     int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 100;
+    int swapDeliveriesWeight = 50;
 
     int addWeightSum;
     int removeWeightSum;
@@ -252,6 +265,40 @@
         } 
 
         return workingScore;
+    }
+
+    void DebugMessages()
+    {
+        for (int i = 0; i < workingSchedule.workDays.Length; i++)
+        {
+            for (int j = 0; j < workingSchedule.workDays[i].Length; j++)
+            {
+                IndexedLinkedListNode<Route> r = workingSchedule.workDays[i][j].workDay.nodes[0];
+
+                Console.WriteLine(workingSchedule.workDays[i][j].totalDuration);
+
+                float sumDuration = 0;
+
+                for (int k = 0; k < workingSchedule.workDays[i][j].workDay.currentIndex + 1; k++)
+                {
+                    IndexedLinkedListNode<Delivery> d = r.value.route.nodes[0];
+
+                    for (int l = 0; l < r.value.route.currentIndex; l++)
+                    {
+                        d = d.next;
+                    }
+
+                    sumDuration += r.value.duration;
+                    Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
+
+
+                    r = r.next;
+                }
+
+            }
+        }
+
+        Console.WriteLine(statistics);
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Security.Cryptography;
 
 class Schedule
@@ -15,11 +16,6 @@ class Schedule
 
     public Schedule()
     {
-
-    }
-
-    public Schedule(Order[] orders)
-    {
         for (int i = 0; i < schedule.Length; i++)
             schedule[i] = new IndexedLinkedList<Delivery>(Input.orderCount);
 
@@ -31,11 +27,11 @@ class Schedule
             }
         }
 
-        unfulfilledAddresses = new IndexedLinkedList<Address>(orders.Length);
+        unfulfilledAddresses = new IndexedLinkedList<Address>(Input.orders.Length);
 
-        for (int i = 0; i < orders.Length; i++)
+        for (int i = 0; i < Input.orders.Length; i++)
         {
-            unfulfilledAddresses.InsertLast(new Address(orders[i]));
+            unfulfilledAddresses.InsertLast(new Address(Input.orders[i]));
         }
     }
 
@@ -135,241 +131,6 @@ class Schedule
             unfulfilledAddresses.RemoveNode(index);
         }
     }
-
-    /*public void AddRandomDelivery(Random rng, Judge judge)
-    {
-        int index = unfulfilledAddresses.getRandomIncluded(rng);
-        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
-        Address address = node.value;
-
-        switch (address.frequency)
-        {
-            case 1:
-                AddRandomOneTimeDelivery(address, rng, judge);
-                break;
-            case 2:
-                AddRandomTwoTimeDelivery(address, rng, judge);
-                break;
-            case 3:
-                AddRandomThreeTimeDelivery(address, rng, judge);
-                break;
-            case 4:
-                AddRandomFourTimeDelivery(address, rng, judge);
-                break;
-        }
-
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            unfulfilledAddresses.RemoveNode(index);
-        }
-        else
-        {
-            int i = 1;
-        }
-    }
-
-    /// <summary>
-    /// Adds a one time delivery to the a random truck at random.
-    /// </summary>
-    void AddRandomOneTimeDelivery(Address address, Random rng, Judge judge)
-    {
-        //First calculate variables
-        Delivery delivery = new Delivery(address);
-
-        int weekDay = rng.Next(0, 5);
-        int truck = rng.Next(0, 2);
-
-        //Second testify
-        int testimony = -address.emptyingTime * 3; //Assumption is that a previously unfulfilled order is added
-
-        judge.Testify(testimony);
-
-        //Third call other functions that need to testify
-        //workDays[truck][weekDay].AddRandomStop(delivery, rng, judge);
-        workDays[truck][weekDay].StageRandomStop(delivery, rng, judge, out int workDayIndex, out int routeIndex, out int timeDelta);
-
-        //Fourth check judgement
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            delivery.truck = truck;
-            delivery.day = weekDay;
-            delivery.scheduleNode = schedule[weekDay].InsertLast(delivery);
-
-            workDays[truck][weekDay].AddStop(delivery, workDayIndex, routeIndex, timeDelta);
-        }
-    }
-
-    void AddRandomTwoTimeDelivery(Address address, Random rng, Judge judge)
-    {
-        //First calculate variables
-        Delivery delivery1 = new Delivery(address);
-        Delivery delivery2 = new Delivery(address);
-
-        delivery1.others[0] = delivery2;
-        delivery2.others[0] = delivery1;
-
-        int timeSlot = rng.Next(0, 2); //Monday-Thursday or Tuesday-Friday
-        int[] trucks = new int[2] { rng.Next(0, 2), rng.Next(0, 2) };
-
-        trucks[0] = rng.Next(0, 2);
-        trucks[1] = rng.Next(0, 2);
-
-        int day1 = 0 + timeSlot; //0 or 1
-        int day2 = 3 + timeSlot; //3 or 4
-
-        //Second testify
-        int testimony = -address.emptyingTime * 3 * 2; //Assumption is that a previously unfulfilled order is added
-
-        judge.Testify(testimony);
-
-        //Third call other functions that need to testify
-        workDays[trucks[0]][day1].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
-        workDays[trucks[1]][day2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
-
-        //Fourth check judgement
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            workDays[trucks[0]][day1].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
-            workDays[trucks[1]][day2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
-
-            delivery1.truck = trucks[0];
-            delivery2.truck = trucks[1];
-
-            delivery1.day = day1;
-            delivery2.day = day2;
-
-            delivery1.scheduleNode = schedule[day1].InsertLast(delivery1);
-            delivery2.scheduleNode = schedule[day2].InsertLast(delivery2);
-
-            //NOTE:
-            //2+ Frequency Deliveries are put on the same truck here, but in practice could be split
-        }
-    }
-
-    void AddRandomThreeTimeDelivery(Address address, Random rng, Judge judge)
-    {
-        //First calculate variables
-        Delivery delivery1 = new Delivery(address);
-        Delivery delivery2 = new Delivery(address);
-        Delivery delivery3 = new Delivery(address);
-
-        delivery1.others[0] = delivery2;
-        delivery1.others[1] = delivery3;
-
-        delivery2.others[0] = delivery1;
-        delivery2.others[1] = delivery3;
-
-        delivery3.others[0] = delivery1;
-        delivery3.others[1] = delivery2;
-
-        int[] trucks = new int[3] { rng.Next(0, 2), rng.Next(0, 2), rng.Next(0, 2) };
-
-        //Second testify
-        int testimony = -address.emptyingTime * 3 * 3;
-
-        judge.Testify(testimony);
-
-        //Third call other functions that need to testify
-
-        workDays[trucks[0]][0].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
-        workDays[trucks[1]][2].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
-        workDays[trucks[2]][4].StageRandomStop(delivery3, rng, judge, out int workDayIndex3, out int routeIndex3, out int timeDelta3);
-
-        //Fourth check judgement
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            workDays[trucks[0]][0].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
-            workDays[trucks[1]][2].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
-            workDays[trucks[2]][4].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
-
-            delivery1.truck = trucks[0];
-            delivery2.truck = trucks[1];
-            delivery3.truck = trucks[2];
-
-            delivery1.day = 0;
-            delivery2.day = 2;
-            delivery3.day = 4;
-
-            delivery1.scheduleNode = schedule[0].InsertLast(delivery1);
-            delivery2.scheduleNode = schedule[2].InsertLast(delivery2);
-            delivery3.scheduleNode = schedule[4].InsertLast(delivery3);
-        }
-    }
-
-    void AddRandomFourTimeDelivery(Address address, Random rng, Judge judge)
-    {
-        //First calculate variables
-        Delivery delivery1 = new Delivery(address);
-        Delivery delivery2 = new Delivery(address);
-        Delivery delivery3 = new Delivery(address);
-        Delivery delivery4 = new Delivery(address);
-
-        delivery1.others[0] = delivery2;
-        delivery1.others[1] = delivery3;
-        delivery1.others[2] = delivery4;
-
-        delivery2.others[0] = delivery1;
-        delivery2.others[1] = delivery3;
-        delivery2.others[2] = delivery4;
-
-        delivery3.others[0] = delivery1;
-        delivery3.others[1] = delivery2;
-        delivery3.others[2] = delivery4;
-
-        delivery4.others[0] = delivery1;
-        delivery4.others[1] = delivery2;
-        delivery4.others[2] = delivery3;
-
-        int[] trucks = new int[4] { rng.Next(0, 2), rng.Next(0, 2), rng.Next(0, 2), rng.Next(0, 2) };
-
-        int skipDay = rng.Next(0, 5);
-        int[] days = new int[4];
-
-        for (int i = 0, day = 0; i < 4; i++, day++)
-        {
-            if (day == skipDay)
-                day++;
-
-            days[i] = day;
-        }
-
-        //Second testify
-        int testimony = -address.emptyingTime * 3 * 4;
-
-        judge.Testify(testimony);
-
-        //Third call other functions that need to testify
-
-        workDays[trucks[0]][days[0]].StageRandomStop(delivery1, rng, judge, out int workDayIndex1, out int routeIndex1, out int timeDelta1);
-        workDays[trucks[1]][days[1]].StageRandomStop(delivery2, rng, judge, out int workDayIndex2, out int routeIndex2, out int timeDelta2);
-        workDays[trucks[2]][days[2]].StageRandomStop(delivery3, rng, judge, out int workDayIndex3, out int routeIndex3, out int timeDelta3);
-        workDays[trucks[3]][days[3]].StageRandomStop(delivery4, rng, judge, out int workDayIndex4, out int routeIndex4, out int timeDelta4);
-
-
-        //Fourth check judgement
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            workDays[trucks[0]][days[0]].AddStop(delivery1, workDayIndex1, routeIndex1, timeDelta1);
-            workDays[trucks[1]][days[1]].AddStop(delivery2, workDayIndex2, routeIndex2, timeDelta2);
-            workDays[trucks[2]][days[2]].AddStop(delivery3, workDayIndex3, routeIndex3, timeDelta3);
-            workDays[trucks[3]][days[3]].AddStop(delivery4, workDayIndex4, routeIndex4, timeDelta4);
-
-            delivery1.truck = trucks[0];
-            delivery2.truck = trucks[1];
-            delivery3.truck = trucks[2];
-            delivery4.truck = trucks[3];
-
-            delivery1.day = days[0];
-            delivery2.day = days[1];
-            delivery3.day = days[2];
-            delivery4.day = days[3];
-
-            delivery1.scheduleNode = schedule[days[0]].InsertLast(delivery1);
-            delivery2.scheduleNode = schedule[days[1]].InsertLast(delivery2);
-            delivery3.scheduleNode = schedule[days[2]].InsertLast(delivery3);
-            delivery4.scheduleNode = schedule[days[3]].InsertLast(delivery4);
-        }
-    }*/
 
     #endregion AddRandom
 
@@ -730,5 +491,134 @@ class Schedule
 
         node1.index = node2.index;
         node2.index = tempIndex;
+    }
+
+    public static Schedule LoadSchedule(string path, out int score)
+    {
+        List<List<(int, int, int, int)>> routes = new List<List<(int, int, int, int)>>();
+
+        using (StreamReader streamReader = new StreamReader(path))
+        {
+            int i = 0; //This is the route number in order given in the solution.
+
+            string line = streamReader.ReadLine();
+
+            if (line != null)
+                routes.Add(new List<(int, int, int, int)>()); //The first route.
+
+            while (line != null)
+            {
+                string[] split = line.Split(';');
+                (int truck, int day, int routeIndex, int orderId) lineValue = (int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]), int.Parse(split[3]));
+
+                routes[i].Add(lineValue);
+
+                line = streamReader.ReadLine();
+
+                if (lineValue.orderId == 0 && line != null)
+                {
+                    i++;
+
+                    routes.Add(new List<(int, int, int, int)>());
+                }
+            }
+        }
+
+        score = 0;
+
+        Schedule schedule = new Schedule(); //The schedule we will fill out.
+
+        Dictionary<int, List<Delivery>> orderDeliveries = new Dictionary<int, List<Delivery>>(); //Maps an order number to all deliveries that are made for that order.
+
+        int[][] workDayIndexes = new int[2][] { new int[5], new int[5] }; //The default value of int is 0, so each time we encounter a route on a certain truck and day combination we increase that index by 1.
+
+        //First we will insert each node into a route
+        for (int i = 0; i < routes.Count; i++) //For each route.
+        {
+            int prevID = Input.depotMatrixID; //Since every route start at the depot.
+
+            for (int j = 0; j < routes[i].Count; j++) //For each node in the route.
+            {
+                (int truck, int day, int routeIndex, int orderId) parse = routes[i][j]; //For readability.
+
+                Address address;
+
+                if (parse.orderId != 0) //Order id 0 means the depot.
+                    address = new Address(Input.byOrderId[parse.orderId]);
+                else
+                    address = Address.Depot();
+
+                Delivery delivery = new Delivery(address);
+
+                if (!orderDeliveries.ContainsKey(parse.orderId))
+                    orderDeliveries.Add(parse.orderId, new List<Delivery>()); //Create a new list if this is the first delivery of and order. 
+
+                orderDeliveries[parse.orderId].Add(delivery);
+
+                //Now fill the values out on the delivery.
+                delivery.truck = parse.truck - 1; //The input starts counting from 1.
+                delivery.day = parse.day - 1; //The input starts counting from 1.
+
+                int timeDelta = Input.GetTimeFromTo(prevID, address.matrixID) + address.emptyingTime; //The time delta consists of the time from the previous address to the current one plus the emptying time of the current address.
+                
+                if (parse.orderId != 0) //If the addres is the depot we do NOT want to add it at the end of the route. We still want to calculate the time difference though.
+                    schedule.AddDelivery(delivery, workDayIndexes[parse.truck - 1][parse.day - 1], j, timeDelta);
+                
+                score += timeDelta;
+
+                prevID = address.matrixID;
+            }
+
+            //A route was fully added so we can increase workdayIndexes for later routes that are added to the same truck day combination
+            workDayIndexes[routes[i][0].Item1 - 1][routes[i][0].Item2 - 1]++; //These indexes are just truck/day.
+        }
+
+        //Now it is important to update each delivery that we just added to reference other deliveries of the same order.
+        foreach (List<Delivery> deliveries in orderDeliveries.Values)
+        {
+            if (deliveries[0].address.orderID == 0)
+                continue;
+
+            for (int i = 0; i < deliveries.Count; i++) //For each delivery.
+            {
+                for (int j = 0; j < deliveries.Count - 1; j++) //For each delivery except the one from the previous loop.
+                {
+                    deliveries[i].others[j] = deliveries[(i + j + 1) % deliveries.Count];
+                }
+            }
+        }
+
+        IndexedLinkedListNode<Address> currentNode = schedule.unfulfilledAddresses.nodes[0]; //The list is initially filled with every order value so we need to check for each value in this list wether it is present in the parse input.
+
+        //Since we are bypassing some of the normal steps we need to update the unfulfilled orders list with the correct values.
+        for (int i = 0; i < schedule.unfulfilledAddresses.nodes.Length; i++)
+        {
+            Address address = currentNode.value;
+
+            if (orderDeliveries.ContainsKey(address.orderID))
+                schedule.unfulfilledAddresses.RemoveNode(currentNode.index);
+
+            currentNode = currentNode.next;
+        }
+
+        currentNode = schedule.unfulfilledAddresses.nodes[0];
+
+        //As a last step we need to add the penalties for the unfulfilled orders to the score.
+        for (int i = 0; i < schedule.unfulfilledAddresses.currentIndex + 1; i++)
+        {
+            Address address = currentNode.value;
+
+            score += address.emptyingTime * address.frequency * 3;
+
+            currentNode = currentNode.next;
+        }
+
+        return schedule;
+    }
+
+    public void AddDelivery(Delivery delivery, int workDayIndex, int routeIndex, int timeDelta)
+    {
+        delivery.scheduleNode = schedule[delivery.day].InsertLast(delivery);
+        workDays[delivery.truck][delivery.day].AddStop(delivery, workDayIndex, routeIndex, timeDelta);
     }
 }
