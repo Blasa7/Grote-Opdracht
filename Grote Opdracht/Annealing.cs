@@ -142,6 +142,17 @@
 
                 if (bestSolution.score < 358500000) // Score < 6000 min
                     return;
+
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Q) // Quit the program when the user presses 'q'
+                    {
+                        Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
+                        return;
+                    }
+                }
+
             }
         }
     }
