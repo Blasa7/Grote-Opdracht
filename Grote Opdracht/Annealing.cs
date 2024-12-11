@@ -4,8 +4,8 @@
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T;
-    ulong iterations = 0; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
+    float T = 10;
+    ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
     Judge judge;
@@ -149,9 +149,9 @@
     }
 
     int addWeight = 20;
-    int removeWeight = 7;
-    int shuffleScheduleWeight = 15;
-    int shuffleWorkDayWeight = 20;
+    int removeWeight = 15;
+    int shuffleScheduleWeight = 30;
+    int shuffleWorkDayWeight = 30;
     int shuffleRouteWeight = 50;
     int swapDeliveriesWeight = 50;
 
