@@ -142,22 +142,29 @@ class Solution
                 tuples = file[i][j]; // A 'Route'
                 for (int k = 0; k < tuples.Count; k++)
                 {
-                    solution.solution[i][j] = FillWorkday(j, tuples[k].Item1, tuples[k].Item2);
+                    solution.solution[i][j] = FillWorkday(j, tuples[k].Item1, tuples[k].Item2, tuples);
+                    // Also solution.solution[i][j].workDay.totalDuration = sum
                 }
             }
         return solution;
     }
 
-    public static WorkDay FillWorkday(int day, int routeNum, int matrixID)
+    public static WorkDay FillWorkday(int day, int routeNum, int matrixID, List<(int, int)> tuples)
     {
         WorkDay workDay = new WorkDay(day);
-        workDay.workDay = FillRoutes(workDay, routeNum, matrixID);
+        workDay.workDay = FillRoute(workDay, routeNum, matrixID, tuples);
         return workDay;
     }
 
-    public static IndexedLinkedList<Route> FillRoutes(WorkDay workDay, int routeNum, int matrixID)
+    public static IndexedLinkedList<Route> FillRoute(WorkDay workDay, int routeNum, int matrixID, List<(int, int)> tuples)
     {
         IndexedLinkedList<Route> routes = new IndexedLinkedList<Route>(10);
+
+        for (int i = 0; i < tuples.Count; i++)
+        {
+            //routes.InsertLast();
+        }
+
 
         //IndexedLinkedListNode<Delivery> currentNode = FillDelivery();
 
