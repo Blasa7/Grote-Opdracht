@@ -1,15 +1,15 @@
 ﻿class Annealing
 {
-    Statistics statistics;
+    Statistics statistics = new Statistics();
 
     public Solution Run()
     {
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
-        Random rng = new Random();
+        Random rng = new Random(4);
         float T = 100000; //Dummy value for now
         ulong million = 5000000;
-        ulong maxIter = 10 * million; // How many iterations: x * 1.000.000
+        ulong maxIter = 1 * million; // How many iterations: x * 1.000.000
         Judge judge = new Judge(T, rng);
         int workingScore = bestSolution.score;
         Console.WriteLine(workingScore / 60 / 1000);
@@ -19,8 +19,8 @@
         shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
         shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
         shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
-        swapDeliveriesSum = shuffleRouteWeightSum + swapDeliveriesWeight;
-        totalWeightSum = swapDeliveriesSum + 1;
+        swapDeliveriesWeightSum = shuffleRouteWeightSum + swapDeliveriesWeight;
+        totalWeightSum = swapDeliveriesWeightSum + 1;
 
         //Initial solution
         for (int i = 0; i < 5000; i++)
@@ -73,6 +73,8 @@
 
             }
         }
+
+        Console.WriteLine(statistics);
 
         return bestSolution;
     }
@@ -145,45 +147,110 @@
     int shuffleScheduleSum;
     int shuffleWorkDayWeightSum;
     int shuffleRouteWeightSum;
-    int swapDeliveriesSum;
+    int swapDeliveriesWeightSum;
     int totalWeightSum;
 
     public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
     {
-        int weight = rng.Next(0, totalWeightSum);//rng.NextSingle();
+        int weight = rng.Next(0, totalWeightSum);//rng.NextSingle(); 
 
         if (weight < addWeightSum)
         {
-            if (schedule.unfulfilledAddresses.currentIndex > 0)
+            schedule.AddRandomDelivery(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
             {
-                schedule.AddRandomDelivery(rng, judge);
+                statistics.addScoreDelta += judge.score;
+                statistics.addSuccessCount++;
+
+                return workingScore + judge.score;
+            }
+            else
+            {
+                statistics.addFailCount++;
             }
         }
         else if (weight < removeWeightSum)
         {
             schedule.RemoveRandomDelivery(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
+            {
+                statistics.removeScoreDelta += judge.score;
+                statistics.removeSuccessCount++;
+
+                return workingScore + judge.score;
+            }
+            else
+            {
+                statistics.removeFailCount++;
+            }
         }
         else if (weight < shuffleScheduleSum) //Not too many times
         {
             schedule.ShuffleSchedule(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
+            {
+                statistics.shuffleScheduleScoreDelta += judge.score;
+                statistics.shuffleScheduleSuccessCount++;
+
+                return workingScore + judge.score;
+            }
+            else
+            {
+                statistics.shuffleScheduleFailCount++;
+            }
         }
         else if (weight < shuffleWorkDayWeightSum)
         {
             schedule.ShuffleWorkDay(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
+            {
+                statistics.shuffleWorkDayScoreDelta += judge.score;
+                statistics.shuffleWorkDaySuccessCount++;
+
+                return workingScore + judge.score;
+            }
+            else
+            {
+                statistics.shuffleWorkDayFailCount++;
+            }
         }
         else if (weight < shuffleRouteWeightSum)
         {
             schedule.ShuffleRoute(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
+            {
+                statistics.shuffleWorkDayScoreDelta += judge.score;
+                statistics.shuffleWorkDaySuccessCount++;
+                
+                return workingScore + judge.score;
+            }
+            else
+            {
+                statistics.shuffleWorkDayFailCount++;
+            }
         }
-        else if (weight < swapDeliveriesSum)
+        else if (weight < swapDeliveriesWeightSum)
         {
             schedule.SwapDeliveries(rng, judge);
+
+            if (judge.GetJudgement() == Judgement.Pass)
+            {
+                statistics.swapDeliveryScoreDelta += judge.score;
+                statistics.swapDeliverySuccessCount++;
+
+                return workingScore + judge.score;
+            }
+            else
+            {
+                statistics.swapDeliveryFailCount++;
+            }
         } 
 
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            return workingScore + judge.score;
-        }
         return workingScore;
     }
 }
@@ -265,4 +332,29 @@ class Statistics()
     public long shuffleRouteSuccessCount;
     public long shuffleRouteFailCount;
 
+    public long swapDeliveryScoreDelta;
+    public long swapDeliverySuccessCount;
+    public long swapDeliveryFailCount;
+
+
+    public override string ToString()
+    {
+        return
+            $"Statistics: \n" +
+            $"Add score delta: {addScoreDelta / 60 / 1000} \n" +
+            $"Add success count: {addSuccessCount} \n" +
+            $"Add fail count: {addFailCount} \n" +
+            $"Remove score delta: {removeScoreDelta / 60 / 1000} \n" +
+            $"Remove success count: {removeSuccessCount} \n" +
+            $"Remove fail count: {removeFailCount} \n" +
+            $"Shuffle schedule score delta: {shuffleScheduleScoreDelta / 60 / 1000} \n" +
+            $"Shuffle schedule success count: {shuffleScheduleSuccessCount} \n" +
+            $"Shuffle schedule fail count: {shuffleScheduleFailCount} \n" +
+            $"Shuffle workday score delta: {shuffleWorkDayScoreDelta / 60 / 1000} \n" +
+            $"Shuffle workday success count: {shuffleWorkDaySuccessCount} \n" +
+            $"Shuffle workday fail count: {shuffleWorkDayFailCount} \n" +
+            $"Swap delivery score delta: {swapDeliveryScoreDelta / 60 / 1000} \n" +
+            $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
+            $"Swap delivery fail count: {swapDeliveryFailCount}";
+    }
 }

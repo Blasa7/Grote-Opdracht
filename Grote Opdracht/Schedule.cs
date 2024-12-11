@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics;
+using System.Security.Cryptography;
 
 class Schedule
 {
@@ -40,70 +41,102 @@ class Schedule
 
     #region AddRandom
 
-    public void AddRandomTwoTimeDelivery(Random rng, Judge judge)
+    public void AddRandomDelivery(Random rng, Judge judge) //Shorter more readable? equivalent of the previous add method, maybe a fraction fast
     {
-        int index = unfulfilledAddresses.getRandomIncluded(rng);
-        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
-        Address address = node.value;
 
-        if (address.frequency == 2)
-        {
-            AddRandomTwoTimeDelivery(address, rng, judge);
-        }
-        else
+        if (unfulfilledAddresses.currentIndex == 0)
         {
             judge.OverrideJudge(Judgement.Fail);
+            return;
+        }
+
+
+        //Get a random unfulfilled address
+        int index = unfulfilledAddresses.getRandomIncluded(rng);
+        Address address = unfulfilledAddresses.nodes[index].value;
+
+        Delivery[] deliveries = new Delivery[address.frequency];
+        int[] workDayIndexes = new int[address.frequency];
+        int[] routeIndexes = new int[address.frequency];
+        int[] timeDeltas = new int[address.frequency];
+
+        for (int i = 0; i < address.frequency; i++)
+        {
+            deliveries[i] = new Delivery(address);
+            deliveries[i].truck = rng.Next(0, 2);
+        }
+
+        for (int i = 0; i < address.frequency; i++) // For each delivery
+        {
+            for (int j = 0; j < address.frequency - 1; j++) // For each delivery except the one from the previous loop
+            {
+                deliveries[i].others[j] = deliveries[(i + j + 1) % address.frequency]; 
+            }
+        }
+
+        //The method to calculate the day differs for each frequency
+        switch (address.frequency)
+        {
+            case 1: //Any random day of the week
+                {
+                    deliveries[0].day = rng.Next(0, 5);
+                    break;
+                }
+            case 2: //Monday - Thursday or Tuesday - Friday
+                {
+                    int offset = rng.Next(0, 2);
+
+                    deliveries[0].day = 0 + offset; //0 or 1
+                    deliveries[1].day = 3 + offset; //3 or 4
+                    break;
+                }
+            case 3: //Monday - Wendsday - Friday
+                {
+                    deliveries[0].day = 0;
+                    deliveries[1].day = 2;
+                    deliveries[2].day = 4;
+                    break;
+                }
+            case 4: //All days except one
+                {
+                    int skipDay = rng.Next(0, 5);
+
+                    for (int i = 0, day = 0; i < 4; i++, day++)
+                    {
+                        if (day == skipDay)
+                            day++;
+
+                        deliveries[i].day = day;
+                    }
+                    break;
+                }
+        }
+
+        //Penalty gets removed
+        int testimony = -address.emptyingTime * 3 * address.frequency;
+
+        judge.Testify(testimony);
+
+        //Stage functions to randomly add are called
+        for (int i = 0; i < address.frequency; i++)
+        {
+            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i]);
         }
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
+            for (int i = 0; i < address.frequency; i++)
+            {
+                deliveries[i].scheduleNode = schedule[deliveries[i].day].InsertLast(deliveries[i]);
+
+                workDays[deliveries[i].truck][deliveries[i].day].AddStop(deliveries[i], workDayIndexes[i], routeIndexes[i], timeDeltas[i]);
+            }
+
             unfulfilledAddresses.RemoveNode(index);
         }
     }
 
-    public void AddRandomThreeTimeDelivery(Random rng, Judge judge)
-    {
-        int index = unfulfilledAddresses.getRandomIncluded(rng);
-        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
-        Address address = node.value;
-
-        if (address.frequency == 3)
-        {
-            AddRandomThreeTimeDelivery(address, rng, judge);
-        }
-        else
-        {
-            judge.OverrideJudge(Judgement.Fail);
-        }
-
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            unfulfilledAddresses.RemoveNode(index);
-        }
-    }
-
-    public void AddRandomFourTimeDelivery(Random rng, Judge judge)
-    {
-        int index = unfulfilledAddresses.getRandomIncluded(rng);
-        IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
-        Address address = node.value;
-
-        if (address.frequency == 4)
-        {
-            AddRandomFourTimeDelivery(address, rng, judge);
-        }
-        else
-        {
-            judge.OverrideJudge(Judgement.Fail);
-        }
-
-        if (judge.GetJudgement() == Judgement.Pass)
-        {
-            unfulfilledAddresses.RemoveNode(index);
-        }
-    }
-
-    public void AddRandomDelivery(Random rng, Judge judge)
+    /*public void AddRandomDelivery(Random rng, Judge judge)
     {
         int index = unfulfilledAddresses.getRandomIncluded(rng);
         IndexedLinkedListNode<Address> node = unfulfilledAddresses.nodes[index];
@@ -336,7 +369,7 @@ class Schedule
             delivery3.scheduleNode = schedule[days[2]].InsertLast(delivery3);
             delivery4.scheduleNode = schedule[days[3]].InsertLast(delivery4);
         }
-    }
+    }*/
 
     #endregion AddRandom
 
