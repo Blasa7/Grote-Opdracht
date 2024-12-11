@@ -6,10 +6,10 @@
     {
         Schedule workingSchedule = new Schedule(Input.orders);
         Solution bestSolution = new Solution();
-        Random rng = new Random(4);
-        float T = 100000; //Dummy value for now
+        Random rng = new Random();
+        float T = 100; //Dummy value for now
         ulong million = 5000000;
-        ulong maxIter = 1 * million; // How many iterations: x * 1.000.000
+        ulong maxIter = 50 * million; // How many iterations: x * 1.000.000
         Judge judge = new Judge(T, rng);
         int workingScore = bestSolution.score;
         Console.WriteLine(workingScore / 60 / 1000);
@@ -113,7 +113,7 @@
             judge.Reset();
 
             // Increase the temperature if the score doesn't increase after Y iterations
-            if (i % 1000000 == 0)
+            if (i % 1000000 == 0) 
             {
                 if (previousScore == workingScore)
                 {
@@ -140,7 +140,7 @@
     int shuffleScheduleWeight = 15;
     int shuffleWorkDayWeight = 20;
     int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 20;
+    int swapDeliveriesWeight = 100;
 
     int addWeightSum;
     int removeWeightSum;
