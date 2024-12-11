@@ -56,8 +56,11 @@
         totalWeightSum = swapDeliveriesWeightSum + 1;
     }
 
-    public Solution Run()
+    public Solution Run(ulong iter)
     {
+        Console.WriteLine(iter);
+        iterations = iter;
+
         Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
         //Initial solution
