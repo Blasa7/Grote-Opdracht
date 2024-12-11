@@ -4,7 +4,7 @@
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 10;
+    float T = 1000;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
@@ -133,12 +133,12 @@
             {
                 if (previousScore == workingScore)
                 {
-                    judge.T = T;
+                    judge.T += 5000;//T;
                 }
 
                 previousScore = workingScore;
 
-                Console.WriteLine(bestSolution.score / 60 / 1000);
+                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
 
                 if (bestSolution.score < 358500000) // Score < 6000 min
                     return;
@@ -164,7 +164,7 @@
 
     int addWeight = 20;
     int removeWeight = 15;
-    int shuffleScheduleWeight = 30;
+    int shuffleScheduleWeight = 50;
     int shuffleWorkDayWeight = 30;
     int shuffleRouteWeight = 50;
     int swapDeliveriesWeight = 50;
@@ -263,7 +263,7 @@
         }
         else if (weight < swapDeliveriesWeightSum)
         {
-            schedule.SwapDeliveries(rng, judge);
+            schedule.CompleteRandomSwap(rng, judge);
 
             if (judge.GetJudgement() == Judgement.Pass)
             {

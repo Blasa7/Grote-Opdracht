@@ -341,52 +341,47 @@ class Schedule
 
     #endregion ShuffleLowerLevel
 
-    public void SwapDeliveries(Random rng, Judge judge)
+    public void CompleteRandomSwap(Random rng, Judge judge)
     {
-        //First calculate variables
-        int weekDay = rng.Next(0, 5);
+        int day = rng.Next(0, 5);
 
-        if (schedule[weekDay].currentIndex == -1)
+        if (schedule[day].currentIndex < 2) //The weekday must have at least two deliveries.
         {
             judge.OverrideJudge(Judgement.Fail);
             return;
         }
 
-        int index = schedule[weekDay].getRandomIncluded(rng);
+        //Gets two random different deliveries from the given day.
+        int index1 = schedule[day].getRandomIncluded(rng);
 
-        Delivery delivery = schedule[weekDay].nodes[index].value;
+        int index2 = schedule[day].getRandomIncluded(rng);
 
-        int otherTruck = rng.Next(0, 2);
+        while (index1 == index2)
+            index2 = schedule[day].getRandomIncluded(rng);
 
-        int randomWorkDayIndex = workDays[otherTruck][weekDay].workDay.getRandomIncluded(rng);
+        Delivery delivery1 = schedule[day].nodes[index1].value;
+        Delivery delivery2 = schedule[day].nodes[index2].value;
 
-        while (otherTruck == delivery.truck && randomWorkDayIndex == delivery.workDayNode.index)
-        {
-            randomWorkDayIndex = workDays[otherTruck][weekDay].workDay.getRandomIncluded(rng);
-        }
+        SwapDeliveries(delivery1, delivery2, rng, judge);
+    }
 
-        if (workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.currentIndex < workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.startIndex)
+    public void SwapDeliveries(Delivery delivery1, Delivery delivery2, Random rng, Judge judge) //Swaps two deliveries. Niether of the two deliveries may refer to a depot or to eachother.
+    {
+        if (delivery1.truck == delivery2.truck && delivery1.workDayNode.index == delivery2.workDayNode.index) //Deliveries may not be in the exact same route use shuffle instead.
         {
             judge.OverrideJudge(Judgement.Fail);
             return;
         }
 
-        int randomRouteIndex = workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.getRandomIncluded(rng);
-
-        Delivery otherDelivery = workDays[otherTruck][weekDay].workDay.nodes[randomWorkDayIndex].value.route.nodes[randomRouteIndex].value;
-
-        int index1 = delivery.routeNode.index;
-        int index2 = otherDelivery.routeNode.index;
-
-        Address address1 = delivery.address;
-        Address address2 = otherDelivery.address;
+        Address address1 = delivery1.address;
+        Address address2 = delivery2.address;
 
         int thisID1 = address1.matrixID;
         int thisID2 = address2.matrixID;
-        int prevID1 = delivery.routeNode.prev.value.address.matrixID;//list1.nodes[index1].prev.value.address.matrixID;
-        int nextID1 = delivery.routeNode.next.value.address.matrixID;
-        int prevID2 = otherDelivery.routeNode.prev.value.address.matrixID;
-        int nextID2 = otherDelivery.routeNode.next.value.address.matrixID;
+        int prevID1 = delivery1.routeNode.prev.value.address.matrixID;
+        int nextID1 = delivery1.routeNode.next.value.address.matrixID;
+        int prevID2 = delivery2.routeNode.prev.value.address.matrixID;
+        int nextID2 = delivery2.routeNode.next.value.address.matrixID;
 
         //initial distances between the nodes and their neighbors + emptying time
         int oldValue1 = Input.GetTimeFromTo(prevID1, thisID1) + Input.GetTimeFromTo(thisID1, nextID1) + address1.emptyingTime;
@@ -402,28 +397,28 @@ class Schedule
         int garbage2Delta = -garbage1Delta;                                  //difference in garbage for truck 2
 
         // The same workday and the same truck
-        if (delivery.workDayNode.index == otherDelivery.workDayNode.index && delivery.truck == otherDelivery.truck)
+        if (delivery1.truck == delivery2.truck && delivery1.day == delivery2.day)
         {
             // Check if the new time on the same workday is within time
-            if (workDays[delivery.truck][weekDay].totalDuration + list1Delta + list2Delta > workDays[delivery.truck][weekDay].maximumDuration)
+            if (workDays[delivery1.truck][delivery1.day].totalDuration + list1Delta + list2Delta > workDays[delivery1.truck][delivery1.day].maximumDuration)
                 judge.OverrideJudge(Judgement.Fail);
 
             // Check garbage
-            if (delivery.workDayNode.value.collectedGarbage + garbage1Delta > delivery.workDayNode.value.maximumGarbage)
+            if (delivery1.workDayNode.value.collectedGarbage + garbage1Delta > delivery1.workDayNode.value.maximumGarbage)
                 judge.OverrideJudge(Judgement.Fail);
 
-            if (otherDelivery.workDayNode.value.collectedGarbage + garbage2Delta > otherDelivery.workDayNode.value.maximumGarbage)
+            if (delivery2.workDayNode.value.collectedGarbage + garbage2Delta > delivery2.workDayNode.value.maximumGarbage)
                 judge.OverrideJudge(Judgement.Fail);
         }
         else
         {
-            if (workDays[delivery.truck][weekDay].totalDuration + list1Delta > workDays[delivery.truck][weekDay].maximumDuration ||
-                delivery.workDayNode.value.collectedGarbage + garbage1Delta > delivery.workDayNode.value.maximumGarbage)
+            if (workDays[delivery1.truck][delivery1.day].totalDuration + list1Delta > workDays[delivery1.truck][delivery1.day].maximumDuration ||
+                delivery1.workDayNode.value.collectedGarbage + garbage1Delta > delivery1.workDayNode.value.maximumGarbage)
                 judge.OverrideJudge(Judgement.Fail);
 
 
-            if (workDays[otherTruck][weekDay].totalDuration + list2Delta > workDays[otherTruck][weekDay].maximumDuration ||
-                otherDelivery.workDayNode.value.collectedGarbage + garbage2Delta > otherDelivery.workDayNode.value.maximumGarbage)
+            if (workDays[delivery2.truck][delivery2.day].totalDuration + list2Delta > workDays[delivery2.truck][delivery2.day].maximumDuration ||
+                delivery2.workDayNode.value.collectedGarbage + garbage2Delta > delivery2.workDayNode.value.maximumGarbage)
                 judge.OverrideJudge(Judgement.Fail);
         }
 
@@ -434,19 +429,19 @@ class Schedule
             //Swapping values of the Deliveries, this isn't done in the generic SwapNodes function
 
             //Updating the collected garbage
-            delivery.workDayNode.value.collectedGarbage += garbage1Delta;
-            otherDelivery.workDayNode.value.collectedGarbage += garbage2Delta;
+            delivery1.workDayNode.value.collectedGarbage += garbage1Delta;
+            delivery2.workDayNode.value.collectedGarbage += garbage2Delta;
 
             //Updating the duration
-            workDays[delivery.truck][weekDay].totalDuration += list1Delta;
-            workDays[otherTruck][weekDay].totalDuration += list2Delta;
+            workDays[delivery1.truck][delivery1.day].totalDuration += list1Delta;
+            workDays[delivery2.truck][delivery2.day].totalDuration += list2Delta;
 
-            delivery.workDayNode.value.duration += list1Delta;
-            otherDelivery.workDayNode.value.duration += list2Delta;
+            delivery1.workDayNode.value.duration += list1Delta;
+            delivery2.workDayNode.value.duration += list2Delta;
 
-            SwapNodes<Delivery>(delivery.routeNode, otherDelivery.routeNode, delivery.workDayNode.value.route, otherDelivery.workDayNode.value.route);
-            (delivery.workDayNode, otherDelivery.workDayNode) = (otherDelivery.workDayNode, delivery.workDayNode);
-            (delivery.truck, otherDelivery.truck) = (otherDelivery.truck, delivery.truck);
+            SwapNodes<Delivery>(delivery1.routeNode, delivery2.routeNode, delivery1.workDayNode.value.route, delivery2.workDayNode.value.route);
+            (delivery1.workDayNode, delivery2.workDayNode) = (delivery2.workDayNode, delivery1.workDayNode);
+            (delivery1.truck, delivery2.truck) = (delivery2.truck, delivery1.truck);
 
         }
     }
