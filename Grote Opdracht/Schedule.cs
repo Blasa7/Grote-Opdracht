@@ -541,6 +541,9 @@ class Schedule
             {
                 (int truck, int day, int routeIndex, int orderId) parse = routes[i][j]; //For readability.
 
+                if (parse.orderId == 0) //We dont want to add the depot to the route.
+                    continue;
+
                 Address address;
 
                 if (parse.orderId != 0) //Order id 0 means the depot.
@@ -560,9 +563,11 @@ class Schedule
                 delivery.day = parse.day - 1; //The input starts counting from 1.
 
                 int timeDelta = Input.GetTimeFromTo(prevID, address.matrixID) + address.emptyingTime; //The time delta consists of the time from the previous address to the current one plus the emptying time of the current address.
-                
-                if (parse.orderId != 0) //If the addres is the depot we do NOT want to add it at the end of the route. We still want to calculate the time difference though.
-                    schedule.AddDelivery(delivery, workDayIndexes[parse.truck - 1][parse.day - 1], j, timeDelta);
+
+                if (j == routes[i].Count - 2) //If the addres is just before the depot (the second last element in this list) then add the traver time from the address to the depot plus the depot emptying time.
+                    timeDelta += Input.GetTimeFromTo(address.matrixID, Input.depotMatrixID) + Address.Depot().emptyingTime;
+
+                schedule.AddDelivery(delivery, workDayIndexes[parse.truck - 1][parse.day - 1], j, timeDelta);
                 
                 score += timeDelta;
 
