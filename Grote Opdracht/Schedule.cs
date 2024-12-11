@@ -27,7 +27,7 @@ class Schedule
         {
             for (int j = 0; j < workDays[i].Length; j++)
             {
-                workDays[i][j] = new WorkDay(j, Input.orderCount);
+                workDays[i][j] = new WorkDay(j);
             }
         }
 
