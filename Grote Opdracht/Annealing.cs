@@ -1,4 +1,4 @@
-﻿class Annealing
+class Annealing
 {
     public Solution bestSolution = new Solution();
     Schedule workingSchedule = new Schedule();
@@ -11,6 +11,7 @@
     Judge judge;
 
     bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
+    bool deleteRandomStart = false;
 
     bool debugMessages = true;
 
@@ -83,6 +84,26 @@
             judge.Reset();
 
             Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
+        }
+
+        if (deleteRandomStart)
+        {
+            for (int i = 0; i < 250; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                //workingSchedule.AddRandomDelivery(rng, judge);
+                workingSchedule.RemoveRandomDelivery(rng, judge);
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.score;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore);
+
+            judge.Reset();
+
+            Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
         }
 
         //Start iterating
@@ -165,9 +186,9 @@
     int addWeight = 50;
     int removeWeight = 20;
     int shuffleScheduleWeight = 50;
-    int shuffleWorkDayWeight = 30;
+    int shuffleWorkDayWeight = 100;
     int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 50;
+    int swapDeliveriesWeight = 20;
 
     int addWeightSum;
     int removeWeightSum;

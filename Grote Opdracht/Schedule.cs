@@ -209,6 +209,7 @@ class Schedule
 
         if (schedule[weekDay].currentIndex == -1)
         {
+            judge.OverrideJudge(Judgement.Fail);
             timeDeltas = null;
             return null;
         }
@@ -279,7 +280,7 @@ class Schedule
         switch (oldDelivery.address.frequency) //Frequency 3 is not allowed to switch.
         {
             case 1:
-                weekDays[0] = (oldDelivery.day + rng.Next(1, 4)) % 5; //Get shifted by 0-3 mod 4 sot it is on a different day of the week.
+                weekDays[0] = (oldDelivery.day + rng.Next(1, 5)) % 5; //Get shifted by 0-3 mod 4 sot it is on a different day of the week.
                 break;
             case 2:
                 {
@@ -291,7 +292,7 @@ class Schedule
                 }
             case 4:
                 {
-                    int offset = rng.Next(0, 4);
+                    int offset = rng.Next(1, 5);
                     weekDays[0] = (oldDelivery.day + offset) % 5;
                     weekDays[1] = (oldDelivery.others[0].day + offset) % 5;
                     weekDays[2] = (oldDelivery.others[1].day + offset) % 5;
