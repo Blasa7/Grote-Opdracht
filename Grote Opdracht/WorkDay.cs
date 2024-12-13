@@ -3,11 +3,12 @@
     public IndexedLinkedList<Route> workDay;
 
     public int weekDay; // 0, 1, 2, 3, 4
+    public int numRoutes;
 
     public int totalDuration = 0;
     public int maximumDuration = 43200000; // 720 min, 432000 sec //in minutes aka 11.5 hours in a work day
 
-    public WorkDay(int weekDay, int maximumSize)
+    public WorkDay(int weekDay)
     {
         this.weekDay = weekDay;
         int numRoutes = 10;
@@ -125,7 +126,7 @@
 
     public WorkDay Clone()
     {
-        WorkDay copy = new WorkDay(0, Input.orderCount);
+        WorkDay copy = new WorkDay(0);
 
         copy.workDay = workDay.Clone();
         copy.weekDay = weekDay;

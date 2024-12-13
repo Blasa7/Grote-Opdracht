@@ -17,9 +17,9 @@
     {
         name = s;
         orderID = 0;
-        matrixID = 287;
+        matrixID = 287; //Depot matrix id.
         garbageAmount = 0;
-        emptyingTime = 0;
+        emptyingTime = 30 * 60 * 1000; //Depot emptying time.
         containerAmount = 0;
         frequency = 1;
     }

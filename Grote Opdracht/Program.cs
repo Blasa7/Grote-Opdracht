@@ -4,24 +4,39 @@
     {
         Input.Parse();
 
-        Console.WriteLine("Do you want to write to file?");
-        string s = Console.ReadLine();
+        Console.WriteLine("Do you want to parse from input.txt? y|n");
+
+        string response = Console.ReadLine();
+
+        bool read = false;
+
+        if (response == "y")
+            read = true;
+
+        Console.WriteLine("Do you want to write to file? y|n");
+        
+        response = Console.ReadLine();
+        
         bool write = false;
-        if (s == "y")
-        {
+        
+        if (response == "y")
             write = true;
-        }
 
-        Annealing annealing = new Annealing();
-        Solution solution = annealing.Run();
+        Annealing annealing;
 
-        Console.WriteLine(solution.score / 60 / 1000);
+        if (read)
+            annealing = Annealing.FromFile(@"..\\..\\..\\Input.txt");
+        else
+            annealing = Annealing.FromRandom();
 
-        solution.PrintSolution(write);
+        Console.WriteLine("Enter amount of iterations (in million)");
 
+        ulong iter = ulong.Parse(Console.ReadLine()) * 1000000;
 
+        Solution solution = annealing.Run(iter);
 
+        annealing.bestSolution.PrintSolution(write);
 
-
+        Console.WriteLine("Final score: " + solution.score / 60 / 1000);
     }
 }

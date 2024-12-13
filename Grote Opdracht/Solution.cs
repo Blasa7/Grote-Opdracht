@@ -86,6 +86,116 @@ class Solution
         }
         return "";
     }
+
+    /*public static List<(int, int)>[][] MakeFileArray()
+    {
+        string line;
+        string[] split;
+        int truck, day;
+
+        List<(int, int)>[][] file = new List<(int, int)>[][]
+        {
+            new List<(int, int)>[5],
+            new List<(int, int)>[5]
+        };
+
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 5; j++)
+                file[i][j] = new List<(int, int)>();
+
+
+        using (StreamReader sw = new StreamReader(@"..\\..\\..\\solution6389.txt"))
+        {
+            line = sw.ReadLine();
+            while (line != null)
+            {
+                split = line.Split(';');
+                truck = int.Parse(split[0]) - 1;
+                day = int.Parse(split[1]) - 1;
+                (int, int) tup = (int.Parse(split[2]), int.Parse(split[3]));
+                file[truck][day].Add(tup);
+
+                line = sw.ReadLine();
+            }
+        }
+
+        //print file
+        //for (int i = 0; i < 2; i++)
+        //    for (int j = 0; j < 5; j++)
+        //        for (int k = 0; k < file[i][j].Count; k++)
+        //            Console.WriteLine(file[i][j][k]);
+
+        return file;
+    }
+
+
+    public static Solution LoadSolution()
+    {
+        Solution solution = new Solution();
+
+        List<(int, int)>[][] file = MakeFileArray();
+        List<(int, int)> tuples = new List<(int, int)>();
+
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 5; j++)
+            {
+                tuples = file[i][j]; // A 'Route'
+                for (int k = 0; k < tuples.Count; k++)
+                {
+                    //solution.solution[i][j] = FillWorkday(i, j, tuples[k].Item1, tuples[k].Item2, tuples);
+                    // Also solution.solution[i][j].workDay.totalDuration = sum
+                }
+            }
+
+        solution.score = 0;
+
+        return solution;
+    }
+
+    public static WorkDay FillWorkday(int truck, int day, int routeNum, int orderID, List<(int, int)> tuples)
+    {
+        WorkDay workDay = new WorkDay(day);
+        workDay.workDay = FillRoute(truck, workDay, routeNum, orderID, tuples);
+        //workDay.AddStop(delivery,);
+        return workDay;
+    }
+
+    public static IndexedLinkedList<Route> FillRoute(int truck, WorkDay workDay, int routeNum, int orderID, List<(int, int)> tuples)
+    {
+        IndexedLinkedList<Route> routes = new IndexedLinkedList<Route>(10);
+
+        Route route = new Route();
+
+        for (int i = 0; i < tuples.Count; i++)
+        {
+            Address address;
+
+            Delivery delivery = new Delivery();
+            route.AddStop(delivery, 0, 0);
+        }
+        //routes.InsertAfter(route);
+
+
+        //IndexedLinkedListNode<Delivery> currentNode = FillDelivery();
+
+        //while ()
+        //{
+
+        //}
+
+        //IndexedLinkedListNode<Delivery> currentNode = this.route.nodes[0].next;
+        //for (int i = 0; i < this.route.currentIndex + 1; i++)
+        //{
+        //    string orderId = currentNode.value.address.orderID.ToString();
+        //    int addressNumber = startAddressNumber + i;
+        //    addresses[i] = Tuple.Create(addressNumber.ToString(), orderId);
+        //    currentNode = currentNode.next;
+        //}
+
+
+        return routes;
+    }*/
+
 }
 
 /*class Schedule

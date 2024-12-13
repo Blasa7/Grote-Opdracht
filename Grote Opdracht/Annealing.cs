@@ -1,19 +1,52 @@
 ﻿class Annealing
 {
+    public Solution bestSolution = new Solution();
+    Schedule workingSchedule = new Schedule();
+    int workingScore;
+
+    float T = 1000;
+    ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
+
+    Random rng = new Random();
+    Judge judge;
+
+    bool insertRandomStart = false; //Wether or not to inser a number of nodes regardless of score before local search.
+
+    bool debugMessages = true;
+
     Statistics statistics = new Statistics();
 
-    public Solution Run()
-    {
-        Schedule workingSchedule = new Schedule(Input.orders);
-        Solution bestSolution = new Solution();
-        Random rng = new Random(4);
-        float T = 100000; //Dummy value for now
-        ulong million = 5000000;
-        ulong maxIter = 1 * million; // How many iterations: x * 1.000.000
-        Judge judge = new Judge(T, rng);
-        int workingScore = bestSolution.score;
-        Console.WriteLine(workingScore / 60 / 1000);
+    /// <summary>
+    /// Make new Annealing through the static factory functions.
+    /// </summary>
+    private Annealing() { RecalculateWeights(); }
 
+    public static Annealing FromRandom()
+    {
+        Annealing annealing = new Annealing();
+
+        annealing.workingScore = annealing.bestSolution.score;
+        
+        annealing.judge = new Judge(annealing.T, annealing.rng);
+
+        return annealing;
+    }
+
+    public static Annealing FromFile(string path)
+    {
+        Annealing annealing = new Annealing();
+
+        annealing.workingSchedule = Schedule.LoadSchedule(path, out annealing.workingScore);
+
+        annealing.judge = new Judge(annealing.T, annealing.rng);
+
+        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
+
+        return annealing;
+    }
+
+    private void RecalculateWeights()
+    {
         addWeightSum = addWeight;
         removeWeightSum = addWeightSum + removeWeight;
         shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
@@ -21,60 +54,43 @@
         shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
         swapDeliveriesWeightSum = shuffleRouteWeightSum + swapDeliveriesWeight;
         totalWeightSum = swapDeliveriesWeightSum + 1;
+    }
+
+    public Solution Run(ulong iter)
+    {
+        Console.WriteLine(iter);
+        iterations = iter;
+
+        Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
         //Initial solution
-        for (int i = 0; i < 5000; i++)
+
+        if (insertRandomStart)
         {
+            for (int i = 0; i < 5000; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                //workingSchedule.AddRandomDelivery(rng, judge);
+                workingSchedule.AddRandomDelivery(rng, judge);
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.score;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore);
+
             judge.Reset();
-            judge.OverrideJudge(Judgement.Pass);
-            //workingSchedule.AddRandomDelivery(rng, judge);
-            workingSchedule.AddRandomDelivery(rng, judge);
 
-            if (judge.GetJudgement() == Judgement.Pass)
-                workingScore += judge.score;
+            Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
         }
-
-        bestSolution.UpdateSolution(workingSchedule, workingScore);
-
-        judge.Reset();
-
-        Console.WriteLine(workingScore / 60 / 1000);
 
         //Start iterating
 
-        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, maxIter, T);
+        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, T);
 
-
-        for (int i = 0; i < workingSchedule.workDays.Length; i++)
-        {
-            for (int j = 0; j < workingSchedule.workDays[i].Length; j++)
-            {
-                IndexedLinkedListNode<Route> r = workingSchedule.workDays[i][j].workDay.nodes[0];
-
-                Console.WriteLine(workingSchedule.workDays[i][j].totalDuration);
-
-                float sumDuration = 0;
-
-                for (int k = 0; k < workingSchedule.workDays[i][j].workDay.currentIndex + 1; k++)
-                {
-                    IndexedLinkedListNode<Delivery> d = r.value.route.nodes[0];
-
-                    for (int l = 0; l < r.value.route.currentIndex; l++)
-                    {
-                        d = d.next;
-                    }
-
-                    sumDuration += r.value.duration;
-                    Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
-
-
-                    r = r.next;
-                }
-
-            }
-        }
-
-        Console.WriteLine(statistics);
+        if (debugMessages)
+            DebugMessages();
 
         return bestSolution;
     }
@@ -113,19 +129,30 @@
             judge.Reset();
 
             // Increase the temperature if the score doesn't increase after Y iterations
-            if (i % 1000000 == 0)
+            if (i % 1000000 == 0) 
             {
                 if (previousScore == workingScore)
                 {
-                    judge.T = T;
+                    judge.T += 5000;//T;
                 }
 
                 previousScore = workingScore;
 
-                Console.WriteLine(bestSolution.score / 60 / 1000);
+                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
 
                 if (bestSolution.score < 358500000) // Score < 6000 min
                     return;
+
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+                    if (key.Key == ConsoleKey.Q) // Quit the program when the user presses 'q'
+                    {
+                        Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
+                        return;
+                    }
+                }
+
             }
         }
     }
@@ -136,11 +163,11 @@
     }
 
     int addWeight = 20;
-    int removeWeight = 7;
-    int shuffleScheduleWeight = 15;
-    int shuffleWorkDayWeight = 20;
+    int removeWeight = 15;
+    int shuffleScheduleWeight = 50;
+    int shuffleWorkDayWeight = 30;
     int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 20;
+    int swapDeliveriesWeight = 50;
 
     int addWeightSum;
     int removeWeightSum;
@@ -236,7 +263,7 @@
         }
         else if (weight < swapDeliveriesWeightSum)
         {
-            schedule.SwapDeliveries(rng, judge);
+            schedule.CompleteRandomSwap(rng, judge);
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
@@ -252,6 +279,40 @@
         } 
 
         return workingScore;
+    }
+
+    void DebugMessages()
+    {
+        for (int i = 0; i < workingSchedule.workDays.Length; i++)
+        {
+            for (int j = 0; j < workingSchedule.workDays[i].Length; j++)
+            {
+                IndexedLinkedListNode<Route> r = workingSchedule.workDays[i][j].workDay.nodes[0];
+
+                Console.WriteLine(workingSchedule.workDays[i][j].totalDuration);
+
+                float sumDuration = 0;
+
+                for (int k = 0; k < workingSchedule.workDays[i][j].workDay.currentIndex + 1; k++)
+                {
+                    IndexedLinkedListNode<Delivery> d = r.value.route.nodes[0];
+
+                    for (int l = 0; l < r.value.route.currentIndex; l++)
+                    {
+                        d = d.next;
+                    }
+
+                    sumDuration += r.value.duration;
+                    Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
+
+
+                    r = r.next;
+                }
+
+            }
+        }
+
+        Console.WriteLine(statistics);
     }
 }
 

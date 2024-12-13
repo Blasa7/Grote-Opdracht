@@ -7,6 +7,12 @@ class Input
     public static Order[] orders = new Order[1177];
     public static DistancesMatrix distancesMatrix;
     public static int orderCount = 1177;
+    public static int depotMatrixID = 287;
+
+    /// <summary>
+    /// Not intended for use during local search just to make parsing input easier.
+    /// </summary>
+    public static Dictionary<int, Order> byOrderId = new Dictionary<int, Order>();
 
     public static int GetTimeFromTo(int matrixID1, int matrixID2)
     {
@@ -38,7 +44,9 @@ class Input
                     split[j] = split[j].Trim();
                 }
 
-                Input.orders[i] = Order.Parse(split);
+                Order order = Order.Parse(split);
+                Input.orders[i] = order;
+                byOrderId.Add(order.id, order);
 
                 line = sr.ReadLine();
                 i++;
