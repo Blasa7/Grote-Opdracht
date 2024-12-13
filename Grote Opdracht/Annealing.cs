@@ -176,8 +176,7 @@ class Annealing
 
             if (i % 1000000000 == 0)
             {
-                runMode = (RunMode)(((int)runMode + 1) % 2);
-                SwapWeights(runMode);
+                SwapMode();
             }
 
         }
@@ -186,6 +185,29 @@ class Annealing
     public void RandomWalk(Schedule workingSchedule, Solution solution, ulong iterations)
     {
 
+    }
+
+    public void SwapMode()
+    {
+        runMode = (RunMode)(((int)runMode + 1) % 2);
+
+        switch (runMode)
+        {
+            case RunMode.TestRoutes:
+                {
+                    T = 10;
+                    break;
+                }
+            case RunMode.RefineRoutes:
+                {
+                    T = 1;
+                    break;
+                }
+        }
+
+        judge.T = T;
+
+        SwapWeights(runMode);
     }
 
 
