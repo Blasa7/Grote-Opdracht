@@ -4,13 +4,13 @@
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 1000;
+    float T = 10;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
     Judge judge;
 
-    bool insertRandomStart = false; //Wether or not to inser a number of nodes regardless of score before local search.
+    bool insertRandomStart = true; //Wether or not to inser a number of nodes regardless of score before local search.
 
     bool debugMessages = true;
 
@@ -131,10 +131,10 @@
             // Increase the temperature if the score doesn't increase after Y iterations
             if (i % 1000000 == 0) 
             {
-                if (previousScore == workingScore)
-                {
-                    judge.T += 5000;//T;
-                }
+                //if (previousScore == workingScore)
+                //{
+                //    judge.T += 5000;//T;
+                //}
 
                 previousScore = workingScore;
 
