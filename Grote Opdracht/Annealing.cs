@@ -183,7 +183,7 @@ class Annealing
                 }
             }
 
-            if (i % 1000000000 == 0)
+            if (i % 200000000 == 0)
             {
                 SwapMode();
             }
@@ -226,22 +226,22 @@ class Annealing
         {
             case RunMode.TestRoutes:
             {
-                addWeight = 50;
-                removeWeight = 35;
+                addWeight = 40;
+                removeWeight = 40;
                 shuffleScheduleWeight = 0;
-                shuffleWorkDayWeight = 5;
+                shuffleWorkDayWeight = 0;
                 shuffleRouteWeight = 10;
                 swapDeliveriesWeight = 5;
                 break;
             }
             case RunMode.RefineRoutes:
             {
-                addWeight = 20;
-                removeWeight = 20;
-                shuffleScheduleWeight = 5;
-                shuffleWorkDayWeight = 5;
+                addWeight = 5;
+                removeWeight = 5;
+                shuffleScheduleWeight = 10;
+                shuffleWorkDayWeight = 10;
                 shuffleRouteWeight = 50;
-                swapDeliveriesWeight = 50;
+                swapDeliveriesWeight = 30;
                 break;
             }
         }
