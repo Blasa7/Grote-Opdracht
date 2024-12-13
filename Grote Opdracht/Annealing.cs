@@ -10,7 +10,8 @@ class Annealing
     Random rng = new Random();
     Judge judge;
 
-    bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
+    bool insertRandomStart = false; //Wether or not to inser a number of nodes regardless of score before local search.
+    bool deleteRandomStart = false;
 
     bool debugMessages = true;
 
@@ -83,6 +84,26 @@ class Annealing
             judge.Reset();
 
             Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
+        }
+
+        if (deleteRandomStart)
+        {
+            for (int i = 0; i < 250; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                //workingSchedule.AddRandomDelivery(rng, judge);
+                workingSchedule.RemoveRandomDelivery(rng, judge);
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.score;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore);
+
+            judge.Reset();
+
+            Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
         }
 
         //Start iterating
@@ -163,11 +184,11 @@ class Annealing
     }
 
     int addWeight = 5;
-    int removeWeight = 10;
-    int shuffleScheduleWeight = 20;
-    int shuffleWorkDayWeight = 30;
-    int shuffleRouteWeight = 70;
-    int swapDeliveriesWeight = 70;
+    int removeWeight = 5;
+    int shuffleScheduleWeight = 50;
+    int shuffleWorkDayWeight = 100;
+    int shuffleRouteWeight = 50;
+    int swapDeliveriesWeight = 20;
 
     int addWeightSum;
     int removeWeightSum;
