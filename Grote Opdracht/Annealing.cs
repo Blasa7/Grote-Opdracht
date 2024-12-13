@@ -184,11 +184,11 @@ class Annealing
     }
 
     int addWeight = 50;
-    int removeWeight = 20;
+    int removeWeight = 25;
     int shuffleScheduleWeight = 0;
-    int shuffleWorkDayWeight = 0;
+    int shuffleWorkDayWeight = 5;
     int shuffleRouteWeight = 10;
-    int swapDeliveriesWeight = 20;
+    int swapDeliveriesWeight = 5;
 
     int addWeightSum;
     int removeWeightSum;
