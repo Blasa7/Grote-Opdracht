@@ -4,13 +4,13 @@
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 1000;
+    float T = 10;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
     Judge judge;
 
-    bool insertRandomStart = true; //Whether or not to insert a number of nodes regardless of score before local search.
+    bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
 
     bool debugMessages = true;
 
@@ -75,7 +75,7 @@
                 workingSchedule.AddRandomDelivery(rng, judge);
 
                 if (judge.GetJudgement() == Judgement.Pass)
-                    workingScore += judge.score;
+                    workingScore += judge.timeDelta;
             }
 
             bestSolution.UpdateSolution(workingSchedule, workingScore);
@@ -97,7 +97,7 @@
 
     public float GetTemperature(float T)
     {
-        float alpha = 0.99f; //Parameter to be played around with
+        float alpha = 0.9999f; //Parameter to be played around with
         return T*alpha;
     }
 
@@ -131,10 +131,10 @@
             // Increase the temperature if the score doesn't increase after Y iterations
             if (i % 1000000 == 0) 
             {
-                if (previousScore == workingScore)
-                {
-                    judge.T += 5000;//T;
-                }
+                //if (previousScore == workingScore)
+                //{
+                //    judge.T += T;//T;
+                //}
 
                 previousScore = workingScore;
 
@@ -162,8 +162,8 @@
 
     }
 
-    int addWeight = 20;
-    int removeWeight = 15;
+    int addWeight = 50;
+    int removeWeight = 20;
     int shuffleScheduleWeight = 50;
     int shuffleWorkDayWeight = 30;
     int shuffleRouteWeight = 50;
@@ -187,10 +187,10 @@
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.addScoreDelta += judge.score;
+                statistics.addScoreDelta += judge.timeDelta;
                 statistics.addSuccessCount++;
 
-                return workingScore + judge.score;
+                return workingScore + judge.timeDelta;
             }
             else
             {
@@ -203,10 +203,10 @@
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.removeScoreDelta += judge.score;
+                statistics.removeScoreDelta += judge.timeDelta;
                 statistics.removeSuccessCount++;
 
-                return workingScore + judge.score;
+                return workingScore + judge.timeDelta;
             }
             else
             {
@@ -219,10 +219,10 @@
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleScheduleScoreDelta += judge.score;
+                statistics.shuffleScheduleScoreDelta += judge.timeDelta;
                 statistics.shuffleScheduleSuccessCount++;
 
-                return workingScore + judge.score;
+                return workingScore + judge.timeDelta;
             }
             else
             {
@@ -235,10 +235,10 @@
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleWorkDayScoreDelta += judge.score;
+                statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
                 statistics.shuffleWorkDaySuccessCount++;
 
-                return workingScore + judge.score;
+                return workingScore + judge.timeDelta;
             }
             else
             {
@@ -251,10 +251,10 @@
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleWorkDayScoreDelta += judge.score;
+                statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
                 statistics.shuffleWorkDaySuccessCount++;
                 
-                return workingScore + judge.score;
+                return workingScore + judge.timeDelta;
             }
             else
             {
@@ -267,10 +267,10 @@
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.swapDeliveryScoreDelta += judge.score;
+                statistics.swapDeliveryScoreDelta += judge.timeDelta;
                 statistics.swapDeliverySuccessCount++;
 
-                return workingScore + judge.score;
+                return workingScore + judge.timeDelta;
             }
             else
             {
@@ -318,7 +318,8 @@
 
 class Judge
 {
-    public int score; //newScore - oldScore (negative score suggests improvement!)
+    public int scoreDelta; //newScore - oldScore (negative score suggests improvement!)
+    public int timeDelta;
     Judgement judgement;
 
     public float T;
@@ -332,9 +333,10 @@ class Judge
         Reset();
     }
 
-    public void Testify(int weight)
+    public void Testify(int scoreDelta, int timeDelta)//int weight)
     {
-        score += weight;
+        this.scoreDelta += scoreDelta;
+        this.timeDelta += timeDelta;
     }
 
     public void OverrideJudge(Judgement judgement)
@@ -346,7 +348,7 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            double frac = -score / T; // '-', because we want to minimize here
+            double frac = -scoreDelta / T; // '-', because we want to minimize here
             double res = Math.Exp(frac);
             if (res >= rng.NextDouble())
                 judgement = Judgement.Pass;//return Judgement.Pass;
@@ -359,7 +361,8 @@ class Judge
 
     public void Reset()
     {
-        score = 0;
+        scoreDelta = 0;
+        timeDelta = 0;
         judgement = Judgement.Undecided;
     }
 }

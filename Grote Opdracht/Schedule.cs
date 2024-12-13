@@ -109,9 +109,11 @@ class Schedule
         }
 
         //Penalty gets removed
-        int testimony = -address.emptyingTime * 3 * address.frequency;
+        int timeDelta = -address.emptyingTime * 3 * address.frequency;
 
-        judge.Testify(testimony);
+        int scoreDelta = timeDelta;
+
+        judge.Testify(scoreDelta, timeDelta);
 
         //Stage functions to randomly add are called
         for (int i = 0; i < address.frequency; i++)
@@ -150,17 +152,18 @@ class Schedule
         Delivery delivery = schedule[weekDay].nodes[index].value; //Get a random delivery
 
         //Second testify
-        int testimony = delivery.address.emptyingTime * delivery.address.frequency * 3;
+        int timeDelta = delivery.address.emptyingTime * delivery.address.frequency * 3;
+        int scoreDelta = timeDelta;
 
-        judge.Testify(testimony);
+        judge.Testify(scoreDelta, timeDelta);
 
         //Third call other functions that need to testify
-        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out int timeDelta);
+        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out int workDayTimeDelta);
 
-        int[] otherTimeDeltas = new int[delivery.others.Length];
+        int[] otherWorkDayTimeDeltas = new int[delivery.others.Length];
 
         for (int i = 0; i < delivery.others.Length; i++)
-            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], judge, out otherTimeDeltas[i]);
+            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], judge, out otherWorkDayTimeDeltas[i]);
 
         //Fourth check judgement
 
@@ -168,12 +171,12 @@ class Schedule
         {
             //We need to remove all the stops in all the routes in all the workdays foreach truck as well
             schedule[delivery.day].RemoveNode(delivery.scheduleNode.index);
-            workDays[delivery.truck][delivery.day].RemoveStop(delivery, timeDelta);
+            workDays[delivery.truck][delivery.day].RemoveStop(delivery, workDayTimeDelta);
 
             for (int i = 0; i < delivery.others.Length; i++)
             {
                 schedule[delivery.others[i].day].RemoveNode(delivery.others[i].scheduleNode.index);
-                workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], otherTimeDeltas[i]);
+                workDays[delivery.others[i].truck][delivery.others[i].day].RemoveStop(delivery.others[i], otherWorkDayTimeDeltas[i]);
             }
 
             unfulfilledAddresses.InsertLast(delivery.address); //Only once!
@@ -220,9 +223,10 @@ class Schedule
         timeDeltas = new int[delivery.address.frequency];
 
         //Second testify
-        int testimony = delivery.address.emptyingTime * delivery.address.frequency * 3; //Not strictly neede for shuffle
+        int timeDelta = delivery.address.emptyingTime * delivery.address.frequency * 3; //Not strictly neede for shuffle
+        int scoreDelta = timeDelta;
 
-        judge.Testify(testimony);
+        judge.Testify(scoreDelta, timeDelta);
 
         //Third call other functions that need to testify
         workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out timeDeltas[0]);
@@ -296,9 +300,10 @@ class Schedule
                 }
         }
 
-        int testimony = -oldDelivery.address.emptyingTime * 3 * oldDelivery.address.frequency; //Not strictly needed for shuffle
+        int timeDelta = -oldDelivery.address.emptyingTime * 3 * oldDelivery.address.frequency; //Not strictly needed for shuffle
+        int scoreDelta = timeDelta;
 
-        judge.Testify(testimony);
+        judge.Testify(scoreDelta, timeDelta);
 
         for (int i = 0; i < oldDelivery.address.frequency; i++)
         {
@@ -422,7 +427,10 @@ class Schedule
                 judge.OverrideJudge(Judgement.Fail);
         }
 
-        judge.Testify(list1Delta + list2Delta);
+        int timeDelta = list1Delta + list2Delta; //Time in doelstellingsfunctie
+        int scoreDelta = timeDelta; //Time used in the judge
+
+        judge.Testify(scoreDelta, timeDelta);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {            

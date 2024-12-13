@@ -45,6 +45,11 @@
         return rng.Next(startIndex, currentIndex + 1);
     }
 
+    public int getRandomIncluded(Random rng, int startIndex)
+    {
+        return rng.Next(startIndex, currentIndex + 1);
+    }
+
     /// <summary>
     /// Inserts the node at nodeIndex after the node at prevIndex.
     /// </summary>

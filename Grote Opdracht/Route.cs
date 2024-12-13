@@ -32,23 +32,23 @@ class Route : IClonable<Route>
     // example
     // ...a - b - c - d - e - f - a...
     // a = depot
-    // total distance = ab + bc + cd + de + ef + fa
-    // relevant distance = bc + cd + de + ef
+    // total driving time = ab + bc + cd + de + ef + fa
+    // relevant driving time = bc + cd + de + ef
 
     // remove c
     // ...a - b - d - e - f - a...
-    // total distance = ab + bd + de + ef + fa  ( -bc  -cd  +bd )   
-    // relevant distance = bd + de + ef         ( -bc  -cd  +bd )   all same
+    // total driving time = ab + bd + de + ef + fa  ( -bc  -cd  +bd )   
+    // relevant driving time = bd + de + ef         ( -bc  -cd  +bd )   all same
 
     // remove b
     //...a - d - e - f - a...
-    // total distance = ad + de + ef + fa   ( -ab  -bd  +ad )       
-    // relevant distance = de + ef          ( -bd )                 only the middle
+    // total driving time = ad + de + ef + fa   ( -ab  -bd  +ad )       
+    // relevant driving time = de + ef          ( -bd )                 only the middle
 
     // add g after f
     //...a - d - e - f - g - a...
-    // total distance = ad + de + ef + fg   ( -fa  +fg  +ga )       
-    // relevant distance = de + ef + fg     ( +fg )                 only the middle
+    // total driving time = ad + de + ef + fg   ( -fa  +fg  +ga )       
+    // relevant driving time = de + ef + fg     ( +fg )                 only the middle
 
 
     public Route()
@@ -60,10 +60,7 @@ class Route : IClonable<Route>
     public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int routeIndex, out int timeDelta)
     {
         //First calculate variables
-        routeIndex = 0;
-
-        if (route.startIndex <= route.currentIndex)
-            routeIndex = route.getRandomIncluded(rng);
+        routeIndex = route.getRandomIncluded(rng, 0);
 
         Address address = delivery.address;
         int prevID = route.nodes[routeIndex].value.address.matrixID;
@@ -72,21 +69,32 @@ class Route : IClonable<Route>
         int newGarbageAmount = collectedGarbage + delivery.address.garbageAmount;
 
         //Second testify
-        int testimony =
+        timeDelta =
             Input.GetTimeFromTo(prevID, address.matrixID) + //New values are added
             Input.GetTimeFromTo(address.matrixID, nextID) -
             Input.GetTimeFromTo(prevID, nextID) +
             delivery.address.emptyingTime; //Old value is substracted
 
-        if (routeIndex == 0)
-            testimony += 1800000;//30; //Because the emptying time at depot is 30 min
+        int scoreDelta = timeDelta;
+
+        //Add empyting time of 30min on the first node in the route
+        if (routeIndex == 0 && route.currentIndex == 0)
+            timeDelta += 1800000;//30; //Because the emptying time at depot is 30 min
+
+        //Not the first node to be added
+        if (route.currentIndex != 0)
+        {
+            if (routeIndex == 0) //Insert after Depot
+                scoreDelta = Input.GetTimeFromTo(address.matrixID, nextID);
+
+            if (routeIndex == route.currentIndex) //Insert before Depot
+                scoreDelta = Input.GetTimeFromTo(prevID, address.matrixID);
+        }
 
         if (newGarbageAmount > maximumGarbage) //Hard limits
             judge.OverrideJudge(Judgement.Fail);
 
-        judge.Testify(testimony);
-
-        timeDelta = testimony;
+        judge.Testify(scoreDelta, timeDelta);
     }
 
     /// <summary>
@@ -106,11 +114,11 @@ class Route : IClonable<Route>
         int nextID = route.nodes[routeIndex].next.value.address.matrixID;
 
         int relevantDelta = drivetimeDelta;
-        if (routeIndex == 0)
+        if (routeIndex == 0) //Add after depot
         {
             relevantDelta = Input.GetTimeFromTo(thisID, nextID);
         }
-        else if (routeIndex == route.currentIndex) 
+        else if (routeIndex == route.currentIndex) //Add before depot
         {
             relevantDelta = Input.GetTimeFromTo(prevID, thisID);
         }
@@ -133,19 +141,28 @@ class Route : IClonable<Route>
         int nextID = route.nodes[index].next.value.address.matrixID;
 
         //Second testify
-        int testimony =
+        timeDelta =
             Input.GetTimeFromTo(prevID, nextID) - //New value
             (Input.GetTimeFromTo(prevID, address.matrixID) + //Old values are substracted.
             Input.GetTimeFromTo(address.matrixID, nextID)) -
             delivery.address.emptyingTime;
 
+        int scoreDelta = timeDelta;
+
         if (route.currentIndex == 1) //There are two nodes
-            testimony -= 1800000;//30; //Minus 30 minutes because you no longer have the 30 min emptying time.
+            timeDelta -= 1800000;//30; //Minus 30 minutes because you no longer have the 30 min emptying time.
 
-        judge.Testify(testimony);
+        //Not the last remaining node to be removed
+        if (route.currentIndex != 1)
+        {
+            if (delivery.routeNode.index == 1) //Remove after Depot
+                scoreDelta = -Input.GetTimeFromTo(address.matrixID, nextID);
 
-        timeDelta = testimony;
+            if (delivery.routeNode.index == route.currentIndex) //Remove before Depot
+                scoreDelta = -Input.GetTimeFromTo(prevID, address.matrixID);
+        }
 
+        judge.Testify(scoreDelta, timeDelta);
     }
 
     /// <summary>
@@ -167,11 +184,11 @@ class Route : IClonable<Route>
         int nextID = route.nodes[removedIndex].next.value.address.matrixID;
 
         int relevantDelta = drivetimeDelta;
-        if (removedIndex == 1)
+        if (removedIndex == 1) //Remove node after depot
         {
             relevantDelta = -Input.GetTimeFromTo(thisID, nextID);
         }
-        else if (removedIndex == route.currentIndex)
+        else if (removedIndex == route.currentIndex) //Remove node before depot
         {
             relevantDelta = -Input.GetTimeFromTo(prevID, thisID);
         }
@@ -232,8 +249,9 @@ class Route : IClonable<Route>
             //changedDelivery.address.emptyingTime; //Old value is substracted
 
         timeDelta = removeTimeDelta + addTimeDelta;
+        int scoreDelta = timeDelta;
 
-        judge.Testify(timeDelta);
+        judge.Testify(scoreDelta, timeDelta);
     }
 
     public void ShuffleRoute(Delivery changedDelivery, Delivery newIndexDelivery, int removeTimeDelta, int addTimeDelta)
