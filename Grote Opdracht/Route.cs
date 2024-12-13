@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Dynamic;
+using System.Net;
 
 class Route : IClonable<Route>
 {
@@ -7,7 +8,58 @@ class Route : IClonable<Route>
     public int collectedGarbage = 0;
     public int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
 
-    public int duration; //Time to empty at depot is 30 min
+    /// <summary>
+    /// The total distance of this route, including driving time, collecting time, etc..
+    /// </summary>
+    public int duration;
+
+    /// <summary>
+    /// The total distance of this route, only counting driving time.
+    /// </summary>
+    public int distance;
+
+    /// <summary>
+    /// The distance of this route, only counting driving time and excluding time from & to depot.
+    /// Idea is: some routes go all over the place (bad). These have a high relevant distance.
+    /// </summary>
+    public int relevantDistance;
+
+    /// <summary>
+    /// We want this ratio small.
+    /// BECAUSE Ratio will be bigger when relevant distance makes most of the trip (bad).
+    /// AND     Ratio will be smaller when a truck once drives far and then collects a clump of addresses (good).
+    /// BUT     Ratio will also be big when the truck drives near the depot and then picks up a clump, so might not be accurate representation.
+    /// SO      Do we want to use ratio?
+    /// </summary>
+    public double relevantRatio
+    {
+        get
+        {
+            return (double)relevantDistance / (double)distance;
+        }
+    }
+
+    // example
+    // ...a - b - c - d - e - f - a...
+    // a = depot
+    // total distance = ab + bc + cd + de + ef + fa
+    // relevant distance = bc + cd + de + ef
+
+    // remove c
+    // ...a - b - d - e - f - a...
+    // total distance = ab + bd + de + ef + fa  ( -bc  -cd  +bd )   
+    // relevant distance = bd + de + ef         ( -bc  -cd  +bd )   all same
+
+    // remove b
+    //...a - d - e - f - a...
+    // total distance = ad + de + ef + fa   ( -ab  -bd  +ad )       
+    // relevant distance = de + ef          ( -bd )                 only the middle
+
+    // add g after f
+    //...a - d - e - f - g - a...
+    // total distance = ad + de + ef + fg   ( -fa  +fg  +ga )       
+    // relevant distance = de + ef + fg     ( +fg )                 only the middle
+
 
     public Route()
     {
@@ -47,10 +99,33 @@ class Route : IClonable<Route>
         timeDelta = testimony;
     }
 
+    /// <summary>
+    /// Add delivery to the route after routeIndex
+    /// </summary>
     public void AddStop(Delivery delivery, int routeIndex, int timeDelta)
     {
         collectedGarbage += delivery.address.garbageAmount;
         duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
+
+        int distanceDelta = timeDelta - delivery.address.emptyingTime;
+        distance += distanceDelta;
+
+        //prepare the IDs
+        int prevID = route.nodes[routeIndex].value.address.matrixID;
+        int thisID = delivery.address.matrixID;
+        int nextID = route.nodes[routeIndex].next.value.address.matrixID;
+
+        int relevantDelta = distanceDelta;
+        if (routeIndex == 0)
+        {
+            relevantDelta = Input.GetTimeFromTo(thisID, nextID);
+        }
+        else if (routeIndex == route.currentIndex) 
+        {
+            relevantDelta = Input.GetTimeFromTo(prevID, thisID);
+        }
+
+        relevantDistance += relevantDelta;
 
         delivery.routeNode = route.InsertAfter(delivery, routeIndex);
     }
@@ -70,7 +145,7 @@ class Route : IClonable<Route>
         //Second testify
         int testimony =
             Input.GetTimeFromTo(prevID, nextID) - //New value
-            (Input.GetTimeFromTo(prevID, address.matrixID) + //Old values are substracted
+            (Input.GetTimeFromTo(prevID, address.matrixID) + //Old values are substracted.
             Input.GetTimeFromTo(address.matrixID, nextID)) -
             delivery.address.emptyingTime;
 
@@ -80,16 +155,38 @@ class Route : IClonable<Route>
         judge.Testify(testimony);
 
         timeDelta = testimony;
+
     }
 
     /// <summary>
-    /// Call tgis after calling StageRemoveStop and use the correspoding returns.
+    /// Call this after calling StageRemoveStop and use the correspoding returns.
     /// The judgement is assumed to be passed (check before calling).
     /// </summary>
     public void RemoveStop(Delivery delivery, int timeDelta)
     {
         collectedGarbage -= delivery.address.garbageAmount;
         duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
+
+        int distanceDelta = timeDelta + delivery.address.emptyingTime;
+        distance += distanceDelta;
+
+        //prepare the IDs
+        int removedIndex = delivery.routeNode.index;
+        int prevID = route.nodes[removedIndex].prev.value.address.matrixID;
+        int thisID = delivery.address.matrixID;
+        int nextID = route.nodes[removedIndex].next.value.address.matrixID;
+
+        int relevantDelta = distanceDelta;
+        if (removedIndex == 1)
+        {
+            relevantDelta = -Input.GetTimeFromTo(thisID, nextID);
+        }
+        else if (removedIndex == route.currentIndex)
+        {
+            relevantDelta = -Input.GetTimeFromTo(prevID, thisID);
+        }
+
+        relevantDistance += relevantDelta;
 
         route.RemoveNode(delivery.routeNode.index);
     }
