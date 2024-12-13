@@ -63,6 +63,8 @@ class Annealing
 
     public Solution Run(ulong iter)
     {
+        SwapMode();
+
         Console.WriteLine(iter);
         iterations = iter;
 
