@@ -1,10 +1,12 @@
 class Annealing
 {
+    public static RunMode runMode = RunMode.TestRoutes;
+
     public Solution bestSolution = new Solution();
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 10;
+    float T = 5f;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
@@ -173,8 +175,14 @@ class Annealing
                         return;
                     }
                 }
-
             }
+
+            if (i % 1000000000 == 0)
+            {
+                runMode = (RunMode)(((int)runMode + 1) % 2);
+                SwapWeights(runMode);
+            }
+
         }
     }
 
@@ -183,12 +191,43 @@ class Annealing
 
     }
 
-    int addWeight = 50;
-    int removeWeight = 20;
-    int shuffleScheduleWeight = 50;
-    int shuffleWorkDayWeight = 100;
-    int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 20;
+
+    public void SwapWeights(RunMode mode)
+    {
+        switch (mode)
+        {
+            case RunMode.TestRoutes:
+            {
+                addWeight = 50;
+                removeWeight = 35;
+                shuffleScheduleWeight = 0;
+                shuffleWorkDayWeight = 5;
+                shuffleRouteWeight = 10;
+                swapDeliveriesWeight = 5;
+                break;
+            }
+            case RunMode.RefineRoutes:
+            {
+                addWeight = 20;
+                removeWeight = 20;
+                shuffleScheduleWeight = 5;
+                shuffleWorkDayWeight = 5;
+                shuffleRouteWeight = 50;
+                swapDeliveriesWeight = 50;
+                break;
+            }
+        }
+
+        RecalculateWeights();
+    }
+
+
+    int addWeight; 
+    int removeWeight;
+    int shuffleScheduleWeight;
+    int shuffleWorkDayWeight;
+    int shuffleRouteWeight;
+    int swapDeliveriesWeight;
 
     int addWeightSum;
     int removeWeightSum;
@@ -356,7 +395,15 @@ class Judge
 
     public void Testify(int scoreDelta, int timeDelta)//int weight)
     {
-        this.scoreDelta += scoreDelta;
+        switch (Annealing.runMode)
+        {
+            case RunMode.TestRoutes:
+                this.scoreDelta += scoreDelta;
+                break;
+            case RunMode.RefineRoutes:
+                this.scoreDelta += timeDelta;
+                break;
+        }
         this.timeDelta += timeDelta;
     }
 
@@ -442,4 +489,10 @@ class Statistics()
             $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
             $"Swap delivery fail count: {swapDeliveryFailCount}";
     }
+}
+
+public enum RunMode : int 
+{
+    TestRoutes = 0,
+    RefineRoutes = 1
 }

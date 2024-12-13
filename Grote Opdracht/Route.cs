@@ -75,11 +75,11 @@ class Route : IClonable<Route>
             Input.GetTimeFromTo(prevID, nextID) +
             delivery.address.emptyingTime; //Old value is substracted
 
-        int scoreDelta = timeDelta;
-
         //Add empyting time of 30min on the first node in the route
         if (routeIndex == 0 && route.currentIndex == 0)
             timeDelta += 1800000;//30; //Because the emptying time at depot is 30 min
+
+        int scoreDelta = timeDelta;
 
         //Not the first node to be added
         if (route.currentIndex != 0)
@@ -147,10 +147,10 @@ class Route : IClonable<Route>
             Input.GetTimeFromTo(address.matrixID, nextID)) -
             delivery.address.emptyingTime;
 
-        int scoreDelta = timeDelta;
-
         if (route.currentIndex == 1) //There are two nodes
             timeDelta -= 1800000;//30; //Minus 30 minutes because you no longer have the 30 min emptying time.
+
+        int scoreDelta = timeDelta;
 
         //Not the last remaining node to be removed
         if (route.currentIndex != 1)
