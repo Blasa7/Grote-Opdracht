@@ -6,7 +6,9 @@ class Annealing
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 10f;
+
+    float T = 1;
+
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
@@ -170,6 +172,11 @@ class Annealing
                     {
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         return;
+                    }
+                    else if (key.Key == ConsoleKey.P)
+                    {
+                        bestSolution.UpdateSolution(workingSchedule, workingScore);
+                        workingScore = bestSolution.score;
                     }
                 }
             }
@@ -423,6 +430,7 @@ class Judge
                 this.scoreDelta += timeDelta;
                 break;
         }
+
         this.timeDelta += timeDelta;
     }
 
