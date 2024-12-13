@@ -10,7 +10,7 @@
     Random rng = new Random();
     Judge judge;
 
-    bool insertRandomStart = false; //Wether or not to inser a number of nodes regardless of score before local search.
+    bool insertRandomStart = true; //Whether or not to insert a number of nodes regardless of score before local search.
 
     bool debugMessages = true;
 

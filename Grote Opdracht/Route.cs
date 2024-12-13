@@ -14,30 +14,20 @@ class Route : IClonable<Route>
     public int duration;
 
     /// <summary>
-    /// The total distance of this route, only counting driving time.
+    /// The total driving time of this route.
     /// </summary>
-    public int distance;
+    public int drivingTime;
 
     /// <summary>
-    /// The distance of this route, only counting driving time and excluding time from & to depot.
-    /// Idea is: some routes go all over the place (bad). These have a high relevant distance.
+    /// The driving time of this route, excluding time from & to depot.
+    /// Idea is: some routes go all over the place (bad). These have a high relevant driving time.
     /// </summary>
-    public int relevantDistance;
+    public int relevantDrivingTime;
 
     /// <summary>
-    /// We want this ratio small.
-    /// BECAUSE Ratio will be bigger when relevant distance makes most of the trip (bad).
-    /// AND     Ratio will be smaller when a truck once drives far and then collects a clump of addresses (good).
-    /// BUT     Ratio will also be big when the truck drives near the depot and then picks up a clump, so might not be accurate representation.
-    /// SO      Do we want to use ratio?
+    /// The driving time from and to the depot.
     /// </summary>
-    public double relevantRatio
-    {
-        get
-        {
-            return (double)relevantDistance / (double)distance;
-        }
-    }
+    public int depotDrivingTime { get { return drivingTime - relevantDrivingTime; } }
 
     // example
     // ...a - b - c - d - e - f - a...
@@ -107,15 +97,15 @@ class Route : IClonable<Route>
         collectedGarbage += delivery.address.garbageAmount;
         duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
 
-        int distanceDelta = timeDelta - delivery.address.emptyingTime;
-        distance += distanceDelta;
+        int drivetimeDelta = timeDelta - delivery.address.emptyingTime;
+        drivingTime += drivetimeDelta;
 
         //prepare the IDs
         int prevID = route.nodes[routeIndex].value.address.matrixID;
         int thisID = delivery.address.matrixID;
         int nextID = route.nodes[routeIndex].next.value.address.matrixID;
 
-        int relevantDelta = distanceDelta;
+        int relevantDelta = drivetimeDelta;
         if (routeIndex == 0)
         {
             relevantDelta = Input.GetTimeFromTo(thisID, nextID);
@@ -125,7 +115,7 @@ class Route : IClonable<Route>
             relevantDelta = Input.GetTimeFromTo(prevID, thisID);
         }
 
-        relevantDistance += relevantDelta;
+        relevantDrivingTime += relevantDelta;
 
         delivery.routeNode = route.InsertAfter(delivery, routeIndex);
     }
@@ -167,8 +157,8 @@ class Route : IClonable<Route>
         collectedGarbage -= delivery.address.garbageAmount;
         duration += timeDelta; //Same value as testimony as it just calculates the time change in the route.
 
-        int distanceDelta = timeDelta + delivery.address.emptyingTime;
-        distance += distanceDelta;
+        int drivetimeDelta = timeDelta + delivery.address.emptyingTime;
+        drivingTime += drivetimeDelta;
 
         //prepare the IDs
         int removedIndex = delivery.routeNode.index;
@@ -176,7 +166,7 @@ class Route : IClonable<Route>
         int thisID = delivery.address.matrixID;
         int nextID = route.nodes[removedIndex].next.value.address.matrixID;
 
-        int relevantDelta = distanceDelta;
+        int relevantDelta = drivetimeDelta;
         if (removedIndex == 1)
         {
             relevantDelta = -Input.GetTimeFromTo(thisID, nextID);
@@ -186,7 +176,7 @@ class Route : IClonable<Route>
             relevantDelta = -Input.GetTimeFromTo(prevID, thisID);
         }
 
-        relevantDistance += relevantDelta;
+        relevantDrivingTime += relevantDelta;
 
         route.RemoveNode(delivery.routeNode.index);
     }
