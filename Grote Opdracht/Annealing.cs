@@ -185,9 +185,9 @@ class Annealing
 
     int addWeight = 50;
     int removeWeight = 20;
-    int shuffleScheduleWeight = 50;
-    int shuffleWorkDayWeight = 100;
-    int shuffleRouteWeight = 50;
+    int shuffleScheduleWeight = 0;
+    int shuffleWorkDayWeight = 0;
+    int shuffleRouteWeight = 10;
     int swapDeliveriesWeight = 20;
 
     int addWeightSum;
@@ -272,14 +272,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
-                statistics.shuffleWorkDaySuccessCount++;
+                statistics.shuffleRouteScoreDelta += judge.timeDelta;
+                statistics.shuffleRouteSuccessCount++;
                 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.shuffleWorkDayFailCount++;
+                statistics.shuffleRouteFailCount++;
             }
         }
         else if (weight < swapDeliveriesWeightSum)
@@ -438,6 +438,9 @@ class Statistics()
             $"Shuffle workday score delta: {shuffleWorkDayScoreDelta / 60 / 1000} \n" +
             $"Shuffle workday success count: {shuffleWorkDaySuccessCount} \n" +
             $"Shuffle workday fail count: {shuffleWorkDayFailCount} \n" +
+            $"Shuffle workday score delta: {shuffleRouteScoreDelta / 60 / 1000} \n" +
+            $"Shuffle workday success count: {shuffleRouteSuccessCount} \n" +
+            $"Shuffle workday fail count: {shuffleRouteFailCount} \n" +
             $"Swap delivery score delta: {swapDeliveryScoreDelta / 60 / 1000} \n" +
             $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
             $"Swap delivery fail count: {swapDeliveryFailCount}";
