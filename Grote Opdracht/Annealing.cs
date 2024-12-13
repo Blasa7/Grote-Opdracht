@@ -1,4 +1,4 @@
-﻿class Annealing
+class Annealing
 {
     public Solution bestSolution = new Solution();
     Schedule workingSchedule = new Schedule();
@@ -10,7 +10,7 @@
     Random rng = new Random();
     Judge judge;
 
-    bool insertRandomStart = true; //Wether or not to inser a number of nodes regardless of score before local search.
+    bool insertRandomStart = true; //Whether or not to insert a number of nodes regardless of score before local search.
 
     bool debugMessages = true;
 
