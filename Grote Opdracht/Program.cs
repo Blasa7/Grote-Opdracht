@@ -29,9 +29,14 @@
         else
             annealing = Annealing.FromRandom();
 
+        ulong iter;
         Console.WriteLine("Enter amount of iterations (in million)");
 
-        ulong iter = ulong.Parse(Console.ReadLine()) * 1000000;
+        response = Console.ReadLine();
+        if (response == "")
+            iter = 18446744073709551615;
+        else
+            iter = ulong.Parse(response) * 1000000;
 
         Solution solution = annealing.Run(iter);
 

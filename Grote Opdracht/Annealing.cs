@@ -4,13 +4,13 @@ class Annealing
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 10;
+    float T = 500;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
     Judge judge;
 
-    bool insertRandomStart = true; //Whether or not to insert a number of nodes regardless of score before local search.
+    bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
 
     bool debugMessages = true;
 
@@ -97,7 +97,7 @@ class Annealing
 
     public float GetTemperature(float T)
     {
-        float alpha = 0.99f; //Parameter to be played around with
+        float alpha = 0.95f; //Parameter to be played around with
         return T*alpha;
     }
 
@@ -162,12 +162,12 @@ class Annealing
 
     }
 
-    int addWeight = 20;
-    int removeWeight = 15;
-    int shuffleScheduleWeight = 50;
+    int addWeight = 5;
+    int removeWeight = 10;
+    int shuffleScheduleWeight = 20;
     int shuffleWorkDayWeight = 30;
-    int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 50;
+    int shuffleRouteWeight = 70;
+    int swapDeliveriesWeight = 70;
 
     int addWeightSum;
     int removeWeightSum;
