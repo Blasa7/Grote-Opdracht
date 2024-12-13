@@ -4,7 +4,7 @@ class Annealing
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 10;
+    float T = 0.5f;//10;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
@@ -161,9 +161,6 @@ class Annealing
 
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
 
-                if (bestSolution.score < 358500000) // Score < 6000 min
-                    return;
-
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
@@ -183,12 +180,12 @@ class Annealing
 
     }
 
-    int addWeight = 50;
-    int removeWeight = 25;
-    int shuffleScheduleWeight = 0;
+    int addWeight = 50;//20;//50;
+    int removeWeight = 35;//20;//35;
+    int shuffleScheduleWeight = 0;//5;//0;
     int shuffleWorkDayWeight = 5;
-    int shuffleRouteWeight = 10;
-    int swapDeliveriesWeight = 5;
+    int shuffleRouteWeight = 10;//50;//10;
+    int swapDeliveriesWeight = 5;//50;//5;
 
     int addWeightSum;
     int removeWeightSum;
@@ -356,7 +353,7 @@ class Judge
 
     public void Testify(int scoreDelta, int timeDelta)//int weight)
     {
-        this.scoreDelta += scoreDelta;
+        this.scoreDelta += scoreDelta;//timeDelta;//scoreDelta;
         this.timeDelta += timeDelta;
     }
 
