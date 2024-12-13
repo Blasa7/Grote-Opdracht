@@ -96,7 +96,7 @@ class Annealing
                 workingSchedule.RemoveRandomDelivery(rng, judge);
 
                 if (judge.GetJudgement() == Judgement.Pass)
-                    workingScore += judge.score;
+                    workingScore += judge.timeDelta;
             }
 
             bestSolution.UpdateSolution(workingSchedule, workingScore);
