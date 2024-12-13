@@ -438,9 +438,9 @@ class Statistics()
             $"Shuffle workday score delta: {shuffleWorkDayScoreDelta / 60 / 1000} \n" +
             $"Shuffle workday success count: {shuffleWorkDaySuccessCount} \n" +
             $"Shuffle workday fail count: {shuffleWorkDayFailCount} \n" +
-            $"Shuffle workday score delta: {shuffleRouteScoreDelta / 60 / 1000} \n" +
-            $"Shuffle workday success count: {shuffleRouteSuccessCount} \n" +
-            $"Shuffle workday fail count: {shuffleRouteFailCount} \n" +
+            $"Shuffle route score delta: {shuffleRouteScoreDelta / 60 / 1000} \n" +
+            $"Shuffle route success count: {shuffleRouteSuccessCount} \n" +
+            $"Shuffle route fail count: {shuffleRouteFailCount} \n" +
             $"Swap delivery score delta: {swapDeliveryScoreDelta / 60 / 1000} \n" +
             $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
             $"Swap delivery fail count: {swapDeliveryFailCount}";
