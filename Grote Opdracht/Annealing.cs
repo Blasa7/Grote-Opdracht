@@ -4,7 +4,7 @@ class Annealing
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 0.5f;//10;
+    float T = 1;// 10;//0.5f;//10;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
@@ -169,6 +169,11 @@ class Annealing
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         return;
                     }
+                    else if (key.Key == ConsoleKey.P)
+                    {
+                        bestSolution.UpdateSolution(workingSchedule, workingScore);
+                        workingScore = bestSolution.score;
+                    }
                 }
 
             }
@@ -180,12 +185,12 @@ class Annealing
 
     }
 
-    int addWeight = 50;//20;//50;
-    int removeWeight = 35;//20;//35;
-    int shuffleScheduleWeight = 0;//5;//0;
+    int addWeight = 20;//50;//20;//50;
+    int removeWeight = 20;//35;//20;//35;
+    int shuffleScheduleWeight = 5;//0;//5;//0;
     int shuffleWorkDayWeight = 5;
-    int shuffleRouteWeight = 10;//50;//10;
-    int swapDeliveriesWeight = 5;//50;//5;
+    int shuffleRouteWeight = 50;//10;//50;//10;
+    int swapDeliveriesWeight = 50;//5;//50;//5;
 
     int addWeightSum;
     int removeWeightSum;
@@ -353,7 +358,7 @@ class Judge
 
     public void Testify(int scoreDelta, int timeDelta)//int weight)
     {
-        this.scoreDelta += scoreDelta;//timeDelta;//scoreDelta;
+        this.scoreDelta += timeDelta;//scoreDelta;//timeDelta;//scoreDelta;
         this.timeDelta += timeDelta;
     }
 
