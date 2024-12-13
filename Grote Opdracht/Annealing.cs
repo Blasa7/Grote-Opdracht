@@ -11,6 +11,7 @@
     Judge judge;
 
     bool insertRandomStart = false; //Wether or not to inser a number of nodes regardless of score before local search.
+    bool deleteRandomStart = false;
 
     bool debugMessages = true;
 
@@ -85,6 +86,26 @@
             Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
         }
 
+        if (deleteRandomStart)
+        {
+            for (int i = 0; i < 250; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                //workingSchedule.AddRandomDelivery(rng, judge);
+                workingSchedule.RemoveRandomDelivery(rng, judge);
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.score;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore);
+
+            judge.Reset();
+
+            Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
+        }
+
         //Start iterating
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, T);
@@ -97,7 +118,7 @@
 
     public float GetTemperature(float T)
     {
-        float alpha = 0.99f; //Parameter to be played around with
+        float alpha = 0.9999999f; //Parameter to be played around with
         return T*alpha;
     }
 
@@ -162,12 +183,12 @@
 
     }
 
-    int addWeight = 20;
-    int removeWeight = 15;
+    int addWeight = 5;
+    int removeWeight = 5;
     int shuffleScheduleWeight = 50;
-    int shuffleWorkDayWeight = 30;
+    int shuffleWorkDayWeight = 100;
     int shuffleRouteWeight = 50;
-    int swapDeliveriesWeight = 50;
+    int swapDeliveriesWeight = 20;
 
     int addWeightSum;
     int removeWeightSum;
