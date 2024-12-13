@@ -6,7 +6,7 @@ class Annealing
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    float T = 5f;
+    float T = 10f;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
 
     Random rng = new Random();
@@ -163,9 +163,6 @@ class Annealing
 
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
 
-                if (bestSolution.score < 358500000) // Score < 6000 min
-                    return;
-
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
@@ -311,14 +308,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
-                statistics.shuffleWorkDaySuccessCount++;
+                statistics.shuffleRouteScoreDelta += judge.timeDelta;
+                statistics.shuffleRouteSuccessCount++;
                 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.shuffleWorkDayFailCount++;
+                statistics.shuffleRouteFailCount++;
             }
         }
         else if (weight < swapDeliveriesWeightSum)
@@ -485,6 +482,9 @@ class Statistics()
             $"Shuffle workday score delta: {shuffleWorkDayScoreDelta / 60 / 1000} \n" +
             $"Shuffle workday success count: {shuffleWorkDaySuccessCount} \n" +
             $"Shuffle workday fail count: {shuffleWorkDayFailCount} \n" +
+            $"Shuffle route score delta: {shuffleRouteScoreDelta / 60 / 1000} \n" +
+            $"Shuffle route success count: {shuffleRouteSuccessCount} \n" +
+            $"Shuffle route fail count: {shuffleRouteFailCount} \n" +
             $"Swap delivery score delta: {swapDeliveryScoreDelta / 60 / 1000} \n" +
             $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
             $"Swap delivery fail count: {swapDeliveryFailCount}";
