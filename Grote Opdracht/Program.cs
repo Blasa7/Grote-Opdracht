@@ -30,7 +30,7 @@
             annealing = Annealing.FromRandom();
 
         ulong iter;
-        Console.WriteLine("Enter amount of iterations (in million)");
+        Console.WriteLine("Enter amount of iterations (in million) (press Enter for infinite)");
 
         response = Console.ReadLine();
         if (response == "")

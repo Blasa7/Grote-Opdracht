@@ -29,13 +29,8 @@
         copy.address = address.Clone();
         copy.truck = truck;
         copy.day = day;
-        //copy.scheduleNode = scheduleNode.Clone();
-        //copy.workDayNode = workDayNode.Clone();
-        //copy.routeNode = routeNode.Clone();
-        //copy.others = others; // Maybe need to clone otherss aswell
 
         return copy;
-        // throw new NotImplementedException("This shouldn't be called");
     }
 
     public override string ToString()

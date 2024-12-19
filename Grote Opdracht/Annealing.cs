@@ -37,6 +37,9 @@ class Annealing
         return annealing;
     }
 
+    /// <summary>
+    /// Reads a solution from a specified path
+    /// </summary>
     public static Annealing FromFile(string path)
     {
         Annealing annealing = new Annealing();
@@ -63,7 +66,7 @@ class Annealing
 
     public Solution Run(ulong iter)
     {
-        SwapMode();
+        SwapMode(); // Start in RefineRoutes
 
         Console.WriteLine(iter);
         iterations = iter;
@@ -78,7 +81,6 @@ class Annealing
             {
                 judge.Reset();
                 judge.OverrideJudge(Judgement.Pass);
-                //workingSchedule.AddRandomDelivery(rng, judge);
                 workingSchedule.AddRandomDelivery(rng, judge);
 
                 if (judge.GetJudgement() == Judgement.Pass)
@@ -98,7 +100,6 @@ class Annealing
             {
                 judge.Reset();
                 judge.OverrideJudge(Judgement.Pass);
-                //workingSchedule.AddRandomDelivery(rng, judge);
                 workingSchedule.RemoveRandomDelivery(rng, judge);
 
                 if (judge.GetJudgement() == Judgement.Pass)
@@ -114,7 +115,7 @@ class Annealing
 
         //Start iterating
 
-        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, T);
+        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations);
 
         if (debugMessages)
             DebugMessages();
@@ -124,16 +125,11 @@ class Annealing
 
     public float GetTemperature(float T)
     {
-        float alpha = 0.9999f; //Parameter to be played around with
+        float alpha = 0.9999f;
         return T*alpha;
     }
 
-    public void IteratedLocalSearch(Schedule workingSchedule, Solution bestSolution, ulong iterations)
-    {
-
-    }
-
-    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float T)
+    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
     { 
         int previousScore = -1;
 
@@ -155,16 +151,9 @@ class Annealing
 
             judge.Reset();
 
-            // Increase the temperature if the score doesn't increase after Y iterations
+            // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
-                //if (previousScore == workingScore)
-                //{
-                //    judge.T += T;//T;
-                //}
-
-                previousScore = workingScore;
-
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
 
                 if (Console.KeyAvailable)
@@ -183,17 +172,13 @@ class Annealing
                 }
             }
 
+            // Switch modes every Y iterations
             if (i % 200000000 == 0)
             {
                 SwapMode();
             }
 
         }
-    }
-
-    public void RandomWalk(Schedule workingSchedule, Solution solution, ulong iterations)
-    {
-
     }
 
     public void SwapMode()
@@ -267,7 +252,7 @@ class Annealing
 
     public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
     {
-        int weight = rng.Next(0, totalWeightSum);//rng.NextSingle(); 
+        int weight = rng.Next(0, totalWeightSum); 
 
         if (weight < addWeightSum)
         {
@@ -301,7 +286,7 @@ class Annealing
                 statistics.removeFailCount++;
             }
         }
-        else if (weight < shuffleScheduleSum) //Not too many times
+        else if (weight < shuffleScheduleSum)
         {
             schedule.ShuffleSchedule(rng, judge);
 
@@ -369,6 +354,9 @@ class Annealing
         return workingScore;
     }
 
+    /// <summary>
+    /// Prints the schedule for debug purposes
+    /// </summary>
     void DebugMessages()
     {
         for (int i = 0; i < workingSchedule.workDays.Length; i++)
@@ -421,7 +409,7 @@ class Judge
         Reset();
     }
 
-    public void Testify(int scoreDelta, int timeDelta)//int weight)
+    public void Testify(int scoreDelta, int timeDelta)
     {
         switch (Annealing.runMode)
         {

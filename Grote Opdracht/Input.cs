@@ -24,8 +24,6 @@ class Input
     /// </summary>
     public static void Parse() //Changed all inputs to static because its probarly easiest
     {
-        //Input input = new Input();
-
         Input.orders = new Order[1177];
 
         string line;
@@ -54,8 +52,6 @@ class Input
         }
 
         Input.distancesMatrix = DistancesMatrix.Parse(@"..\\..\\..\\DistancesMatrix.txt");
-
-        //return input;
     }
 
     public override string ToString()
