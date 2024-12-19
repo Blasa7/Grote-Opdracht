@@ -50,7 +50,6 @@ class Route : IClonable<Route>
     // total driving time = ad + de + ef + fg   ( -fa  +fg  +ga )       
     // relevant driving time = de + ef + fg     ( +fg )                 only the middle
 
-
     public Route()
     {
         route = new IndexedLinkedList<Delivery>(new Delivery(Address.Depot()), Input.orderCount + 1);
@@ -77,7 +76,7 @@ class Route : IClonable<Route>
 
         //Add empyting time of 30min on the first node in the route
         if (routeIndex == 0 && route.currentIndex == 0)
-            timeDelta += 1800000;//30; //Because the emptying time at depot is 30 min
+            timeDelta += 1800000; //Because the emptying time at depot is 30 min
 
         int scoreDelta = timeDelta;
 
@@ -230,14 +229,13 @@ class Route : IClonable<Route>
         removeTimeDelta =
             Input.GetTimeFromTo(removePrevID, removeNextID) - //New value
             (Input.GetTimeFromTo(removePrevID, currentID) + //Old values are substracted
-            Input.GetTimeFromTo(currentID, removeNextID)); //-
-            //changedDelivery.address.emptyingTime;
+            Input.GetTimeFromTo(currentID, removeNextID));
 
         int addPrevID = route.nodes[newIndex].prev.value.address.matrixID;
         int addID = route.nodes[newIndex].value.address.matrixID;
         int addNextID = route.nodes[newIndex].next.value.address.matrixID;
 
-       if (route.nodes[newIndex].next.index == route.nodes[index].index)//addNextID == currentID) //This means the current node is swapped with its left neighbor
+       if (route.nodes[newIndex].next.index == route.nodes[index].index) //This means the current node is swapped with its left neighbor
        {
             addNextID = removeNextID;
        }
@@ -245,8 +243,7 @@ class Route : IClonable<Route>
         addTimeDelta =
             Input.GetTimeFromTo(addID, currentID) + //New values are added
             Input.GetTimeFromTo(currentID, addNextID) -
-            Input.GetTimeFromTo(addID, addNextID);// +
-            //changedDelivery.address.emptyingTime; //Old value is substracted
+            Input.GetTimeFromTo(addID, addNextID); //Old value is substracted
 
         timeDelta = removeTimeDelta + addTimeDelta;
         int scoreDelta = timeDelta;

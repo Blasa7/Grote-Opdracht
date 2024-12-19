@@ -70,7 +70,7 @@
         IndexedLinkedListNode<Type> current = new IndexedLinkedListNode<Type>(value);
 
         IndexedLinkedListNode<Type> prev = nodes[prevIndex];
-        IndexedLinkedListNode<Type> next = nodes[prevIndex].next; // TODO: Error here, prev == null
+        IndexedLinkedListNode<Type> next = nodes[prevIndex].next; 
 
         //Swap pointers from neighbors
         prev.next = current;
@@ -129,9 +129,6 @@
 
         leftNode.index = rightIndex;
         rightNode.index = leftIndex;
-        //moet dit niet ook? Dat je ze daadwerkelijk swapt in de array.
-        //nodes[leftIndex] = rightNode;
-        //nodes[rightIndex] = leftNode;
 
         //If the left node is the right neighbor of the right node
         //swap them to ensure the leftNode is to the left of the rightNode.

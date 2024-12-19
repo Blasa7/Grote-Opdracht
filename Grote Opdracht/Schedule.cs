@@ -37,7 +37,7 @@ class Schedule
 
     #region AddRandom
 
-    public void AddRandomDelivery(Random rng, Judge judge) //Shorter more readable? equivalent of the previous add method, maybe a fraction fast
+    public void AddRandomDelivery(Random rng, Judge judge)
     {
 
         if (unfulfilledAddresses.currentIndex == 0)
@@ -138,7 +138,6 @@ class Schedule
 
     #region RemoveRandom
 
-    //Maybe add remove
     public void RemoveRandomDelivery(Random rng, Judge judge)
     {
         //First calculate variables
@@ -467,9 +466,6 @@ class Schedule
         IndexedLinkedListNode<T> prevNode1 = node1.prev;
         IndexedLinkedListNode<T> nextNode1 = node1.next;
 
-        //swap the node's indices
-        //(node1.index, node2.index) = (node2.index, node1.index);
-
         //First points to Second's neighbors.
         node1.prev = node2.prev;
         node1.next = node2.next;
@@ -489,7 +485,6 @@ class Schedule
         //Physically swap the nodes from one array to the other
         list1.nodes[node1.index] = node2;
         list2.nodes[node2.index] = node1;
-        //(node1.index, node2.index) = (node2.index, node1.index);
 
         int tempIndex = node1.index;
 
@@ -497,6 +492,9 @@ class Schedule
         node2.index = tempIndex;
     }
 
+    /// <summary>
+    /// Parses a solution file and transforms it into a Schedule
+    /// </summary>
     public static Schedule LoadSchedule(string path, out int score)
     {
         List<List<(int, int, int, int)>> routes = new List<List<(int, int, int, int)>>();
