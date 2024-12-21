@@ -10,6 +10,7 @@ class Annealing
     float T = 1;
 
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
+    ulong modeIterations = 300000000;
 
     Random rng = new Random();
     Judge judge;
@@ -173,8 +174,9 @@ class Annealing
             }
 
             // Switch modes every Y iterations
-            if (i % 200000000 == 0)
+            if (i % modeIterations == 0)
             {
+                Console.WriteLine("Swapped modes!");
                 SwapMode();
             }
 
@@ -190,11 +192,13 @@ class Annealing
             case RunMode.TestRoutes:
                 {
                     T = 10;
+                    modeIterations = 50000000;
                     break;
                 }
             case RunMode.RefineRoutes:
                 {
                     T = 1;
+                    modeIterations = 250000000;
                     break;
                 }
         }
