@@ -10,6 +10,7 @@ class Annealing
     float T = 1;
 
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
+    ulong modeIterations = 300000000;
 
     Random rng = new Random();
     Judge judge;
@@ -165,7 +166,7 @@ class Annealing
 
                 previousScore = workingScore;
 
-                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
+                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%" + ", Mode progress: " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%");
 
                 if (Console.KeyAvailable)
                 {
@@ -183,8 +184,9 @@ class Annealing
                 }
             }
 
-            if (i % 1000000000 == 0)
+            if (i % modeIterations == 0)
             {
+                Console.WriteLine("Swapped modes!");
                 SwapMode();
             }
 
@@ -204,12 +206,14 @@ class Annealing
         {
             case RunMode.TestRoutes:
                 {
-                    T = 10;
+                    modeIterations = 50000000;
+                    T = 5;
                     break;
                 }
             case RunMode.RefineRoutes:
                 {
-                    T = 1;
+                    modeIterations = 250000000;
+                    T = 0.5f;
                     break;
                 }
         }
@@ -226,22 +230,22 @@ class Annealing
         {
             case RunMode.TestRoutes:
             {
-                addWeight = 50;
-                removeWeight = 35;
-                shuffleScheduleWeight = 0;
-                shuffleWorkDayWeight = 5;
+                addWeight = 10;
+                removeWeight = 10;
+                shuffleScheduleWeight = 10;
+                shuffleWorkDayWeight = 2;
                 shuffleRouteWeight = 10;
                 swapDeliveriesWeight = 5;
                 break;
             }
             case RunMode.RefineRoutes:
             {
-                addWeight = 20;
-                removeWeight = 20;
-                shuffleScheduleWeight = 5;
-                shuffleWorkDayWeight = 5;
-                shuffleRouteWeight = 50;
-                swapDeliveriesWeight = 50;
+                addWeight = 5;
+                removeWeight = 1;
+                shuffleScheduleWeight = 20;
+                shuffleWorkDayWeight = 10;
+                shuffleRouteWeight = 30;
+                swapDeliveriesWeight = 20;
                 break;
             }
         }
@@ -426,7 +430,7 @@ class Judge
         switch (Annealing.runMode)
         {
             case RunMode.TestRoutes:
-                this.scoreDelta += scoreDelta;
+                this.scoreDelta += timeDelta;//scoreDelta;
                 break;
             case RunMode.RefineRoutes:
                 this.scoreDelta += timeDelta;
