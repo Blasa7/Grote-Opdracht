@@ -1,14 +1,11 @@
 class Annealing
 {
-    public static RunMode runMode = RunMode.Default;
-
     public Solution bestSolution = new Solution();
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    ulong temperatureReductioninterval;
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
-    ulong modeIterations = 300000000;
+    ulong modeIterations = 500000000;
     float alpha = 0.99f;
 
     Random rng = new Random();
@@ -46,7 +43,7 @@ class Annealing
 
         annealing.workingSchedule = Schedule.LoadSchedule(path, out annealing.workingScore);
 
-        annealing.judge = new Judge(annealing.T, annealing.rng);
+        annealing.judge = new Judge(annealing.rng);
 
         annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
 
@@ -66,7 +63,6 @@ class Annealing
 
     public Solution Run(ulong iter)
     {
-        SwapMode(); // Start in RefineRoutes
 
         Console.WriteLine(iter);
         iterations = iter;
@@ -113,9 +109,14 @@ class Annealing
             Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
         }
 
+        RecalculateWeights();
+
         //Start iterating
 
-        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations);
+        float beginT = 10000000f;
+        float endT = 0.0001f; 
+
+        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 
         if (debugMessages)
             DebugMessages();
@@ -123,33 +124,35 @@ class Annealing
         return bestSolution;
     }
 
-    public float GetTemperature(float )
+    public float GetTemperature(float T)
     {
         return T*alpha;
     }
 
-    public (float, float) SetBeginTemperature(ulong totalIter, float Tend)
+    public ulong GetReductionInterval(ulong totalIter, float beginT, float endT)
     {
-        ulong totalReductions = totalIter / temperatureReductioninterval;
-        Math.Log();
-        //end = init * alpha**iter
-        //init = end / (alpha**iter)
-        float Tinit = (float)(Tend / (Math.Pow(0.99f, totalIter)));
-        return Tinit;
+        float reductionTimes = (float) Math.Log(endT / beginT, alpha);
+        float reductionInterval = totalIter / reductionTimes;
+        Console.WriteLine("Reduction times: " + reductionTimes + ", Reduction interval: " + reductionInterval);
+
+        return (ulong) reductionInterval;
     }
 
-    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
+    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT)
     { 
         int previousScore = -1;
 
+        judge.T = beginT;
+
         //Set inital temp
-        float Tend = 0.00001f;
-        float Tinit = SetBeginTemperature(iterations, Tend)
+        ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
+
+        //Console.WriteLine(modeIterations + " " + beginT + " "  + endT);
 
         for (ulong i = 0; i < iterations; i++)
         {
             // Decrease the temperature every X iterations
-            if (i % 1000000 == 0)
+            if (i % redInterval == 0)
             {
                 judge.T = GetTemperature(judge.T);
             }
@@ -188,8 +191,8 @@ class Annealing
             // Switch modes every Y iterations
             if (i % modeIterations == 0)
             {
+                judge.T = beginT;
                 Console.WriteLine("Swapped modes!");
-                SwapMode();
             }
 
         }
@@ -200,46 +203,12 @@ class Annealing
 
     }
 
-    public void SwapMode()
-    {
-        switch (runMode)
-        {
-            case RunMode.Default:
-                {
-                    judge.T = 1000000;
-                    modeIterations = 500000000;
-                    break;
-                }
-        }
-        
-        SwapWeights(runMode);
-    }
-
-
-    public void SwapWeights(RunMode mode)
-    {
-        switch (mode)
-        {
-            case RunMode.Default:
-                addWeight = 10;
-                removeWeight = 5;
-                shuffleScheduleWeight = 25;
-                shuffleWorkDayWeight = 10;
-                shuffleRouteWeight = 50;
-                swapDeliveriesWeight = 0;
-                break;
-        }
-
-        RecalculateWeights();
-    }
-
-
-    int addWeight; 
-    int removeWeight;
-    int shuffleScheduleWeight;
-    int shuffleWorkDayWeight;
-    int shuffleRouteWeight;
-    int swapDeliveriesWeight;
+    int addWeight = 10; 
+    int removeWeight = 10;
+    int shuffleScheduleWeight = 10;
+    int shuffleWorkDayWeight = 10;
+    int shuffleRouteWeight = 40;
+    int swapDeliveriesWeight = 0;
 
     int addWeightSum;
     int removeWeightSum;
@@ -409,13 +378,7 @@ class Judge
 
     public void Testify(int scoreDelta, int timeDelta)
     {
-        switch (Annealing.runMode)
-        {
-            case RunMode.Default:
-                this.scoreDelta += timeDelta;
-                break;
-        }
-
+        this.scoreDelta += timeDelta;
         this.timeDelta += timeDelta;
     }
 
@@ -504,9 +467,4 @@ class Statistics()
             $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
             $"Swap delivery fail count: {swapDeliveryFailCount}";
     }
-}
-
-public enum RunMode : int 
-{
-    Default = 0
 }
