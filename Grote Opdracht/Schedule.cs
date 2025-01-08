@@ -623,6 +623,7 @@ class Schedule
         return schedule;
     }
 
+    // Used in LoadSchedule
     public void AddDelivery(Delivery delivery, int workDayIndex, int routeIndex, int timeDelta)
     {
         delivery.scheduleNode = schedule[delivery.day].InsertLast(delivery);

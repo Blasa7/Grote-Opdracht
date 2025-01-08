@@ -5,7 +5,7 @@ class Annealing
     int workingScore;
 
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
-    ulong modeIterations = 500000000;
+    ulong modeIterations = 250000000;
     float alpha = 0.99f;
 
     Random rng = new Random();
@@ -113,7 +113,8 @@ class Annealing
 
         //Start iterating
 
-        float beginT = 10000000f;
+        //float beginT = 10000000f;
+        float beginT = float.MaxValue;
         float endT = 0.0001f; 
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
@@ -122,11 +123,6 @@ class Annealing
             DebugMessages();
 
         return bestSolution;
-    }
-
-    public float GetTemperature(float T)
-    {
-        return T*alpha;
     }
 
     public ulong GetReductionInterval(ulong totalIter, float beginT, float endT)
@@ -140,21 +136,20 @@ class Annealing
 
     public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT)
     { 
-        int previousScore = -1;
+        bestSolution.UpdateSolution(workingSchedule, workingScore);
 
-        judge.T = beginT;
+        //Set initial T
+        //judge.T = beginT;
 
         //Set inital temp
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
-
-        //Console.WriteLine(modeIterations + " " + beginT + " "  + endT);
 
         for (ulong i = 0; i < iterations; i++)
         {
             // Decrease the temperature every X iterations
             if (i % redInterval == 0)
             {
-                judge.T = GetTemperature(judge.T);
+                judge.T *= alpha;
             }
 
             workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
@@ -177,6 +172,7 @@ class Annealing
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.Q) // Quit the program when the user presses 'q'
                     {
+                        bestSolution.UpdateSolution(workingSchedule, workingScore);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         return;
                     }
@@ -188,10 +184,10 @@ class Annealing
                 }
             }
 
-            // Switch modes every Y iterations
-            if (i % modeIterations == 0)
+            if (i % modeIterations == 0 && i > 0)
             {
                 judge.T = beginT;
+                
                 Console.WriteLine("Swapped modes!");
             }
 
@@ -203,11 +199,11 @@ class Annealing
 
     }
 
-    int addWeight = 10; 
-    int removeWeight = 10;
-    int shuffleScheduleWeight = 10;
-    int shuffleWorkDayWeight = 10;
-    int shuffleRouteWeight = 40;
+    int addWeight = 1; 
+    int removeWeight = 1;
+    int shuffleScheduleWeight = 1;
+    int shuffleWorkDayWeight = 0;
+    int shuffleRouteWeight = 0;
     int swapDeliveriesWeight = 0;
 
     int addWeightSum;
