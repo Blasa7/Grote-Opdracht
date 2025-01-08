@@ -1,6 +1,6 @@
 class Annealing
 {
-    public static RunMode runMode = RunMode.TestRoutes;
+    public static RunMode runMode = RunMode.Default;
 
     public Solution bestSolution = new Solution();
     Schedule workingSchedule = new Schedule();
@@ -126,7 +126,7 @@ class Annealing
 
     public float GetTemperature(float T)
     {
-        float alpha = 0.9999f;
+        float alpha = 0.99f;
         return T*alpha;
     }
 
@@ -137,7 +137,7 @@ class Annealing
         for (ulong i = 0; i < iterations; i++)
         {
             // Decrease the temperature every X iterations
-            if (i % 10000 == 0)
+            if (i % 1000000 == 0)
             {
                 judge.T = GetTemperature(judge.T);
             }
@@ -155,7 +155,7 @@ class Annealing
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
-                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%");
+                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
 
                 if (Console.KeyAvailable)
                 {
@@ -185,20 +185,28 @@ class Annealing
 
     public void SwapMode()
     {
-        runMode = (RunMode)(((int)runMode + 1) % 2);
+        //runMode = (RunMode)(((int)runMode + 1) % 2);
 
         switch (runMode)
         {
             case RunMode.TestRoutes:
                 {
+                    runMode = RunMode.RefineRoutes;
                     T = 10;
                     modeIterations = 50000000;
                     break;
                 }
             case RunMode.RefineRoutes:
                 {
+                    runMode = RunMode.TestRoutes;
                     T = 1;
                     modeIterations = 250000000;
+                    break;
+                }
+            case RunMode.Default:
+                {
+                    T = 1000000;
+                    modeIterations = 500000000;
                     break;
                 }
         }
@@ -233,6 +241,14 @@ class Annealing
                 swapDeliveriesWeight = 30;
                 break;
             }
+            case RunMode.Default:
+                addWeight = 10;
+                removeWeight = 5;
+                shuffleScheduleWeight = 25;
+                shuffleWorkDayWeight = 10;
+                shuffleRouteWeight = 50;
+                swapDeliveriesWeight = 0;
+                break;
         }
 
         RecalculateWeights();
@@ -423,6 +439,9 @@ class Judge
             case RunMode.RefineRoutes:
                 this.scoreDelta += timeDelta;
                 break;
+            case RunMode.Default:
+                this.scoreDelta += timeDelta;
+                break;
         }
 
         this.timeDelta += timeDelta;
@@ -518,5 +537,6 @@ class Statistics()
 public enum RunMode : int 
 {
     TestRoutes = 0,
-    RefineRoutes = 1
+    RefineRoutes = 1,
+    Default = 2
 }
