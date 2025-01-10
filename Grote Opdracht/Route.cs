@@ -74,9 +74,20 @@ class Route : IClonable<Route>
             Input.GetTimeFromTo(prevID, nextID) +
             delivery.address.emptyingTime; //Old value is substracted
 
-        //Add empyting time of 30min on the first node in the route
-        if (routeIndex == 0 && route.currentIndex == 0)
-            timeDelta += 1800000; //Because the emptying time at depot is 30 min
+
+        // Check that max num of filled routes <= GlobalMaxOfRoutes
+        if (route.currentIndex == 0)
+        {
+            if (Schedule.StagedNumOfRoutes >= Schedule.GlobalMaxOfRoutes) //cannot add past the maximum number of routes
+            {
+                judge.OverrideJudge(Judgement.Fail);
+            }
+            else
+            {
+                timeDelta += 1800000; //Because the emptying time at depot is 30 min
+                Schedule.StagedNumOfRoutes++;
+            }
+        }
 
         int scoreDelta = timeDelta;
 
@@ -116,6 +127,10 @@ class Route : IClonable<Route>
         if (routeIndex == 0) //Add after depot
         {
             relevantDelta = Input.GetTimeFromTo(thisID, nextID);
+            if (route.currentIndex == 0) // The route is empty
+            {
+                Schedule.GlobalNumOfRoutes++;
+            }
         }
         else if (routeIndex == route.currentIndex) //Add before depot
         {
@@ -147,7 +162,12 @@ class Route : IClonable<Route>
             delivery.address.emptyingTime;
 
         if (route.currentIndex == 1) //There are two nodes
-            timeDelta -= 1800000;//30; //Minus 30 minutes because you no longer have the 30 min emptying time.
+        {
+            if (Schedule.GlobalNumOfRoutes <= Schedule.GlobalMinOfRoutes) //cannot remove past the minimum number of routes
+                judge.OverrideJudge(Judgement.Fail);
+            else
+                timeDelta -= 1800000; //Minus 30 minutes because you no longer have the 30 min emptying time.
+        }
 
         int scoreDelta = timeDelta;
 
@@ -186,6 +206,10 @@ class Route : IClonable<Route>
         if (removedIndex == 1) //Remove node after depot
         {
             relevantDelta = -Input.GetTimeFromTo(thisID, nextID);
+            if (route.currentIndex == 1) // gloabal number of used routes now decreases
+            {
+                Schedule.GlobalNumOfRoutes--;
+            }
         }
         else if (removedIndex == route.currentIndex) //Remove node before depot
         {

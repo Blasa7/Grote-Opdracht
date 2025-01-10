@@ -34,7 +34,7 @@
 
         response = Console.ReadLine();
         if (response == "")
-            iter = 18446744073709551615;
+            iter = ulong.MaxValue;
         else
             iter = ulong.Parse(response) * 1000000;
 

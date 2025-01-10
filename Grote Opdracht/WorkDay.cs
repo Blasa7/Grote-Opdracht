@@ -30,6 +30,8 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, rng, judge, out routeIndex, out timeDelta);
 
+        //TODO
+
         if (totalDuration + timeDelta > maximumDuration)
             judge.OverrideJudge(Judgement.Fail);
     }

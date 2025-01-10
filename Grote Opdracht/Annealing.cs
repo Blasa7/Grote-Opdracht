@@ -139,13 +139,16 @@ class Annealing
         bestSolution.UpdateSolution(workingSchedule, workingScore);
 
         //Set initial T
-        //judge.T = beginT;
+        judge.T = beginT;
 
         //Set inital temp
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
 
         for (ulong i = 0; i < iterations; i++)
         {
+            if (Schedule.GlobalNumOfRoutes > Schedule.GlobalMaxOfRoutes)
+                Console.WriteLine(Schedule.GlobalNumOfRoutes);
+
             // Decrease the temperature every X iterations
             if (i % redInterval == 0)
             {
@@ -199,9 +202,9 @@ class Annealing
 
     }
 
-    int addWeight = 1; 
-    int removeWeight = 1;
-    int shuffleScheduleWeight = 1;
+    int addWeight = 1;  // bug with these combo of these 3
+    int removeWeight = 1; //
+    int shuffleScheduleWeight = 0; //
     int shuffleWorkDayWeight = 0;
     int shuffleRouteWeight = 0;
     int swapDeliveriesWeight = 0;

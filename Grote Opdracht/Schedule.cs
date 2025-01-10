@@ -14,6 +14,11 @@ class Schedule
 
     public IndexedLinkedList<Address> unfulfilledAddresses;
 
+             static public int GlobalNumOfRoutes = 0;
+    static public readonly int GlobalMaxOfRoutes = 15;
+    static public readonly int GlobalMinOfRoutes = 14;
+             static public int StagedNumOfRoutes = GlobalNumOfRoutes;
+
     public Schedule()
     {
         for (int i = 0; i < schedule.Length; i++)
@@ -116,10 +121,18 @@ class Schedule
         judge.Testify(scoreDelta, timeDelta);
 
         //Stage functions to randomly add are called
+
+        StagedNumOfRoutes = GlobalNumOfRoutes;
         for (int i = 0; i < address.frequency; i++)
         {
             workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i]);
         }
+
+        if (StagedNumOfRoutes > GlobalMaxOfRoutes)
+        {
+            judge.OverrideJudge(Judgement.Fail);
+        }
+
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
