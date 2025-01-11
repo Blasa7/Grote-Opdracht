@@ -5,7 +5,7 @@ class Annealing
     int workingScore;
 
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
-    ulong modeIterations = 250000000;
+    ulong modeIterations = 100000000;
     float alpha = 0.99f;
 
     Random rng = new Random();
@@ -113,9 +113,9 @@ class Annealing
 
         //Start iterating
 
-        float beginT = 10000000f;
+        float beginT = 20000;
         //float beginT = float.MaxValue;
-        float endT = 0.0001f; 
+        float endT = 1f; 
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 
@@ -168,6 +168,7 @@ class Annealing
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
+                Console.WriteLine(judge.garbagePenalty);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
 
                 if (Console.KeyAvailable)
@@ -406,8 +407,9 @@ class Judge
 
     public void Reset()
     {
-        scoreDelta = 0;
         timeDelta = 0;
+        timePenalty = 0;
+        garbagePenalty = 0;
         judgement = Judgement.Undecided;
     }
 }
