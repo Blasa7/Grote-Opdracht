@@ -32,23 +32,27 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, rng, judge, out routeIndex, out timeDelta);
 
-        //TODO make soft contraint
+        //TODO
         if (totalDuration + timeDelta > maximumDuration)
-        {
-            int penalty;
-            if (totalDuration > maximumDuration) // time was already exceeded
-            {
-                penalty = timeDelta * timePenaltyMultiplier;
-            }
-            else // time will now be exceeded
-            {
-                penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // only add excess
-            }
-            int timePenaltyDelta = penalty;
+            judge.OverrideJudge(Judgement.Fail);
 
-            //Testify only timePenalty here, others are done in Route.StageRandomStop above
-            judge.Testify(0, timePenaltyDelta, 0);
-        }
+        ////TODO make soft contraint
+        //if (totalDuration + timeDelta > maximumDuration)
+        //{
+        //    int penalty;
+        //    if (totalDuration > maximumDuration) // time was already exceeded
+        //    {
+        //        penalty = timeDelta * timePenaltyMultiplier;
+        //    }
+        //    else // time will now be exceeded
+        //    {
+        //        penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // only add excess
+        //    }
+        //    int timePenaltyDelta = penalty;
+
+        //    //Testify only timePenalty here, others are done in Route.StageRandomStop above
+        //    judge.Testify(0, timePenaltyDelta, 0);
+        //}
 
     }
 
@@ -64,37 +68,41 @@
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, judge, out timeDelta);
 
-        int penalty = 0;
-        //TODO make soft contraint
-        if (timeDelta < 0) // improvement
-        {
-            if (totalDuration > maximumDuration) // it was exceeded
-            {
-                if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
-                {
-                    penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier; 
-                }
-                else // it's still is exceeded
-                {
-                    penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
-                }
-            }
-        }
-        else // timedelta > 0, unlikely but possible
-        {
-            if (totalDuration < maximumDuration) // it was NOT exceeded
-            {
-                if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
-                {
-                    penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
-                }
-            }
-            else // it was, and still will be exceeded
-            {
-                penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
-            }
-        }
-        judge.Testify(0, penalty, 0);
+        //TODO
+        if (totalDuration + timeDelta > maximumDuration)
+            judge.OverrideJudge(Judgement.Fail);
+
+        //int penalty = 0;
+        ////TODO make soft contraint
+        //if (timeDelta < 0) // improvement
+        //{
+        //    if (totalDuration > maximumDuration) // it was exceeded
+        //    {
+        //        if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
+        //        {
+        //            penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier; 
+        //        }
+        //        else // it's still is exceeded
+        //        {
+        //            penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+        //        }
+        //    }
+        //}
+        //else // timedelta > 0, unlikely but possible
+        //{
+        //    if (totalDuration < maximumDuration) // it was NOT exceeded
+        //    {
+        //        if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
+        //        {
+        //            penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
+        //        }
+        //    }
+        //    else // it was, and still will be exceeded
+        //    {
+        //        penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+        //    }
+        //}
+        //judge.Testify(0, penalty, 0);
     }
 
     public void RemoveStop(Delivery delivery, int timeDelta)
@@ -163,14 +171,8 @@
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);
 
         //TODO
-        //if (totalDuration + timeDelta > maximumDuration)
-        //    judge.OverrideJudge(Judgement.Fail);
-
-        //if (totalDuration + timeDelta > maximumDuration)
-        //{
-        //    int addedPenalty = (totalDuration + timeDelta - maximumDuration) * 10;
-        //    scoreDelta += addedPenalty;
-        //}
+        if (totalDuration + timeDelta > maximumDuration)
+            judge.OverrideJudge(Judgement.Fail);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
