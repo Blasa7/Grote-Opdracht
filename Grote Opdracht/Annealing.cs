@@ -47,10 +47,6 @@ class Annealing
 
         annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
 
-        annealing.workingSchedule = Schedule.FromSolution(annealing.bestSolution, out int score);
-
-        Console.WriteLine("Input score: " + (annealing.bestSolution.score / 60 / 1000) +  "From solution score: " + (score / 60 / 1000));
-
         return annealing;
     }
 
