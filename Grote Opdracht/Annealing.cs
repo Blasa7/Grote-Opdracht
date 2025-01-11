@@ -5,7 +5,7 @@ class Annealing
     int workingScore;
 
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
-    ulong modeIterations = 200000000;
+    ulong modeIterations = 100000000;
     float alpha = 0.99f;
 
     Random rng = new Random();
@@ -115,7 +115,7 @@ class Annealing
 
         //float beginT = 10000000f;
         float beginT = 20000;//float.MaxValue;
-        float endT = 0.0001f; 
+        float endT = 1; 
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 

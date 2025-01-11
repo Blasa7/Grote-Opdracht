@@ -647,35 +647,6 @@ class Schedule
 
     public static Schedule FromSolution(Solution solution, out int score) //Score should be the same as in solution
     {
-        /*List<List<(int, int, int, int)>> routes = new List<List<(int, int, int, int)>>();
-
-        using (StreamReader streamReader = new StreamReader(path))
-        {
-            int i = 0; //This is the route number in order given in the solution.
-
-            string line = streamReader.ReadLine();
-
-            if (line != null)
-                routes.Add(new List<(int, int, int, int)>()); //The first route.
-
-            while (line != null)
-            {
-                string[] split = line.Split(';');
-                (int truck, int day, int routeIndex, int orderId) lineValue = (int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]), int.Parse(split[3]));
-
-                routes[i].Add(lineValue);
-
-                line = streamReader.ReadLine();
-
-                if (lineValue.orderId == 0 && line != null)
-                {
-                    i++;
-
-                    routes.Add(new List<(int, int, int, int)>());
-                }
-            }
-        }*/
-
         score = 0;
 
         Schedule schedule = new Schedule(); //The schedule we will fill out.
