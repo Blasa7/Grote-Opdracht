@@ -202,11 +202,11 @@ class Annealing
 
     }
 
-    int addWeight = 1;  // bug with these combo of these 3
+    int addWeight = 2;  // bug with these combo of these 3
     int removeWeight = 1; //
-    int shuffleScheduleWeight = 1; //
-    int shuffleWorkDayWeight = 0;
-    int shuffleRouteWeight = 0;
+    int shuffleScheduleWeight = 2; //
+    int shuffleWorkDayWeight = 1;
+    int shuffleRouteWeight = 4;
     int swapDeliveriesWeight = 0;
 
     int addWeightSum;
