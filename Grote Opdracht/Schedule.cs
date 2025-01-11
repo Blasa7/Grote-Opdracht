@@ -116,9 +116,8 @@ class Schedule
         //Penalty gets removed
         int timeDelta = -address.emptyingTime * 3 * address.frequency;
 
-        int scoreDelta = timeDelta;
-
-        judge.Testify(scoreDelta, timeDelta);
+        //TODO
+        judge.Testify(timeDelta, 0,0);
 
         //Stage functions to randomly add are called
 
@@ -165,9 +164,9 @@ class Schedule
 
         //Second testify
         int timeDelta = delivery.address.emptyingTime * delivery.address.frequency * 3;
-        int scoreDelta = timeDelta;
 
-        judge.Testify(scoreDelta, timeDelta);
+        //TODO
+        judge.Testify(timeDelta, 0, 0);
 
         //Third call other functions that need to testify
         workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out int workDayTimeDelta);
@@ -237,9 +236,9 @@ class Schedule
 
         //Second testify
         int timeDelta = delivery.address.emptyingTime * delivery.address.frequency * 3; //Not strictly neede for shuffle
-        int scoreDelta = timeDelta;
 
-        judge.Testify(scoreDelta, timeDelta);
+        //TODO
+        judge.Testify(timeDelta, 0, 0);
 
         //Third call other functions that need to testify
         workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out timeDeltas[0]);
@@ -314,9 +313,9 @@ class Schedule
         }
 
         int timeDelta = -oldDelivery.address.emptyingTime * 3 * oldDelivery.address.frequency; //Not strictly needed for shuffle
-        int scoreDelta = timeDelta;
 
-        judge.Testify(scoreDelta, timeDelta);
+        //TODO
+        judge.Testify(timeDelta, 0, 0);
 
         for (int i = 0; i < oldDelivery.address.frequency; i++)
         {
