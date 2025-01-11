@@ -29,6 +29,8 @@ class Route : IClonable<Route>
     /// </summary>
     public int depotDrivingTime { get { return drivingTime - relevantDrivingTime; } }
 
+
+
     // example
     // ...a - b - c - d - e - f - a...
     // a = depot
@@ -89,22 +91,26 @@ class Route : IClonable<Route>
             }
         }
 
-        int scoreDelta = timeDelta;
+        int garbagePenaltyDelta = 0;
 
-        //Not the first node to be added
-        if (route.currentIndex != 0)
+        //Soft constraint:
+        //If the maximum garbage is exceeded, add a penalty
+        if (newGarbageAmount > maximumGarbage)
         {
-            if (routeIndex == 0) //Insert after Depot
-                scoreDelta = Input.GetTimeFromTo(address.matrixID, nextID);
+            int penalty;
+            if (collectedGarbage < maximumGarbage) //with this stop, it firsts exceeds the limit
+            {
+                penalty = (newGarbageAmount - maximumGarbage) * 10; //only add the diffrence from the maximum
+            }
+            else //there was already too much garbage
+            {
+                penalty = (newGarbageAmount - collectedGarbage) * 10;
+            }
 
-            if (routeIndex == route.currentIndex) //Insert before Depot
-                scoreDelta = Input.GetTimeFromTo(prevID, address.matrixID);
+            garbagePenaltyDelta = penalty;
         }
 
-        if (newGarbageAmount > maximumGarbage) //Hard limits
-            judge.OverrideJudge(Judgement.Fail);
-
-        judge.Testify(scoreDelta, timeDelta);
+        judge.Testify(timeDelta, 0, garbagePenaltyDelta);
     }
 
     /// <summary>
@@ -169,19 +175,28 @@ class Route : IClonable<Route>
                 timeDelta -= 1800000; //Minus 30 minutes because you no longer have the 30 min emptying time.
         }
 
-        int scoreDelta = timeDelta;
+        int garbagePenaltyDelta = 0;
 
-        //Not the last remaining node to be removed
-        if (route.currentIndex != 1)
+        // Soft constraint:
+        // If there was a penalty, lower it after removing a stop
+        if (collectedGarbage > maximumGarbage)
         {
-            if (delivery.routeNode.index == 1) //Remove after Depot
-                scoreDelta = -Input.GetTimeFromTo(address.matrixID, nextID);
+            int newGarbageAmount = collectedGarbage - delivery.address.garbageAmount;
 
-            if (delivery.routeNode.index == route.currentIndex) //Remove before Depot
-                scoreDelta = -Input.GetTimeFromTo(prevID, address.matrixID);
+            int penalty;
+            if (newGarbageAmount < maximumGarbage) //only add the diffrence to the maximum
+            {
+                penalty = (newGarbageAmount - maximumGarbage) * 10;
+            }
+            else //there is still too much garbage
+            {
+                penalty = (newGarbageAmount - collectedGarbage) * 10;
+            }
+            garbagePenaltyDelta += penalty;
+
         }
 
-        judge.Testify(scoreDelta, timeDelta);
+        judge.Testify(timeDelta, 0, garbagePenaltyDelta);
     }
 
     /// <summary>
@@ -270,9 +285,8 @@ class Route : IClonable<Route>
             Input.GetTimeFromTo(addID, addNextID); //Old value is substracted
 
         timeDelta = removeTimeDelta + addTimeDelta;
-        int scoreDelta = timeDelta;
 
-        judge.Testify(scoreDelta, timeDelta);
+        judge.Testify(timeDelta);
     }
 
     public void ShuffleRoute(Delivery changedDelivery, Delivery newIndexDelivery, int removeTimeDelta, int addTimeDelta)

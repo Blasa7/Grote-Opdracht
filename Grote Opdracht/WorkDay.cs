@@ -30,8 +30,7 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, rng, judge, out routeIndex, out timeDelta);
 
-        //TODO
-
+        //TODO make soft contraint
         if (totalDuration + timeDelta > maximumDuration)
             judge.OverrideJudge(Judgement.Fail);
     }
@@ -48,6 +47,7 @@
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, judge, out timeDelta);
 
+        // TODO
         if (totalDuration + timeDelta > maximumDuration)
             judge.OverrideJudge(Judgement.Fail);
     }
@@ -105,6 +105,7 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, rng, judge, out routeIndex, out timeDelta);
 
+        //TODO
         if (totalDuration + timeDelta > maximumDuration)
             judge.OverrideJudge(Judgement.Fail);
     }
@@ -116,8 +117,15 @@
         // Stage and testify
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);
 
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        //TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
+
+        //if (totalDuration + timeDelta > maximumDuration)
+        //{
+        //    int addedPenalty = (totalDuration + timeDelta - maximumDuration) * 10;
+        //    scoreDelta += addedPenalty;
+        //}
 
         if (judge.GetJudgement() == Judgement.Pass)
         {

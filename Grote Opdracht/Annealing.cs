@@ -113,8 +113,8 @@ class Annealing
 
         //Start iterating
 
-        //float beginT = 10000000f;
-        float beginT = float.MaxValue;
+        float beginT = 10000000f;
+        //float beginT = float.MaxValue;
         float endT = 0.0001f; 
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
@@ -204,7 +204,7 @@ class Annealing
 
     int addWeight = 1;  // bug with these combo of these 3
     int removeWeight = 1; //
-    int shuffleScheduleWeight = 0; //
+    int shuffleScheduleWeight = 1; //
     int shuffleWorkDayWeight = 0;
     int shuffleRouteWeight = 0;
     int swapDeliveriesWeight = 0;
@@ -301,22 +301,22 @@ class Annealing
                 statistics.shuffleRouteFailCount++;
             }
         }
-        else if (weight < swapDeliveriesWeightSum)
-        {
-            schedule.CompleteRandomSwap(rng, judge);
+        //else if (weight < swapDeliveriesWeightSum)
+        //{
+        //    schedule.CompleteRandomSwap(rng, judge);
 
-            if (judge.GetJudgement() == Judgement.Pass)
-            {
-                statistics.swapDeliveryScoreDelta += judge.timeDelta;
-                statistics.swapDeliverySuccessCount++;
+        //    if (judge.GetJudgement() == Judgement.Pass)
+        //    {
+        //        statistics.swapDeliveryScoreDelta += judge.timeDelta;
+        //        statistics.swapDeliverySuccessCount++;
 
-                return workingScore + judge.timeDelta;
-            }
-            else
-            {
-                statistics.swapDeliveryFailCount++;
-            }
-        } 
+        //        return workingScore + judge.timeDelta;
+        //    }
+        //    else
+        //    {
+        //        statistics.swapDeliveryFailCount++;
+        //    }
+        //} 
 
         return workingScore;
     }
@@ -363,6 +363,8 @@ class Judge
 {
     public int scoreDelta; //newScore - oldScore (negative score suggests improvement!)
     public int timeDelta;
+    public int timePenalty;
+    public int garbagePenalty;
     Judgement judgement;
 
     public float T;
@@ -375,10 +377,11 @@ class Judge
         Reset();
     }
 
-    public void Testify(int scoreDelta, int timeDelta)
+    public void Testify(int timeDelta, int timePenaltyDelta, int garbagePenaltyDelta)
     {
-        this.scoreDelta += timeDelta;
         this.timeDelta += timeDelta;
+        this.timePenalty += timePenaltyDelta;
+        this.garbagePenalty += garbagePenaltyDelta;
     }
 
     public void OverrideJudge(Judgement judgement)
