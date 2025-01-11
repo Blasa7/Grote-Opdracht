@@ -286,7 +286,8 @@ class Route : IClonable<Route>
 
         timeDelta = removeTimeDelta + addTimeDelta;
 
-        judge.Testify(timeDelta);
+        // Garbageamount stays the same
+        judge.Testify(timeDelta, 0, 0);
     }
 
     public void ShuffleRoute(Delivery changedDelivery, Delivery newIndexDelivery, int removeTimeDelta, int addTimeDelta)
