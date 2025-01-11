@@ -32,9 +32,9 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, rng, judge, out routeIndex, out timeDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        ////TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
 
         ////TODO make soft contraint
         //if (totalDuration + timeDelta > maximumDuration)
@@ -54,6 +54,9 @@
         //    judge.Testify(0, timePenaltyDelta, 0);
         //}
 
+        int timePenaltyDelta = CalculateTimePenalty(timeDelta);
+        judge.Testify(0, timePenaltyDelta, 0);
+
     }
 
     public void AddStop(Delivery delivery, int workDayIndex, int routeIndex, int timeDelta)
@@ -68,41 +71,12 @@
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, judge, out timeDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        ////TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
 
-        //int penalty = 0;
-        ////TODO make soft contraint
-        //if (timeDelta < 0) // improvement
-        //{
-        //    if (totalDuration > maximumDuration) // it was exceeded
-        //    {
-        //        if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
-        //        {
-        //            penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier; 
-        //        }
-        //        else // it's still is exceeded
-        //        {
-        //            penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
-        //        }
-        //    }
-        //}
-        //else // timedelta > 0, unlikely but possible
-        //{
-        //    if (totalDuration < maximumDuration) // it was NOT exceeded
-        //    {
-        //        if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
-        //        {
-        //            penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
-        //        }
-        //    }
-        //    else // it was, and still will be exceeded
-        //    {
-        //        penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
-        //    }
-        //}
-        //judge.Testify(0, penalty, 0);
+        int timePenaltyDelta = CalculateTimePenalty(timeDelta);
+        judge.Testify(0, timePenaltyDelta, 0);
     }
 
     public void RemoveStop(Delivery delivery, int timeDelta)
@@ -158,9 +132,13 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, rng, judge, out routeIndex, out timeDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        ////TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
+
+        int timePenaltyDelta = CalculateTimePenalty(timeDelta);
+        judge.Testify(0, timePenaltyDelta, 0);
+
     }
 
     public void ShuffleRoute(Random rng, Judge judge)
@@ -171,14 +149,51 @@
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);
 
         //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
+
+        int timePenaltyDelta = CalculateTimePenalty(timeDelta);
+        judge.Testify(0, timePenaltyDelta, 0);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
             totalDuration += timeDelta;
             workDay.nodes[workDayIndex].value.ShuffleRoute(changedDelivery, newIndexDelivery, removeTimeDelta, addTimeDelta);
         }
+    }
+
+    public int CalculateTimePenalty(int timeDelta)
+    {
+        int penalty = 0;
+        if (timeDelta < 0) // improvement
+        {
+            if (totalDuration > maximumDuration) // it was exceeded
+            {
+                if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
+                {
+                    penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier;
+                }
+                else // it's still is exceeded
+                {
+                    penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+                }
+            }
+        }
+        else // timedelta > 0, unlikely but possible
+        {
+            if (totalDuration < maximumDuration) // it was NOT exceeded
+            {
+                if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
+                {
+                    penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
+                }
+            }
+            else // it was, and still will be exceeded
+            {
+                penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+            }
+        }
+        return penalty;
     }
 
     public WorkDay Clone()
