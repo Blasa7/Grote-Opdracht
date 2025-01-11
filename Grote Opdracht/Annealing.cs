@@ -393,7 +393,7 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            double frac = -scoreDelta / T; // '-', because we want to minimize here
+            double frac = -(timeDelta + timePenalty + garbagePenalty) / T; // '-', because we want to minimize here
             double res = Math.Exp(frac);
             if (res >= rng.NextDouble())
                 judgement = Judgement.Pass;//return Judgement.Pass;

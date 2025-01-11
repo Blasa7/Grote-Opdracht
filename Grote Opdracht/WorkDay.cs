@@ -8,6 +8,8 @@
     public int totalDuration = 0;
     public int maximumDuration = 43200000; // 720 min, 432000 sec //in minutes aka 11.5 hours in a work day
 
+    public int timePenaltyMultiplier = 10;
+
     public WorkDay(int weekDay)
     {
         this.weekDay = weekDay;
@@ -36,11 +38,11 @@
             int penalty;
             if (totalDuration > maximumDuration) // time was already exceeded
             {
-                penalty = timeDelta * 10;
+                penalty = timeDelta * timePenaltyMultiplier;
             }
             else // time will now be exceeded
             {
-                penalty = (totalDuration + timeDelta - maximumDuration) * 10; // only add excess
+                penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // only add excess
             }
             int timePenaltyDelta = penalty;
 
@@ -70,11 +72,11 @@
             {
                 if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
                 {
-                    penalty = (maximumDuration - totalDuration) * 10; 
+                    penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier; 
                 }
                 else // it's still is exceeded
                 {
-                    penalty = timeDelta * 10; // ((totaldur + timedelta) - totaldur)
+                    penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
                 }
             }
         }
@@ -84,12 +86,12 @@
             {
                 if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
                 {
-                    penalty = (totalDuration + timeDelta - maximumDuration) * 10; // add the excess
+                    penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
                 }
             }
             else // it was, and still will be exceeded
             {
-                penalty = timeDelta * 10; // ((totaldur + timedelta) - totaldur)
+                penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
             }
         }
         judge.Testify(0, penalty, 0);

@@ -7,6 +7,7 @@ class Route : IClonable<Route>
 
     public int collectedGarbage = 0;
     public int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
+    public int garbagePenaltyMultiplier = 10;
 
     /// <summary>
     /// The total distance of this route, including driving time, collecting time, etc..
@@ -100,11 +101,11 @@ class Route : IClonable<Route>
             int penalty;
             if (collectedGarbage < maximumGarbage) //with this stop, it firsts exceeds the limit
             {
-                penalty = (newGarbageAmount - maximumGarbage) * 10; //only add the diffrence from the maximum
+                penalty = (newGarbageAmount - maximumGarbage) * garbagePenaltyMultiplier; //only add the diffrence from the maximum
             }
             else //there was already too much garbage
             {
-                penalty = (newGarbageAmount - collectedGarbage) * 10;
+                penalty = (newGarbageAmount - collectedGarbage) * garbagePenaltyMultiplier;
             }
 
             garbagePenaltyDelta = penalty;
@@ -186,11 +187,11 @@ class Route : IClonable<Route>
             int penalty;
             if (newGarbageAmount < maximumGarbage) //only add the diffrence to the maximum
             {
-                penalty = (newGarbageAmount - maximumGarbage) * 10;
+                penalty = (newGarbageAmount - maximumGarbage) * garbagePenaltyMultiplier;
             }
             else //there is still too much garbage
             {
-                penalty = (newGarbageAmount - collectedGarbage) * 10;
+                penalty = (newGarbageAmount - collectedGarbage) * garbagePenaltyMultiplier;
             }
             garbagePenaltyDelta += penalty;
 
