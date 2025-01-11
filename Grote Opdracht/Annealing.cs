@@ -5,7 +5,7 @@ class Annealing
     int workingScore;
 
     ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
-    ulong modeIterations = 250000000;
+    ulong modeIterations = 200000000;
     float alpha = 0.99f;
 
     Random rng = new Random();
@@ -46,6 +46,10 @@ class Annealing
         annealing.judge = new Judge(annealing.rng);
 
         annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
+
+        annealing.workingSchedule = Schedule.FromSolution(annealing.bestSolution, out int score);
+
+        Console.WriteLine("Input score: " + (annealing.bestSolution.score / 60 / 1000) +  "From solution score: " + (score / 60 / 1000));
 
         return annealing;
     }
@@ -114,7 +118,7 @@ class Annealing
         //Start iterating
 
         //float beginT = 10000000f;
-        float beginT = float.MaxValue;
+        float beginT = 20000;//float.MaxValue;
         float endT = 0.0001f; 
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
@@ -146,9 +150,6 @@ class Annealing
 
         for (ulong i = 0; i < iterations; i++)
         {
-            if (Schedule.GlobalNumOfRoutes > Schedule.GlobalMaxOfRoutes)
-                Console.WriteLine(Schedule.GlobalNumOfRoutes);
-
             // Decrease the temperature every X iterations
             if (i % redInterval == 0)
             {
@@ -190,23 +191,43 @@ class Annealing
             if (i % modeIterations == 0 && i > 0)
             {
                 judge.T = beginT;
-                
-                Console.WriteLine("Swapped modes!");
+
+                ulong randomWalkIterations = 100;
+                workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, randomWalkIterations);
+
+                Console.WriteLine("Reset!");
             }
 
         }
     }
 
-    public void RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
+    public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
     {
+        for (ulong i = 0; i < iterations; i++)
+        {
+            judge.Reset();
+            judge.OverrideJudge(Judgement.Pass);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
 
+            if (workingScore < bestSolution.score)
+            {
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
+                workingScore = bestSolution.score;
+            }
+        }
+
+        judge.Reset();
+
+        Console.WriteLine("After random walk score: " + workingScore / 60 / 1000);
+
+        return workingScore;
     }
 
-    int addWeight = 1;  // bug with these combo of these 3
+    int addWeight = 2;  // bug with these combo of these 3
     int removeWeight = 1; //
-    int shuffleScheduleWeight = 0; //
-    int shuffleWorkDayWeight = 0;
-    int shuffleRouteWeight = 0;
+    int shuffleScheduleWeight = 2; //
+    int shuffleWorkDayWeight = 1;
+    int shuffleRouteWeight = 4;
     int swapDeliveriesWeight = 0;
 
     int addWeightSum;
