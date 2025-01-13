@@ -7,8 +7,6 @@
     public int totalDuration = 0;
     public int maximumDuration = 43200000; // 720 min, 432000 sec //in minutes aka 11.5 hours in a work day
 
-    public int timePenaltyMultiplier = 10;
-
     public WorkDay(int weekDay)
     {
         this.weekDay = weekDay;
@@ -175,11 +173,11 @@
             {
                 if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
                 {
-                    penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier;
+                    penalty = (maximumDuration - totalDuration);
                 }
                 else // it's still is exceeded
                 {
-                    penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+                    penalty = timeDelta; // ((totaldur + timedelta) - totaldur)
                 }
             }
         }
@@ -189,12 +187,12 @@
             {
                 if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
                 {
-                    penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
+                    penalty = (totalDuration + timeDelta - maximumDuration); // add the excess
                 }
             }
             else // it was, and still will be exceeded
             {
-                penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+                penalty = timeDelta; // ((totaldur + timedelta) - totaldur)
             }
         }
         return penalty;
