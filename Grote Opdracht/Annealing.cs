@@ -103,9 +103,7 @@ class Annealing
             tasks.Add(Task.Run(() =>
             {
                 //Each thread gets their own schedule
-                //Schedule threadSchedule = workingSchedule.Clone(); //to be implemented
-                Schedule threadSchedule = new Schedule();
-                int threadScore = workingScore;
+                Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
                 Solution threadBestSolution = new Solution();
                 Random threadRandom = new Random();
                 Judge threadJudge = new Judge(threadRandom);
@@ -117,13 +115,11 @@ class Annealing
 
         cts.Dispose();
 
+        List<Solution> solutions = new List<Solution>();
+
         foreach (var task in tasks)
         {
-            Solution threadSolution = task.Result;
-            if (threadSolution.score < bestSolution.score)
-            {
-                bestSolution = threadSolution;
-            }
+            solutions.Add(task.Result);
         }
 
         return bestSolution;
