@@ -1,5 +1,8 @@
+using System.Net.Http.Headers;
+
 class Annealing
 {
+    #region Variable Declarations
     public Solution bestSolution = new Solution();
     Schedule workingSchedule = new Schedule();
     int workingScore;
@@ -18,6 +21,9 @@ class Annealing
 
     Statistics statistics = new Statistics();
 
+    #endregion
+
+    #region Stuff We Do Not Touch
     /// <summary>
     /// Make new Annealing through the static factory functions.
     /// </summary>
@@ -61,16 +67,152 @@ class Annealing
         totalWeightSum = swapDeliveriesWeightSum + 1;
     }
 
+    #endregion
+
+    #region Multi Threading Territory ( PROCEED WITH CAUTION )
+
+    public Solution ParallelRun(ulong iter, int numOfThreads)
+    {
+        CancellationTokenSource cts = new CancellationTokenSource();
+        List<Task<Solution>> tasks = new List<Task<Solution>>();
+        iterations = iter;
+
+        RecalculateWeights();
+        //Set temperature values:
+        float beginT = 10000000f;
+        float endT = 0.001f;
+
+        //Start one thread that handles the Q press for quitting
+        Task.Run(() =>
+        {
+            while (!cts.Token.IsCancellationRequested)
+            {
+                var key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Q)
+                {
+                    cts.Cancel(); // Signal cancellation
+                    return;
+                }
+            }
+        });
+
+        //Multi Threading
+        for (int i = 0; i < numOfThreads; i++)
+        {
+            int threadID = i+1;
+            tasks.Add(Task.Run(() =>
+            {
+                //Each thread gets their own schedule
+                //Schedule threadSchedule = workingSchedule.Clone(); //to be implemented
+                Schedule threadSchedule = new Schedule();
+                int threadScore = workingScore;
+                Solution threadBestSolution = new Solution();
+                Random threadRandom = new Random();
+                Judge threadJudge = new Judge(threadRandom);
+                return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, cts.Token);
+            }, cts.Token));
+        }
+
+        Task.WaitAll(tasks.ToArray()); // Wait for all threads to finish
+
+        cts.Dispose();
+
+        foreach (var task in tasks)
+        {
+            Solution threadSolution = task.Result;
+            if (threadSolution.score < bestSolution.score)
+            {
+                bestSolution = threadSolution;
+            }
+        }
+
+        return bestSolution;
+    }
+
+    public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT, CancellationToken cts)
+    {
+        bestSolution.UpdateSolution(workingSchedule, workingScore);
+
+        //Set initial T
+        judge.T = beginT;
+
+        //Set initial temperature
+        ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
+
+        for (ulong i = 0; i < iterations; i++)
+        {
+            // Decrease the temperature every X iterations
+            if (i % redInterval == 0)
+            {
+                judge.T *= alpha;
+            }
+
+            if (i % 1000000 == 0)
+            {
+                if (cts.IsCancellationRequested)
+                {
+                    //random cancellation messages because why not
+                    switch (rng.Next(0, 5))
+                    {
+                        case 0:
+                            Console.WriteLine($"Thread {ID} aborted its mission.");
+                            break;
+                        case 1:
+                            Console.WriteLine($"Thread {ID} gave up on its dream.");
+                            break;
+                        case 2:
+                            Console.WriteLine($"Thread {ID} returned to base.");
+                            break;
+                        case 3:
+                            Console.WriteLine($"Thread {ID} has fallen.");
+                            break;
+                        case 4:
+                            Console.WriteLine($"Thread {ID} will be remembered.");
+                            break;
+                    }
+                    return bestSolution;
+                }
+            }
+
+            if(i % 10000000 == 0)
+            {
+                Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}");
+            }
+
+            //Apply operation
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
+
+            //If better solution found
+            if (workingScore < bestSolution.score)
+            {
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
+                workingScore = bestSolution.score;
+            }
+
+            judge.Reset();
+
+            //End of one temperate cycle
+            if (i % modeIterations == 0 && i > 0)
+            {
+                return bestSolution;
+            }
+        }
+
+        return bestSolution;
+    }
+
+    #endregion
+
     public Solution Run(ulong iter)
     {
-
+        //The total number of iterations, specified through input at the start.
         Console.WriteLine(iter);
         iterations = iter;
 
+        //Displays the initial score.
         Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
-        //Initial solution
-
+        //Randomly adds 5000 deliveries.
         if (insertRandomStart)
         {
             for (int i = 0; i < 5000; i++)
@@ -90,6 +232,7 @@ class Annealing
             Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
         }
 
+        //Randomly removes 250 deliveries.
         if (deleteRandomStart)
         {
             for (int i = 0; i < 250; i++)
@@ -112,13 +255,14 @@ class Annealing
         RecalculateWeights();
 
         //Start iterating
+        //Set temperature values:
+        float beginT = 10000000f;
+        float endT = 0.001f; 
 
-        float beginT = 20000;
-        //float beginT = float.MaxValue;
-        float endT = 1f; 
-
+        //Perform the Great Simulated Annealing
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 
+        //Display debug prints after end of process.
         if (debugMessages)
             DebugMessages();
 
