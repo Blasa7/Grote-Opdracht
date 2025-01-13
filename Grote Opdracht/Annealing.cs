@@ -146,9 +146,6 @@ class Annealing
 
         for (ulong i = 0; i < iterations; i++)
         {
-            if (Schedule.GlobalNumOfRoutes > Schedule.GlobalMaxOfRoutes)
-                Console.WriteLine(Schedule.GlobalNumOfRoutes);
-
             // Decrease the temperature every X iterations
             if (i % redInterval == 0)
             {
@@ -191,16 +188,36 @@ class Annealing
             if (i % modeIterations == 0 && i > 0)
             {
                 judge.T = beginT;
-                
-                Console.WriteLine("Swapped modes!");
+
+                ulong randomWalkIterations = 100;
+                workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, randomWalkIterations);
+
+                Console.WriteLine("Reset!");
             }
 
         }
     }
 
-    public void RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
+    public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
     {
+        for (ulong i = 0; i < iterations; i++)
+        {
+            judge.Reset();
+            judge.OverrideJudge(Judgement.Pass);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
 
+            if (workingScore < bestSolution.score)
+            {
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
+                workingScore = bestSolution.score;
+            }
+        }
+
+        judge.Reset();
+
+        Console.WriteLine("After random walk score: " + workingScore / 60 / 1000);
+
+        return workingScore;
     }
 
     int addWeight = 2;  // bug with these combo of these 3
