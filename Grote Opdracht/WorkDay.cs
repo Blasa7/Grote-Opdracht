@@ -7,8 +7,6 @@
     public int totalDuration = 0;
     public int maximumDuration = 43200000; // 720 min, 432000 sec //in minutes aka 11.5 hours in a work day
 
-    public int timePenaltyMultiplier = 10;
-
     public WorkDay(int weekDay)
     {
         this.weekDay = weekDay;
@@ -24,16 +22,16 @@
     /// <summary>
     /// This functions only testifies the changes to the judge and return the values to enact the changes in AddStop
     /// </summary>
-    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta)
+    public void StageRandomStop(Delivery delivery, int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
     {
         //First calculate variables
         workDayIndex = workDay.getRandomIncluded(rng);
 
-        workDay.nodes[workDayIndex].value.StageRandomStop(delivery, rng, judge, out routeIndex, out timeDelta);
+        workDay.nodes[workDayIndex].value.StageRandomStop(delivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
         ////TODO
         //if (totalDuration + timeDelta > maximumDuration)
-        //    judge.OverrideJudge(Judgement.Fail);
+        //    judge.OverrideJudge(Judgement.Fail);s
 
         ////TODO make soft contraint
         //if (totalDuration + timeDelta > maximumDuration)
@@ -66,9 +64,9 @@
         workDay.nodes[workDayIndex].value.AddStop(delivery, routeIndex, timeDelta);
     }
 
-    public void StageRemoveStop(Delivery delivery, Judge judge, out int timeDelta)
+    public void StageRemoveStop(Delivery delivery, int routeNum, Judge judge, out int timeDelta, out int routeNumDelta)
     {
-        workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, judge, out timeDelta);
+        workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, routeNum, judge, out timeDelta, out routeNumDelta);
 
         ////TODO
         //if (totalDuration + timeDelta > maximumDuration)
@@ -88,23 +86,27 @@
     /// <summary>
     /// Shuffles between routes on the same day and the same truck.
     /// </summary>
-    public void ShuffleWorkDay(Random rng, Judge judge)
+    public void ShuffleWorkDay(int routeNum, Random rng, Judge judge, out int routeNumDelta)
     {
-        Delivery changedDelivery = StageRemoveShuffleWorkDay(rng, judge, out int removeTimeDelta);
+        routeNumDelta = 0;
+
+        Delivery changedDelivery = StageRemoveShuffleWorkDay(routeNum, rng, judge, out int removeTimeDelta, out int removeRouteNumDelta);
 
         if (changedDelivery == null)
             return;
 
-        StageShuffleWorkDay(changedDelivery, rng, judge, out int workDayIndex, out int routeIndex, out int addTimeDelta);
+        StageShuffleWorkDay(changedDelivery, routeNum, rng, judge, out int workDayIndex, out int routeIndex, out int addTimeDelta, out int addRouteNumDelta);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
             RemoveStop(changedDelivery, removeTimeDelta);
             AddStop(changedDelivery, workDayIndex, routeIndex, addTimeDelta);
+
+            routeNumDelta = removeRouteNumDelta + addRouteNumDelta;
         }
     }
 
-    Delivery StageRemoveShuffleWorkDay(Random rng, Judge judge, out int timeDelta)
+    Delivery StageRemoveShuffleWorkDay(int routeNum, Random rng, Judge judge, out int timeDelta, out int routeNumDelta)
     {
         int workDayIndex = workDay.getRandomIncluded(rng);
 
@@ -112,6 +114,7 @@
         {
             judge.OverrideJudge(Judgement.Fail);
             timeDelta = 0;
+            routeNumDelta = 0;
             return null;
         }
 
@@ -119,17 +122,17 @@
 
         Delivery removedDelivery = workDay.nodes[workDayIndex].value.route.nodes[routeIndex].value;
 
-        StageRemoveStop(removedDelivery, judge, out timeDelta);
+        StageRemoveStop(removedDelivery, routeNum, judge, out timeDelta, out routeNumDelta);
 
         return removedDelivery;
     }
 
-    void StageShuffleWorkDay(Delivery oldDelivery, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta)
+    void StageShuffleWorkDay(Delivery oldDelivery,int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
     {
         //First calculate variables
         workDayIndex = (oldDelivery.workDayNode.index + rng.Next(1, workDay.currentIndex + 1)) % (workDay.currentIndex + 1);
 
-        workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, rng, judge, out routeIndex, out timeDelta);
+        workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
         ////TODO
         //if (totalDuration + timeDelta > maximumDuration)
@@ -170,11 +173,11 @@
             {
                 if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
                 {
-                    penalty = (maximumDuration - totalDuration) * timePenaltyMultiplier;
+                    penalty = (maximumDuration - totalDuration);
                 }
                 else // it's still is exceeded
                 {
-                    penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+                    penalty = timeDelta; // ((totaldur + timedelta) - totaldur)
                 }
             }
         }
@@ -184,12 +187,12 @@
             {
                 if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
                 {
-                    penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // add the excess
+                    penalty = (totalDuration + timeDelta - maximumDuration); // add the excess
                 }
             }
             else // it was, and still will be exceeded
             {
-                penalty = timeDelta * timePenaltyMultiplier; // ((totaldur + timedelta) - totaldur)
+                penalty = timeDelta; // ((totaldur + timedelta) - totaldur)
             }
         }
         return penalty;

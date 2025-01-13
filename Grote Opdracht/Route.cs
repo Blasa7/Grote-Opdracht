@@ -7,7 +7,6 @@ class Route : IClonable<Route>
 
     public int collectedGarbage = 0;
     public int maximumGarbage = 100000; //Before compression we do not need to calculate the compression
-    public int garbagePenaltyMultiplier = 10;
 
     /// <summary>
     /// The total distance of this route, including driving time, collecting time, etc..
@@ -59,8 +58,10 @@ class Route : IClonable<Route>
         route.startIndex = 1;
     }
 
-    public void StageRandomStop(Delivery delivery, Random rng, Judge judge, out int routeIndex, out int timeDelta)
+    public void StageRandomStop(Delivery delivery, int routeNum, Random rng, Judge judge, out int routeIndex, out int timeDelta, out int routeNumDelta)
     {
+        routeNumDelta = 0;
+
         //First calculate variables
         routeIndex = route.getRandomIncluded(rng, 0);
 
@@ -81,14 +82,15 @@ class Route : IClonable<Route>
         // Check that max num of filled routes <= GlobalMaxOfRoutes
         if (route.currentIndex == 0)
         {
-            if (Schedule.StagedNumOfRoutes >= Schedule.GlobalMaxOfRoutes) //cannot add past the maximum number of routes
+            //if (Schedule.StagedNumOfRoutes >= Schedule.GlobalMaxOfRoutes) //cannot add past the maximum number of routes
+            if (routeNum >= judge.maxRoutes)
             {
                 judge.OverrideJudge(Judgement.Fail);
             }
             else
             {
                 timeDelta += 1800000; //Because the emptying time at depot is 30 min
-                Schedule.StagedNumOfRoutes++;
+                routeNumDelta = 1;//judge.stagedNumRoutes++;
             }
         }
 
@@ -101,11 +103,11 @@ class Route : IClonable<Route>
             int penalty;
             if (collectedGarbage < maximumGarbage) //with this stop, it firsts exceeds the limit
             {
-                penalty = (newGarbageAmount - maximumGarbage) * garbagePenaltyMultiplier; //only add the diffrence from the maximum
+                penalty = (newGarbageAmount - maximumGarbage); //only add the diffrence from the maximum
             }
             else //there was already too much garbage
             {
-                penalty = (newGarbageAmount - collectedGarbage) * garbagePenaltyMultiplier;
+                penalty = (newGarbageAmount - collectedGarbage);
             }
 
             garbagePenaltyDelta = penalty;
@@ -134,10 +136,10 @@ class Route : IClonable<Route>
         if (routeIndex == 0) //Add after depot
         {
             relevantDelta = Input.GetTimeFromTo(thisID, nextID);
-            if (route.currentIndex == 0) // The route is empty
-            {
-                Schedule.GlobalNumOfRoutes++;
-            }
+            //if (route.currentIndex == 0) // The route is empty
+            //{
+            //    judge.numRoutes++;
+            //}
         }
         else if (routeIndex == route.currentIndex) //Add before depot
         {
@@ -152,8 +154,10 @@ class Route : IClonable<Route>
     /// <summary>
     /// Call this before RemoveStop and pass the corresponding arguments
     /// </summary>
-    public void StageRemoveStop(Delivery delivery, Judge judge, out int timeDelta)
+    public void StageRemoveStop(Delivery delivery, int routeNum, Judge judge, out int timeDelta, out int routeNumDelta)
     {
+        routeNumDelta = 0;
+
         //First calculate variables
         int index = delivery.routeNode.index;
 
@@ -170,10 +174,13 @@ class Route : IClonable<Route>
 
         if (route.currentIndex == 1) //There are two nodes
         {
-            if (Schedule.GlobalNumOfRoutes <= Schedule.GlobalMinOfRoutes) //cannot remove past the minimum number of routes
+            if (routeNum <= judge.minRoutes) //cannot remove past the minimum number of routes
                 judge.OverrideJudge(Judgement.Fail);
             else
+            {
                 timeDelta -= 1800000; //Minus 30 minutes because you no longer have the 30 min emptying time.
+                routeNumDelta = -1;
+            }
         }
 
         int garbagePenaltyDelta = 0;
@@ -187,11 +194,11 @@ class Route : IClonable<Route>
             int penalty;
             if (newGarbageAmount < maximumGarbage) //only add the diffrence to the maximum
             {
-                penalty = (newGarbageAmount - maximumGarbage) * garbagePenaltyMultiplier;
+                penalty = (newGarbageAmount - maximumGarbage);
             }
             else //there is still too much garbage
             {
-                penalty = (newGarbageAmount - collectedGarbage) * garbagePenaltyMultiplier;
+                penalty = (newGarbageAmount - collectedGarbage);
             }
             garbagePenaltyDelta += penalty;
 
@@ -222,10 +229,10 @@ class Route : IClonable<Route>
         if (removedIndex == 1) //Remove node after depot
         {
             relevantDelta = -Input.GetTimeFromTo(thisID, nextID);
-            if (route.currentIndex == 1) // gloabal number of used routes now decreases
-            {
-                Schedule.GlobalNumOfRoutes--;
-            }
+            //if (route.currentIndex == 1) // gloabal number of used routes now decreases
+            //{
+            //    Schedule.GlobalNumOfRoutes--;
+            //}
         }
         else if (removedIndex == route.currentIndex) //Remove node before depot
         {
