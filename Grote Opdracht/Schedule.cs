@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Security.Cryptography;
+using static System.Formats.Asn1.AsnWriter;
 
 class Schedule
 {
@@ -640,5 +642,109 @@ class Schedule
     {
         delivery.scheduleNode = schedule[delivery.day].InsertLast(delivery);
         workDays[delivery.truck][delivery.day].AddStop(delivery, workDayIndex, routeIndex, timeDelta);
+    }
+
+    public static Schedule FromSolution(Solution solution, out int score) //Score should be the same as in solution
+    {
+        score = 0;
+
+        Schedule schedule = new Schedule(); //The schedule we will fill out.
+
+        Dictionary<int, List<Delivery>> orderDeliveries = new Dictionary<int, List<Delivery>>(); //Maps an order number to all deliveries that are made for that order.
+
+        int[][] workDayIndexes = new int[2][] { new int[5], new int[5] }; //The default value of int is 0, so each time we encounter a route on a certain truck and day combination we increase that index by 1.
+
+        //First we will insert each node into a route
+        //for (int i = 0; i < routes.Count; i++) //For each route.
+        for (int t = 0; t < 2; t++)
+        {
+            for (int d = 0; d < 5 ; d++)
+            {
+                //int prevID = Input.depotMatrixID; //Since every route start at the depot.
+
+                for (int r = 0; r < solution.solution[t][d].workDay.currentIndex + 1; r++)
+                {
+                    IndexedLinkedListNode<Delivery> previous = solution.solution[t][d].workDay.nodes[r].value.route.nodes[0];
+
+                    if (solution.solution[t][d].workDay.nodes[r].value.route.currentIndex > 0)
+                    {
+                        for (int n = 1; n < solution.solution[t][d].workDay.nodes[r].value.route.currentIndex + 1; n++)
+                        {
+                            IndexedLinkedListNode<Delivery> current = previous.next;
+
+                            Address address = current.value.address;
+
+                            Delivery delivery = new Delivery(address);
+
+                            if (!orderDeliveries.ContainsKey(address.orderID))
+                                orderDeliveries.Add(address.orderID, new List<Delivery>()); //Create a new list if this is the first delivery of and order. 
+
+                            orderDeliveries[address.orderID].Add(delivery);
+
+                            //Now fill the values out on the delivery.
+                            delivery.truck = t;//parse.truck - 1; //The input starts counting from 1.
+                            delivery.day = d;//parse.day - 1; //The input starts counting from 1.
+
+                            int timeDelta = Input.GetTimeFromTo(previous.value.address.matrixID, address.matrixID) + address.emptyingTime; //The time delta consists of the time from the previous address to the current one plus the emptying time of the current address.
+
+                            if (n == solution.solution[t][d].workDay.nodes[r].value.route.currentIndex) //If the addres is just before the depot (the second last element in this list) then add the traver time from the address to the depot plus the depot emptying time.
+                                timeDelta += Input.GetTimeFromTo(address.matrixID, Input.depotMatrixID) + Address.Depot().emptyingTime;
+
+                            schedule.AddDelivery(delivery, workDayIndexes[t][d], n - 1, timeDelta);
+
+                            score += timeDelta;
+
+                            previous = current;
+                        }
+
+                        //A route was fully added so we can increase workdayIndexes for later routes that are added to the same truck day combination
+                        workDayIndexes[t][d]++; //These indexes are just truck/day.
+                    }
+                    
+                }
+            }
+        }
+
+        //Now it is important to update each delivery that we just added to reference other deliveries of the same order.
+        foreach (List<Delivery> deliveries in orderDeliveries.Values)
+        {
+            if (deliveries[0].address.orderID == 0)
+                continue;
+
+            for (int i = 0; i < deliveries.Count; i++) //For each delivery.
+            {
+                for (int j = 0; j < deliveries.Count - 1; j++) //For each delivery except the one from the previous loop.
+                {
+                    deliveries[i].others[j] = deliveries[(i + j + 1) % deliveries.Count];
+                }
+            }
+        }
+
+        IndexedLinkedListNode<Address> currentNode = schedule.unfulfilledAddresses.nodes[0]; //The list is initially filled with every order value so we need to check for each value in this list wether it is present in the parse input.
+
+        //Since we are bypassing some of the normal steps we need to update the unfulfilled orders list with the correct values.
+        for (int i = 0; i < schedule.unfulfilledAddresses.nodes.Length; i++)
+        {
+            Address address = currentNode.value;
+
+            if (orderDeliveries.ContainsKey(address.orderID))
+                schedule.unfulfilledAddresses.RemoveNode(currentNode.index);
+
+            currentNode = currentNode.next;
+        }
+
+        currentNode = schedule.unfulfilledAddresses.nodes[0];
+
+        //As a last step we need to add the penalties for the unfulfilled orders to the score.
+        for (int i = 0; i < schedule.unfulfilledAddresses.currentIndex + 1; i++)
+        {
+            Address address = currentNode.value;
+
+            score += address.emptyingTime * address.frequency * 3;
+
+            currentNode = currentNode.next;
+        }
+
+        return schedule;
     }
 }

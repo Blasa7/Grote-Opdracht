@@ -2,7 +2,7 @@
 class Solution
 {
     //Each truck has 5 routes, one per day.
-    private WorkDay[][] solution = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
+    public WorkDay[][] solution = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
 
     public int score; //The score in seconds
 
