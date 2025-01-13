@@ -94,26 +94,23 @@ class Route : IClonable<Route>
             }
         }
 
-        int garbagePenaltyDelta = 0;
+        int penalty = 0;
 
         //Soft constraint:
         //If the maximum garbage is exceeded, add a penalty
         if (newGarbageAmount > maximumGarbage)
         {
-            int penalty;
             if (collectedGarbage < maximumGarbage) //with this stop, it firsts exceeds the limit
             {
-                penalty = (newGarbageAmount - maximumGarbage); //only add the diffrence from the maximum
+                penalty = newGarbageAmount - maximumGarbage; //only add the diffrence from the maximum
             }
             else //there was already too much garbage
             {
-                penalty = (newGarbageAmount - collectedGarbage);
+                penalty = newGarbageAmount - collectedGarbage;
             }
-
-            garbagePenaltyDelta = penalty;
         }
 
-        judge.Testify(timeDelta, 0, garbagePenaltyDelta);
+        judge.Testify(timeDelta, 0, penalty);
     }
 
     /// <summary>
@@ -183,28 +180,23 @@ class Route : IClonable<Route>
             }
         }
 
-        int garbagePenaltyDelta = 0;
+        int penalty = 0;
 
         // Soft constraint:
         // If there was a penalty, lower it after removing a stop
         if (collectedGarbage > maximumGarbage)
         {
-            int newGarbageAmount = collectedGarbage - delivery.address.garbageAmount;
+            //120 > 100
 
-            int penalty;
-            if (newGarbageAmount < maximumGarbage) //only add the diffrence to the maximum
-            {
-                penalty = (newGarbageAmount - maximumGarbage);
-            }
-            else //there is still too much garbage
-            {
-                penalty = (newGarbageAmount - collectedGarbage);
-            }
-            garbagePenaltyDelta += penalty;
+            int overLimit = collectedGarbage - maximumGarbage; //120 - 100
+            int delta = delivery.address.garbageAmount; // 5
+            //int newGarbageAmount = collectedGarbage - delta;
 
+            penalty = Math.Min(overLimit, delta);
+            
         }
 
-        judge.Testify(timeDelta, 0, garbagePenaltyDelta);
+        judge.Testify(timeDelta, 0, -penalty);
     }
 
     /// <summary>

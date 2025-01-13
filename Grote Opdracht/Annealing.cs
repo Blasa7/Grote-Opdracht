@@ -302,12 +302,14 @@ class Annealing
                 workingScore = bestSolution.score;
             }
 
+            if (judge.garbagePenalty < 0)
+                //Console.WriteLine("TEST");
+
             judge.Reset();
 
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
-                Console.WriteLine(judge.garbagePenalty);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
 
                 if (Console.KeyAvailable)
@@ -562,8 +564,8 @@ class Judge
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
             double weight = (beginT - T);
-            double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier / weight;
-            double weightedTimePenalty = timePenalty * timePenaltyMultiplier / weight;
+            double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier * weight;
+            double weightedTimePenalty = timePenalty * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
 
             double frac = numerator / T; // '-', because we want to minimize here
