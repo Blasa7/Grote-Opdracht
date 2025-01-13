@@ -16,10 +16,11 @@ class Schedule
 
     public IndexedLinkedList<Address> unfulfilledAddresses;
 
-             static public int GlobalNumOfRoutes = 0;
-    static public readonly int GlobalMaxOfRoutes = 15;
-    static public readonly int GlobalMinOfRoutes = 14;
-             static public int StagedNumOfRoutes = GlobalNumOfRoutes;
+    public int routeNum = 0;
+    //         static public int GlobalNumOfRoutes = 0;
+    //static public readonly int GlobalMaxOfRoutes = 15;
+    //static public readonly int GlobalMinOfRoutes = 14;
+    //         static public int StagedNumOfRoutes = GlobalNumOfRoutes;
 
     public Schedule()
     {
@@ -123,13 +124,19 @@ class Schedule
 
         //Stage functions to randomly add are called
 
-        StagedNumOfRoutes = GlobalNumOfRoutes;
+        //StagedNumOfRoutes = GlobalNumOfRoutes;
+        //judge.stagedNumRoutes = judge.numRoutes;
+
+        int stagedRouteNum = routeNum;
+
         for (int i = 0; i < address.frequency; i++)
         {
-            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i]);
+            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], stagedRouteNum, rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i], out int routeNumDelta);
+            stagedRouteNum += routeNumDelta;
         }
 
-        if (StagedNumOfRoutes > GlobalMaxOfRoutes)
+        //if (StagedNumOfRoutes > GlobalMaxOfRoutes)
+        if (stagedRouteNum > judge.maxRoutes)
         {
             judge.OverrideJudge(Judgement.Fail);
         }
@@ -145,6 +152,7 @@ class Schedule
             }
 
             unfulfilledAddresses.RemoveNode(index);
+            routeNum = stagedRouteNum;
         }
     }
 
@@ -171,12 +179,20 @@ class Schedule
         judge.Testify(timeDelta, 0, 0);
 
         //Third call other functions that need to testify
-        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out int workDayTimeDelta);
+        int stagedRouteNum = routeNum;
+
+        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, stagedRouteNum, judge, out int workDayTimeDelta, out int routeNumDelta);
+
+        stagedRouteNum += routeNumDelta;
 
         int[] otherWorkDayTimeDeltas = new int[delivery.others.Length];
+        int[] otherRouteNumDeltas = new int[delivery.others.Length];
 
         for (int i = 0; i < delivery.others.Length; i++)
-            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], judge, out otherWorkDayTimeDeltas[i]);
+        {
+            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], stagedRouteNum, judge, out otherWorkDayTimeDeltas[i], out routeNumDelta);
+            stagedRouteNum += routeNumDelta;
+        }
 
         //Fourth check judgement
 
@@ -193,6 +209,7 @@ class Schedule
             }
 
             unfulfilledAddresses.InsertLast(delivery.address); //Only once!
+            routeNum = stagedRouteNum;
         }
     }
 
@@ -201,21 +218,23 @@ class Schedule
     #region Shuffle
     public void ShuffleSchedule(Random rng, Judge judge)
     {
-        Delivery removedDelivery = StageRemoveShuffleSchedule(rng, judge, out int[] removeTimeDeltas);
+        Delivery removedDelivery = StageRemoveShuffleSchedule(routeNum, rng, judge, out int[] removeTimeDeltas, out int routeNumDelta);
 
         if (removedDelivery == null)
             return;
 
-        StageShuffleSchedule(removedDelivery, rng, judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out int[] addTimeDeltas);
+        StageShuffleSchedule(removedDelivery, routeNum + routeNumDelta, rng, judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out int[] addTimeDeltas, out routeNumDelta);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
             RemoveDelivery(removedDelivery, removeTimeDeltas);
             AddDeliveries(deliveries, workDayIndexes, routeIndexes, addTimeDeltas);
+
+            routeNum += routeNumDelta;
         }
     }
 
-    Delivery StageRemoveShuffleSchedule(Random rng, Judge judge, out int[] timeDeltas)
+    Delivery StageRemoveShuffleSchedule(int routeNum, Random rng, Judge judge, out int[] timeDeltas, out int routeNumDelta)
     {
         //First calculate variables
         int weekDay = rng.Next(0, 5);
@@ -224,6 +243,7 @@ class Schedule
         {
             judge.OverrideJudge(Judgement.Fail);
             timeDeltas = null;
+            routeNumDelta = 0;
             return null;
         }
 
@@ -242,11 +262,21 @@ class Schedule
         //TODO
         judge.Testify(timeDelta, 0, 0);
 
+
         //Third call other functions that need to testify
-        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, judge, out timeDeltas[0]);
+        int stagedRouteNum = routeNum;
+
+        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, routeNum, judge, out timeDeltas[0], out routeNumDelta);
+
+        stagedRouteNum += routeNumDelta;
 
         for (int i = 0; i < delivery.others.Length; i++)
-            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], judge, out timeDeltas[i + 1]);
+        { 
+            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], routeNum, judge, out timeDeltas[i + 1], out routeNumDelta);
+            stagedRouteNum += routeNumDelta;
+        }
+
+        routeNumDelta = stagedRouteNum - routeNum;
 
         return delivery;
     }
@@ -267,7 +297,7 @@ class Schedule
         //unfulfilledAddresses.InsertLast(delivery.address); //Only once!
     }
 
-    void StageShuffleSchedule(Delivery oldDelivery, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out int[] timeDeltas)
+    void StageShuffleSchedule(Delivery oldDelivery, int routeNum, Random rng, Judge judge, out Delivery[] deliveries, out int[] workDayIndexes, out int[] routeIndexes, out int[] timeDeltas, out int routeNumDelta)
     {
         deliveries = new Delivery[oldDelivery.address.frequency];
         workDayIndexes = new int[oldDelivery.address.frequency];
@@ -319,12 +349,18 @@ class Schedule
         //TODO
         judge.Testify(timeDelta, 0, 0);
 
+        int stagedRouteNum = routeNum;
+
         for (int i = 0; i < oldDelivery.address.frequency; i++)
         {
             deliveries[i].day = weekDays[i];
 
-            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i]);
+            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], stagedRouteNum, rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i], out routeNumDelta);
+
+            stagedRouteNum += routeNumDelta;
         }
+
+        routeNumDelta = stagedRouteNum - routeNum;
     }
 
     void AddDeliveries(Delivery[] deliveries, int[] workDayIndexes, int[] routeIndexes, int[] timeDeltas)
@@ -346,7 +382,12 @@ class Schedule
         int truck = rng.Next(0, 2);
         int day = rng.Next(0, 5);
 
-        workDays[truck][day].ShuffleWorkDay(rng, judge);
+        workDays[truck][day].ShuffleWorkDay(routeNum, rng, judge, out int routeNumDelta);
+
+        if (judge.GetJudgement() == Judgement.Pass)
+        {
+            routeNum += routeNumDelta;
+        }
     }
 
     public void ShuffleRoute(Random rng, Judge judge)
@@ -634,6 +675,8 @@ class Schedule
             currentNode = currentNode.next;
         }
 
+        schedule.routeNum = routes.Count;
+
         return schedule;
     }
 
@@ -668,6 +711,8 @@ class Schedule
 
                     if (solution.solution[t][d].workDay.nodes[r].value.route.currentIndex > 0)
                     {
+                        schedule.routeNum++;
+
                         for (int n = 1; n < solution.solution[t][d].workDay.nodes[r].value.route.currentIndex + 1; n++)
                         {
                             IndexedLinkedListNode<Delivery> current = previous.next;

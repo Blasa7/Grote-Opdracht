@@ -383,6 +383,10 @@ class Judge
     public int timeDelta;
     public int timePenalty;
     public int garbagePenalty;
+
+    public int minRoutes = 14;
+    public int maxRoutes = 15;
+
     Judgement judgement;
 
     public float T;
