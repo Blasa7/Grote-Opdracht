@@ -1,3 +1,5 @@
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 class Annealing
 {
     public Solution bestSolution = new Solution();
@@ -115,7 +117,9 @@ class Annealing
 
         float beginT = 20000;
         //float beginT = float.MaxValue;
-        float endT = 1f; 
+        float endT = 1f;
+
+        judge.beginT = beginT;
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 
@@ -176,7 +180,7 @@ class Annealing
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.Q) // Quit the program when the user presses 'q'
                     {
-                        bestSolution.UpdateSolution(workingSchedule, workingScore);
+                        //bestSolution.UpdateSolution(workingSchedule, workingScore);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         return;
                     }
@@ -366,6 +370,9 @@ class Judge
     public int timeDelta;
     public int timePenalty;
     public int garbagePenalty;
+    public int garbagePenaltyMultiplier = 10;
+    public int timePenaltyMultiplier = 500;
+    public float beginT;
     Judgement judgement;
 
     public float T;
@@ -394,7 +401,12 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            double frac = -(timeDelta + timePenalty + garbagePenalty) / T; // '-', because we want to minimize here
+            double weight = (beginT - T);
+            double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier / weight;
+            double weightedTimePenalty = timePenalty * timePenaltyMultiplier / weight;
+            double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
+
+            double frac = numerator / T; // '-', because we want to minimize here
             double res = Math.Exp(frac);
             if (res >= rng.NextDouble())
                 judgement = Judgement.Pass;//return Judgement.Pass;
