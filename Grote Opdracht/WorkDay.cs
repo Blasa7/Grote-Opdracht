@@ -29,30 +29,26 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
-
-        ////TODO make soft contraint
+        ////TODO
         //if (totalDuration + timeDelta > maximumDuration)
-        //{
-        //    int penalty;
-        //    if (totalDuration > maximumDuration) // time was already exceeded
-        //    {
-        //        penalty = timeDelta * timePenaltyMultiplier;
-        //    }
-        //    else // time will now be exceeded
-        //    {
-        //        penalty = (totalDuration + timeDelta - maximumDuration) * timePenaltyMultiplier; // only add excess
-        //    }
-        //    int timePenaltyDelta = penalty;
+        //    judge.OverrideJudge(Judgement.Fail);
 
-        //    //Testify only timePenalty here, others are done in Route.StageRandomStop above
-        //    judge.Testify(0, timePenaltyDelta, 0);
+        int newTime = totalDuration + timeDelta;
+
+        //Soft contraint (Assume timeDelta is positive)
+        //if (newTime > maximumDuration)
+        //{
+        //    int overLimit = newTime - maximumDuration;
+        //    int penalty = Math.Min(overLimit, timeDelta);
+
+        //    judge.Testify(0, penalty, 0);
         //}
 
-        //int timePenaltyDelta = CalculateTimePenalty(timeDelta);
-        //judge.Testify(0, timePenaltyDelta, 0);
+        int penalty = CalculateTimePenalty(timeDelta);
+        if (timeDelta > 0)
+            judge.Testify(0, penalty, 0);
+        else
+            judge.Testify(0, -penalty, 0);
 
     }
 
@@ -68,12 +64,27 @@
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, routeNum, judge, out timeDelta, out routeNumDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        ////TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
 
-        //int timePenaltyDelta = CalculateTimePenalty(timeDelta);
-        //judge.Testify(0, timePenaltyDelta, 0);
+        int newTime = totalDuration + timeDelta;
+
+        ////Soft contraint (Assume timeDelta is negative)
+        //if (totalDuration > maximumDuration)
+        //{
+        //    int overLimit = newTime - maximumDuration;
+        //    int penalty = Math.Min(overLimit, timeDelta);
+
+        //    judge.Testify(0, -penalty, 0);
+        //}
+
+        int penalty = CalculateTimePenalty(timeDelta);
+        if (timeDelta > 0)
+            judge.Testify(0, penalty, 0);
+        else
+            judge.Testify(0, -penalty, 0);
+
     }
 
     public void RemoveStop(Delivery delivery, int timeDelta)
@@ -134,12 +145,15 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        ////TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
 
-        //int timePenaltyDelta = CalculateTimePenalty(timeDelta);
-        //judge.Testify(0, timePenaltyDelta, 0);
+        int penalty = CalculateTimePenalty(timeDelta);
+        if (timeDelta > 0)
+            judge.Testify(0, penalty, 0);
+        else
+            judge.Testify(0, -penalty, 0);
 
     }
 
@@ -150,12 +164,15 @@
         // Stage and testify
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);
 
-        //TODO
-        if (totalDuration + timeDelta > maximumDuration)
-            judge.OverrideJudge(Judgement.Fail);
+        ////TODO
+        //if (totalDuration + timeDelta > maximumDuration)
+        //    judge.OverrideJudge(Judgement.Fail);
 
-        //int timePenaltyDelta = CalculateTimePenalty(timeDelta);
-        //judge.Testify(0, timePenaltyDelta, 0);
+        int penalty = CalculateTimePenalty(timeDelta);
+        if (timeDelta > 0)
+            judge.Testify(0, penalty, 0);
+        else
+            judge.Testify(0, -penalty, 0);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
@@ -167,32 +184,21 @@
     public int CalculateTimePenalty(int timeDelta)
     {
         int penalty = 0;
+        int newTime = totalDuration + timeDelta;
         if (timeDelta < 0) // improvement
         {
-            if (totalDuration > maximumDuration) // it was exceeded
+            if (totalDuration > maximumDuration)
             {
-                if (totalDuration + timeDelta < maximumDuration) // remove the excess penalty
-                {
-                    penalty = (maximumDuration - totalDuration);
-                }
-                else // it's still is exceeded
-                {
-                    penalty = timeDelta; // ((totaldur + timedelta) - totaldur)
-                }
+                int overLimit = newTime - maximumDuration;
+                penalty = Math.Min(overLimit, timeDelta);
             }
         }
-        else // timedelta > 0, unlikely but possible
+        else // timedelta > 0
         {
-            if (totalDuration < maximumDuration) // it was NOT exceeded
+            if (newTime > maximumDuration)
             {
-                if (totalDuration + timeDelta > maximumDuration) // it now will be exceeded
-                {
-                    penalty = (totalDuration + timeDelta - maximumDuration); // add the excess
-                }
-            }
-            else // it was, and still will be exceeded
-            {
-                penalty = timeDelta; // ((totaldur + timedelta) - totaldur)
+                int overLimit = newTime - maximumDuration;
+                penalty = Math.Min(overLimit, timeDelta);
             }
         }
         return penalty;

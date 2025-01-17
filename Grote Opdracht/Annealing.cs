@@ -22,7 +22,7 @@ class Annealing
 
     #endregion
 
-    #region Stuff We Do Not Touch
+    #region Init Annealing
     /// <summary>
     /// Make new Annealing through the static factory functions.
     /// </summary>
@@ -292,12 +292,12 @@ class Annealing
                 workingScore = bestSolution.score;
             }
 
-            //if (judge.garbagePenalty < 0)
+            //if (judge.timePenalty < 0)
             //{
-            //    Console.WriteLine("TEST");
+            //    Console.WriteLine(judge.timePenalty);
             //}
 
-            judge.Reset();
+            //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
 
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
@@ -308,14 +308,14 @@ class Annealing
                 DynamicallyUpdateWeights(progress);
                 RecalculateWeights();
 
-                Console.WriteLine((progress, addWeight, removeWeight));
+                //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
 
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.Q) // Quit the program when the user presses 'q'
                     {
-                        //bestSolution.UpdateSolution(workingSchedule, workingScore);
+                        bestSolution.UpdateSolution(workingSchedule, workingScore);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         return;
                     }
@@ -326,6 +326,8 @@ class Annealing
                     }
                 }
             }
+
+            judge.Reset();
 
             if (i % modeIterations == 0 && i > 0)
             {
@@ -364,6 +366,8 @@ class Annealing
 
         return workingScore;
     }
+
+    #region Weights
 
     readonly int baseAddWeight = 200;
     readonly int baseRemoveWeight = 100;
@@ -416,6 +420,8 @@ class Annealing
         shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
         totalWeightSum = shuffleRouteWeightSum + 1;
     }
+
+    #endregion
 
     public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
     {
@@ -545,7 +551,7 @@ class Annealing
 
 class Judge
 {
-    public int scoreDelta; //newScore - oldScore (negative score suggests improvement!)
+    //public int scoreDelta; //newScore - oldScore (negative score suggests improvement!)
     public int timeDelta;
     public int timePenalty;
     public int garbagePenalty;
@@ -553,8 +559,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public int garbagePenaltyMultiplier = 10;
-    public int timePenaltyMultiplier = 500;
+    public double garbagePenaltyMultiplier = 10;
+    public double timePenaltyMultiplier = 1 / 1000;
     public float beginT;
 
     Judgement judgement;
@@ -585,7 +591,7 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            double weight = (beginT - T);
+            double weight = beginT - T;
             double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier * weight;
             double weightedTimePenalty = timePenalty * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
