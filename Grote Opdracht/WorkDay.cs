@@ -10,7 +10,7 @@
     public WorkDay(int weekDay)
     {
         this.weekDay = weekDay;
-        int numRoutes = 10;
+        int numRoutes = 3;
         workDay = new IndexedLinkedList<Route>(numRoutes); //Hard coded size may need to be larger
 
         for (int i = 0; i < numRoutes; i++)

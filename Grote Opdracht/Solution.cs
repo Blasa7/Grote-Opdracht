@@ -5,6 +5,8 @@ class Solution
     public WorkDay[][] solution = new WorkDay[2][] { new WorkDay[5], new WorkDay[5] };
 
     public int score; //The score in seconds
+    public int timePenalty = 0;
+    public int garbagePenalty = 0;
 
     public Solution()
     {
@@ -14,7 +16,7 @@ class Solution
         }
     }
 
-    public void UpdateSolution(Schedule schedule, int score)
+    public void UpdateSolution(Schedule schedule, int score, int timePenalty, int garbagePenalty)
     {
         this.score = score;
 
@@ -79,6 +81,10 @@ class Solution
                     }
 
                 }
+            }
+            if (write)
+            {
+                sw.WriteLine($"{timePenalty};{garbagePenalty}");
             }
         }
         return "";
