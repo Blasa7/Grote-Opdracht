@@ -55,17 +55,6 @@ class Annealing
         return annealing;
     }
 
-    private void RecalculateWeights()
-    {
-        addWeightSum = addWeight;
-        removeWeightSum = addWeightSum + removeWeight;
-        shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
-        shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
-        shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
-        swapDeliveriesWeightSum = shuffleRouteWeightSum + swapDeliveriesWeight;
-        totalWeightSum = swapDeliveriesWeightSum + 1;
-    }
-
     #endregion
 
     #region Multi Threading Territory ( PROCEED WITH CAUTION )
@@ -234,7 +223,7 @@ class Annealing
             {
                 judge.Reset();
                 judge.OverrideJudge(Judgement.Pass);
-                workingSchedule.RemoveRandomDelivery(rng, judge);
+                workingSchedule.RemoveRandomDelivery(rng, judge); 
 
                 if (judge.GetJudgement() == Judgement.Pass)
                     workingScore += judge.timeDelta;
@@ -247,6 +236,7 @@ class Annealing
             Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
         }
 
+        ResetWeights();
         RecalculateWeights();
 
         //Start iterating
@@ -302,15 +292,23 @@ class Annealing
                 workingScore = bestSolution.score;
             }
 
-            if (judge.garbagePenalty < 0)
-                //Console.WriteLine("TEST");
+            //if (judge.garbagePenalty < 0)
+            //{
+            //    Console.WriteLine("TEST");
+            //}
 
             judge.Reset();
 
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
-                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int)((double)i / iterations * 100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
+                double progress = ((double)(i % modeIterations) / modeIterations);
+                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
+
+                DynamicallyUpdateWeights(progress);
+                RecalculateWeights();
+
+                Console.WriteLine((progress, addWeight, removeWeight));
 
                 if (Console.KeyAvailable)
                 {
@@ -335,6 +333,9 @@ class Annealing
 
                 ulong randomWalkIterations = 100;
                 workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, randomWalkIterations);
+
+                ResetWeights();
+                RecalculateWeights();
 
                 Console.WriteLine("Reset!");
             }
@@ -364,20 +365,57 @@ class Annealing
         return workingScore;
     }
 
-    int addWeight = 2;  // bug with these combo of these 3
-    int removeWeight = 1; //
-    int shuffleScheduleWeight = 2; //
-    int shuffleWorkDayWeight = 1;
-    int shuffleRouteWeight = 4;
-    int swapDeliveriesWeight = 0;
+    readonly int baseAddWeight = 200;
+    readonly int baseRemoveWeight = 100;
+    readonly int baseShuffleScheduleWeight = 200;
+    readonly int baseShuffleWorkDayWeight = 100;
+    readonly int baseShuffleRouteWeight = 400;
+
+    int addWeight;
+    int removeWeight;
+    int shuffleScheduleWeight;
+    int shuffleWorkDayWeight;
+    int shuffleRouteWeight;
 
     int addWeightSum;
     int removeWeightSum;
     int shuffleScheduleSum;
     int shuffleWorkDayWeightSum;
     int shuffleRouteWeightSum;
-    int swapDeliveriesWeightSum;
     int totalWeightSum;
+
+    /// <summary>
+    /// Dynamically change the weights as we progress through the algorithm.
+    /// Increase the chances of removal and shuffling the closer we are to the end
+    /// </summary>
+    /// <param name="progress">Progress should be between 0.0-1.0</param>
+    private void DynamicallyUpdateWeights(double progress)
+    {
+        addWeight = (int) (baseAddWeight * (1 - progress));
+        removeWeight = (int) (baseAddWeight * progress);
+        shuffleScheduleWeight = (int) (baseAddWeight * progress);
+        shuffleWorkDayWeight = (int) (baseAddWeight * progress);
+        shuffleRouteWeight = (int) (baseAddWeight * progress);
+    }
+
+    private void ResetWeights()
+    {
+        addWeight = baseAddWeight;
+        removeWeight = baseRemoveWeight;
+        shuffleScheduleWeight = baseShuffleScheduleWeight;
+        shuffleWorkDayWeight = baseShuffleWorkDayWeight;
+        shuffleRouteWeight = baseShuffleRouteWeight;
+    }
+
+    private void RecalculateWeights()
+    {
+        addWeightSum = addWeight;
+        removeWeightSum = addWeightSum + removeWeight;
+        shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
+        shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
+        shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
+        totalWeightSum = shuffleRouteWeightSum + 1;
+    }
 
     public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
     {
@@ -463,22 +501,6 @@ class Annealing
                 statistics.shuffleRouteFailCount++;
             }
         }
-        //else if (weight < swapDeliveriesWeightSum)
-        //{
-        //    schedule.CompleteRandomSwap(rng, judge);
-
-        //    if (judge.GetJudgement() == Judgement.Pass)
-        //    {
-        //        statistics.swapDeliveryScoreDelta += judge.timeDelta;
-        //        statistics.swapDeliverySuccessCount++;
-
-        //        return workingScore + judge.timeDelta;
-        //    }
-        //    else
-        //    {
-        //        statistics.swapDeliveryFailCount++;
-        //    }
-        //} 
 
         return workingScore;
     }
@@ -571,7 +593,7 @@ class Judge
             double frac = numerator / T; // '-', because we want to minimize here
             double res = Math.Exp(frac);
             if (res >= rng.NextDouble())
-                judgement = Judgement.Pass;//return Judgement.Pass;
+                judgement = Judgement.Pass;
             else
                 judgement = Judgement.Fail;
         }
