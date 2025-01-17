@@ -36,6 +36,8 @@ class Annealing
         
         annealing.judge = new Judge(annealing.rng);
 
+        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
+
         return annealing;
     }
 
@@ -78,8 +80,8 @@ class Annealing
 
         RecalculateWeights();
         //Set temperature values:
-        float beginT = 10000000f;
-        float endT = 0.001f;
+        float beginT = 20000f;
+        float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
         Task.Run(() =>
@@ -95,31 +97,57 @@ class Annealing
             }
         });
 
-        //Multi Threading
-        for (int i = 0; i < numOfThreads; i++)
-        {
-            int threadID = i+1;
-            tasks.Add(Task.Run(() =>
-            {
-                //Each thread gets their own schedule
-                Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
-                Solution threadBestSolution = new Solution();
-                Random threadRandom = new Random();
-                Judge threadJudge = new Judge(threadRandom);
-                return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, cts.Token);
-            }, cts.Token));
-        }
+        ulong runs = iter / modeIterations;
 
-        Task.WaitAll(tasks.ToArray()); // Wait for all threads to finish
+        for (ulong r = 0; r < runs; r++)
+        {
+            tasks = new List<Task<Solution>>();
+
+            //Multi Threading
+            for (int i = 0; i < numOfThreads; i++)
+            {
+                int threadID = i + 1;
+                tasks.Add(Task.Run(() =>
+                {
+                    //Each thread gets their own schedule
+                    Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
+                    Solution threadBestSolution = new Solution();
+                    Random threadRandom = new Random();
+                    Judge threadJudge = new Judge(threadRandom);
+                    return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, cts.Token);
+                }, cts.Token));
+            }
+
+            Task.WaitAll(tasks.ToArray()); // Wait for all threads to finish
+
+            // for testing purpoises.
+            Solution threadBestSolution = tasks[0].Result;
+            int bestThreadID = 1;
+
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                Solution threadSolution = tasks[i].Result;
+                if (threadSolution.score < threadBestSolution.score)
+                {
+                    threadBestSolution = threadSolution;
+                    bestThreadID = i + 1;
+                }
+            }
+
+            if (threadBestSolution.score < bestSolution.score)
+            {
+                bestSolution = threadBestSolution;
+            }
+
+            Console.WriteLine($"Thread {bestThreadID} had the best solution.");
+
+            if (cts.IsCancellationRequested)
+            {
+                break;
+            }
+        }
 
         cts.Dispose();
-
-        List<Solution> solutions = new List<Solution>();
-
-        foreach (var task in tasks)
-        {
-            solutions.Add(task.Result);
-        }
 
         return bestSolution;
     }
@@ -302,9 +330,6 @@ class Annealing
                 workingScore = bestSolution.score;
             }
 
-            if (judge.garbagePenalty < 0)
-                //Console.WriteLine("TEST");
-
             judge.Reset();
 
             // Print bestScore, workingScore and progress every million iterations
@@ -389,14 +414,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.addScoreDelta += judge.timeDelta;
-                statistics.addSuccessCount++;
+                //statistics.addScoreDelta += judge.timeDelta;
+                //statistics.addSuccessCount++;
 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.addFailCount++;
+                //statistics.addFailCount++;
             }
         }
         else if (weight < removeWeightSum)
@@ -405,14 +430,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.removeScoreDelta += judge.timeDelta;
-                statistics.removeSuccessCount++;
+                //statistics.removeScoreDelta += judge.timeDelta;
+                //statistics.removeSuccessCount++;
 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.removeFailCount++;
+                //statistics.removeFailCount++;
             }
         }
         else if (weight < shuffleScheduleSum)
@@ -421,14 +446,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleScheduleScoreDelta += judge.timeDelta;
-                statistics.shuffleScheduleSuccessCount++;
+                //statistics.shuffleScheduleScoreDelta += judge.timeDelta;
+                //statistics.shuffleScheduleSuccessCount++;
 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.shuffleScheduleFailCount++;
+                //statistics.shuffleScheduleFailCount++;
             }
         }
         else if (weight < shuffleWorkDayWeightSum)
@@ -437,14 +462,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
-                statistics.shuffleWorkDaySuccessCount++;
+                //statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
+                //statistics.shuffleWorkDaySuccessCount++;
 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.shuffleWorkDayFailCount++;
+               // statistics.shuffleWorkDayFailCount++;
             }
         }
         else if (weight < shuffleRouteWeightSum)
@@ -453,14 +478,14 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                statistics.shuffleRouteScoreDelta += judge.timeDelta;
-                statistics.shuffleRouteSuccessCount++;
+               // statistics.shuffleRouteScoreDelta += judge.timeDelta;
+                //statistics.shuffleRouteSuccessCount++;
                 
                 return workingScore + judge.timeDelta;
             }
             else
             {
-                statistics.shuffleRouteFailCount++;
+               //statistics.shuffleRouteFailCount++;
             }
         }
         //else if (weight < swapDeliveriesWeightSum)
