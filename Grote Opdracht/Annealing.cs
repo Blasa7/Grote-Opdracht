@@ -67,6 +67,7 @@ class Annealing
         List<Task<Solution>> tasks = new List<Task<Solution>>();
         iterations = iter;
 
+        ResetWeights();
         RecalculateWeights();
         //Set temperature values:
         float beginT = 20000f;
