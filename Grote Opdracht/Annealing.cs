@@ -1,4 +1,6 @@
 
+using System.Net.Http.Headers;
+
 class Annealing
 {
     #region Variable Declarations
@@ -26,7 +28,7 @@ class Annealing
     /// <summary>
     /// Make new Annealing through the static factory functions.
     /// </summary>
-    private Annealing() { RecalculateWeights(); }
+    private Annealing() { }
 
     public static Annealing FromRandom()
     {
@@ -64,11 +66,16 @@ class Annealing
     public Solution ParallelRun(ulong iter, int numOfThreads)
     {
         CancellationTokenSource cts = new CancellationTokenSource();
-        List<Task<Solution>> tasks = new List<Task<Solution>>();
+        //List<Task<Solution>> tasks = new List<Task<Solution>>();
+        Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
+        Weights[] weights = new Weights[numOfThreads];
         iterations = iter;
 
-        ResetWeights();
-        RecalculateWeights();
+        for (int i = 0; i < weights.Length; i++)
+        {
+            weights[i] = Weights.StartWeight();
+        }
+
         //Set temperature values:
         float beginT = 20000f;
         float endT = 1f;
@@ -91,20 +98,22 @@ class Annealing
 
         for (ulong r = 0; r < runs; r++)
         {
-            tasks = new List<Task<Solution>>();
+            //tasks = new List<Task<Solution>>();
+            
 
             //Multi Threading
-            for (int i = 0; i < numOfThreads; i++)
+            for (int i = 0; i < weights.Length; i++)
             {
                 int threadID = i + 1;
-                tasks.Add(Task.Run(() =>
+                int j = i;
+                tasks[i] = (Task.Run(() =>
                 {
                     //Each thread gets their own schedule
                     Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
                     Solution threadBestSolution = new Solution();
                     Random threadRandom = new Random();
                     Judge threadJudge = new Judge(threadRandom);
-                    return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, cts.Token);
+                    return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, weights[j], cts.Token);
                 }, cts.Token));
             }
 
@@ -114,7 +123,7 @@ class Annealing
             Solution threadBestSolution = tasks[0].Result;
             int bestThreadID = 1;
 
-            for (int i = 0; i < tasks.Count; i++)
+            for (int i = 0; i < tasks.Length; i++)
             {
                 Solution threadSolution = tasks[i].Result;
                 if (threadSolution.score < threadBestSolution.score)
@@ -142,7 +151,7 @@ class Annealing
         return bestSolution;
     }
 
-    public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT, CancellationToken cts)
+    public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT, Weights weights, CancellationToken cts)
     {
         bestSolution.UpdateSolution(workingSchedule, workingScore);
 
@@ -151,6 +160,9 @@ class Annealing
 
         //Set initial temperature
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
+
+        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 50, weights);
+
 
         for (ulong i = 0; i < iterations; i++)
         {
@@ -189,11 +201,15 @@ class Annealing
 
             if(i % 10000000 == 0)
             {
+                double progress = ((double)(i % modeIterations) / modeIterations);
+                weights.DynamicallyUpdateWeights(progress);
+                weights.RecalculateWeights();
+
                 Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}");
             }
 
             //Apply operation
-            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
 
             //If better solution found
             if (workingScore < bestSolution.score)
@@ -207,6 +223,9 @@ class Annealing
             //End of one temperate cycle
             if (i % modeIterations == 0 && i > 0)
             {
+                weights.ResetWeights();
+                weights.RecalculateWeights();
+
                 return bestSolution;
             }
         }
@@ -265,9 +284,6 @@ class Annealing
             Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
         }
 
-        ResetWeights();
-        RecalculateWeights();
-
         //Start iterating
         //Set temperature values:
 
@@ -299,6 +315,8 @@ class Annealing
     { 
         bestSolution.UpdateSolution(workingSchedule, workingScore);
 
+        Weights weights = Weights.StartWeight();
+
         //Set initial T
         judge.T = beginT;
 
@@ -313,7 +331,7 @@ class Annealing
                 judge.T *= alpha;
             }
 
-            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
 
             if (workingScore < bestSolution.score)
             {
@@ -329,10 +347,9 @@ class Annealing
                 double progress = ((double)(i % modeIterations) / modeIterations);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
 
-                DynamicallyUpdateWeights(progress);
-                RecalculateWeights();
+                weights.DynamicallyUpdateWeights(progress);
 
-                Console.WriteLine((progress, addWeight, removeWeight));
+                Console.WriteLine((progress, weights.addWeight, weights.removeWeight));
 
                 if (Console.KeyAvailable)
                 {
@@ -356,10 +373,10 @@ class Annealing
                 judge.T = beginT;
 
                 ulong randomWalkIterations = 100;
-                workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, randomWalkIterations);
+                workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, randomWalkIterations, weights);
 
-                ResetWeights();
-                RecalculateWeights();
+                weights.ResetWeights();
+                weights.RecalculateWeights();
 
                 Console.WriteLine("Reset!");
             }
@@ -367,13 +384,13 @@ class Annealing
         }
     }
 
-    public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations)
+    public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, Weights weights)
     {
         for (ulong i = 0; i < iterations; i++)
         {
             judge.Reset();
             judge.OverrideJudge(Judgement.Pass);
-            workingScore = TryIterate(workingScore, workingSchedule, rng, judge);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
 
             if (workingScore < bestSolution.score)
             {
@@ -389,63 +406,63 @@ class Annealing
         return workingScore;
     }
 
-    readonly int baseAddWeight = 200;
-    readonly int baseRemoveWeight = 100;
-    readonly int baseShuffleScheduleWeight = 200;
-    readonly int baseShuffleWorkDayWeight = 100;
-    readonly int baseShuffleRouteWeight = 400;
+    //readonly int baseAddWeight = 200;
+    //readonly int baseRemoveWeight = 100;
+    //readonly int baseShuffleScheduleWeight = 200;
+    //readonly int baseShuffleWorkDayWeight = 100;
+    //readonly int baseShuffleRouteWeight = 400;
 
-    int addWeight;
-    int removeWeight;
-    int shuffleScheduleWeight;
-    int shuffleWorkDayWeight;
-    int shuffleRouteWeight;
+    //int addWeight;
+    //int removeWeight;
+    //int shuffleScheduleWeight;
+    //int shuffleWorkDayWeight;
+    //int shuffleRouteWeight;
 
-    int addWeightSum;
-    int removeWeightSum;
-    int shuffleScheduleSum;
-    int shuffleWorkDayWeightSum;
-    int shuffleRouteWeightSum;
-    int totalWeightSum;
+    //int addWeightSum;
+    //int removeWeightSum;
+    //int shuffleScheduleSum;
+    //int shuffleWorkDayWeightSum;
+    //int shuffleRouteWeightSum;
+    //int totalWeightSum;
 
-    /// <summary>
-    /// Dynamically change the weights as we progress through the algorithm.
-    /// Increase the chances of removal and shuffling the closer we are to the end
-    /// </summary>
-    /// <param name="progress">Progress should be between 0.0-1.0</param>
-    private void DynamicallyUpdateWeights(double progress)
+    ///// <summary>
+    ///// Dynamically change the weights as we progress through the algorithm.
+    ///// Increase the chances of removal and shuffling the closer we are to the end
+    ///// </summary>
+    ///// <param name="progress">Progress should be between 0.0-1.0</param>
+    //private void DynamicallyUpdateWeights(double progress)
+    //{
+    //    addWeight = (int) (baseAddWeight * (1 - progress));
+    //    removeWeight = (int) (baseAddWeight * progress);
+    //    shuffleScheduleWeight = (int) (baseAddWeight * progress);
+    //    shuffleWorkDayWeight = (int) (baseAddWeight * progress);
+    //    shuffleRouteWeight = (int) (baseAddWeight * progress);
+    //}
+
+    //private void ResetWeights()
+    //{
+    //    addWeight = baseAddWeight;
+    //    removeWeight = baseRemoveWeight;
+    //    shuffleScheduleWeight = baseShuffleScheduleWeight;
+    //    shuffleWorkDayWeight = baseShuffleWorkDayWeight;
+    //    shuffleRouteWeight = baseShuffleRouteWeight;
+    //}
+
+    //private void RecalculateWeights()
+    //{
+    //    addWeightSum = addWeight;
+    //    removeWeightSum = addWeightSum + removeWeight;
+    //    shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
+    //    shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
+    //    shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
+    //    totalWeightSum = shuffleRouteWeightSum + 1;
+    //}
+
+    public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge, Weights weights)
     {
-        addWeight = (int) (baseAddWeight * (1 - progress));
-        removeWeight = (int) (baseAddWeight * progress);
-        shuffleScheduleWeight = (int) (baseAddWeight * progress);
-        shuffleWorkDayWeight = (int) (baseAddWeight * progress);
-        shuffleRouteWeight = (int) (baseAddWeight * progress);
-    }
+        int weight = rng.Next(0, weights.totalWeightSum); 
 
-    private void ResetWeights()
-    {
-        addWeight = baseAddWeight;
-        removeWeight = baseRemoveWeight;
-        shuffleScheduleWeight = baseShuffleScheduleWeight;
-        shuffleWorkDayWeight = baseShuffleWorkDayWeight;
-        shuffleRouteWeight = baseShuffleRouteWeight;
-    }
-
-    private void RecalculateWeights()
-    {
-        addWeightSum = addWeight;
-        removeWeightSum = addWeightSum + removeWeight;
-        shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
-        shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
-        shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
-        totalWeightSum = shuffleRouteWeightSum + 1;
-    }
-
-    public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge)
-    {
-        int weight = rng.Next(0, totalWeightSum); 
-
-        if (weight < addWeightSum)
+        if (weight < weights.addWeightSum)
         {
             schedule.AddRandomDelivery(rng, judge);
 
@@ -461,7 +478,7 @@ class Annealing
                 //statistics.addFailCount++;
             }
         }
-        else if (weight < removeWeightSum)
+        else if (weight < weights.removeWeightSum)
         {
             schedule.RemoveRandomDelivery(rng, judge);
 
@@ -477,7 +494,7 @@ class Annealing
                 //statistics.removeFailCount++;
             }
         }
-        else if (weight < shuffleScheduleSum)
+        else if (weight < weights.shuffleScheduleSum)
         {
             schedule.ShuffleSchedule(rng, judge);
 
@@ -493,7 +510,7 @@ class Annealing
                 //statistics.shuffleScheduleFailCount++;
             }
         }
-        else if (weight < shuffleWorkDayWeightSum)
+        else if (weight < weights.shuffleWorkDayWeightSum)
         {
             schedule.ShuffleWorkDay(rng, judge);
 
@@ -509,7 +526,7 @@ class Annealing
                // statistics.shuffleWorkDayFailCount++;
             }
         }
-        else if (weight < shuffleRouteWeightSum)
+        else if (weight < weights.shuffleRouteWeightSum)
         {
             schedule.ShuffleRoute(rng, judge);
 
@@ -631,6 +648,72 @@ class Judge
         timePenalty = 0;
         garbagePenalty = 0;
         judgement = Judgement.Undecided;
+    }
+}
+
+class Weights()
+{
+    readonly int baseAddWeight = 200;
+    readonly int baseRemoveWeight = 100;
+    readonly int baseShuffleScheduleWeight = 200;
+    readonly int baseShuffleWorkDayWeight = 100;
+    readonly int baseShuffleRouteWeight = 400;
+
+    public int addWeight;
+    public int removeWeight;
+    public int shuffleScheduleWeight;
+    public int shuffleWorkDayWeight;
+    public int shuffleRouteWeight;
+
+    public int addWeightSum;
+    public int removeWeightSum;
+    public int shuffleScheduleSum;
+    public int shuffleWorkDayWeightSum;
+    public int shuffleRouteWeightSum;
+    public int totalWeightSum;
+
+    /// <summary>
+    /// Dynamically change the weights as we progress through the algorithm.
+    /// Increase the chances of removal and shuffling the closer we are to the end
+    /// </summary>
+    /// <param name="progress">Progress should be between 0.0-1.0</param>
+    public void DynamicallyUpdateWeights(double progress)
+    {
+        addWeight = (int)(baseAddWeight * (1 - progress));
+        removeWeight = (int)(baseAddWeight * progress);
+        shuffleScheduleWeight = (int)(baseAddWeight * progress);
+        shuffleWorkDayWeight = (int)(baseAddWeight * progress);
+        shuffleRouteWeight = (int)(baseAddWeight * progress);
+
+        RecalculateWeights();
+    }
+
+    public void ResetWeights()
+    {
+        addWeight = baseAddWeight;
+        removeWeight = baseRemoveWeight;
+        shuffleScheduleWeight = baseShuffleScheduleWeight;
+        shuffleWorkDayWeight = baseShuffleWorkDayWeight;
+        shuffleRouteWeight = baseShuffleRouteWeight;
+    }
+
+    public void RecalculateWeights()
+    {
+        addWeightSum = addWeight;
+        removeWeightSum = addWeightSum + removeWeight;
+        shuffleScheduleSum = removeWeightSum + shuffleScheduleWeight;
+        shuffleWorkDayWeightSum = shuffleScheduleSum + shuffleWorkDayWeight;
+        shuffleRouteWeightSum = shuffleWorkDayWeightSum + shuffleRouteWeight;
+        totalWeightSum = shuffleRouteWeightSum + 1;
+    }
+
+    public static Weights StartWeight()
+    {
+        Weights weights = new Weights();
+        weights.ResetWeights();
+        weights.RecalculateWeights();
+
+        return weights;
     }
 }
 
