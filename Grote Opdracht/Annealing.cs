@@ -70,6 +70,7 @@ class Annealing
     public Solution ParallelRun(ulong iter, int numOfThreads)
     {
         CancellationTokenSource cts = new CancellationTokenSource();
+        //List<Task<Solution>> tasks = new List<Task<Solution>>();
         Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
         Weights[] weights = new Weights[numOfThreads];
         iterations = iter;
@@ -80,7 +81,7 @@ class Annealing
         }
 
         //Set temperature values:
-        float beginT = 20000f;
+        float beginT = 100000;
         float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
@@ -101,6 +102,9 @@ class Annealing
 
         for (ulong r = 0; r < runs; r++)
         {
+            //tasks = new List<Task<Solution>>();
+            
+
             //Multi Threading
             for (int i = 0; i < weights.Length; i++)
             {
@@ -113,6 +117,7 @@ class Annealing
                     Solution threadBestSolution = new Solution();
                     Random threadRandom = new Random();
                     Judge threadJudge = new Judge(threadRandom);
+                    threadJudge.beginT = beginT;
                     return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, weights[j], cts.Token);
                 }, cts.Token));
             }
@@ -161,7 +166,7 @@ class Annealing
         //Set initial temperature
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
 
-        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 100, weights);
+        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 50, weights);
 
 
         for (ulong i = 0; i < iterations; i++)
@@ -199,21 +204,23 @@ class Annealing
                 }
             }
 
+            if(i % 10000000 == 0)
+            {
+                double progress = ((double)(i % modeIterations) / modeIterations);
+                weights.DynamicallyUpdateWeights(progress);
+                weights.RecalculateWeights();
+
+                Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}");
+            }
+
             //Apply operation
             workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
 
+            //If better solution found
             if (workingScore < bestSolution.score)
             {
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                 workingScore = bestSolution.score;
-            }
-
-            if (i % 1000000 == 0)
-            {
-                double progress = ((double)(i % modeIterations) / modeIterations);
-                weights.DynamicallyUpdateWeights(progress);
-
-                Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}");
             }
 
             judge.Reset();
@@ -242,11 +249,54 @@ class Annealing
         //Displays the initial score.
         Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
+        //Randomly adds 5000 deliveries.
+        if (insertRandomStart)
+        {
+            for (int i = 0; i < 5000; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                workingSchedule.AddRandomDelivery(rng, judge);
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.timeDelta;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+
+            judge.Reset();
+
+            Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
+        }
+
+        //Randomly removes 250 deliveries.
+        if (deleteRandomStart)
+        {
+            for (int i = 0; i < 250; i++)
+            {
+                judge.Reset();
+                judge.OverrideJudge(Judgement.Pass);
+                workingSchedule.RemoveRandomDelivery(rng, judge); 
+
+                if (judge.GetJudgement() == Judgement.Pass)
+                    workingScore += judge.timeDelta;
+            }
+
+            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+
+            judge.Reset();
+
+            Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
+        }
+
         //Start iterating
         //Set temperature values:
-        float beginT = 20000f;
+
+        float beginT = 100000;
         //float beginT = float.MaxValue;
         float endT = 1f;
+
+        judge.beginT = beginT;
 
         SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 
@@ -278,8 +328,6 @@ class Annealing
         //Set inital temp
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
 
-        //workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, 50, weights);
-
         for (ulong i = 0; i < iterations; i++)
         {
             // Decrease the temperature every X iterations
@@ -296,6 +344,13 @@ class Annealing
                 workingScore = bestSolution.score;
             }
 
+            //if (judge.timePenalty < 0)
+            //{
+            //    Console.WriteLine(judge.timePenalty);
+            //}
+
+            //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
+
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
@@ -304,7 +359,8 @@ class Annealing
                 Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
                 weights.DynamicallyUpdateWeights(progress);
 
-                //quitting
+                //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
+
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
@@ -329,7 +385,8 @@ class Annealing
             {
                 judge.T = beginT;
 
-                workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, 100, weights);
+                ulong randomWalkIterations = 100;
+                workingScore = RandomWalk(rng, judge, workingScore, workingSchedule, bestSolution, randomWalkIterations, weights);
 
                 weights.ResetWeights();
                 weights.RecalculateWeights();
@@ -530,7 +587,10 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            double weight = beginT - T;
+            //double weight = beginT - T;
+
+            double maxWeightMultiplier = 1000;
+            double weight = (beginT - T) / beginT * maxWeightMultiplier;
             double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier * weight;
             double weightedTimePenalty = timePenalty * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
