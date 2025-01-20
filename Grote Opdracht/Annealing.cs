@@ -117,6 +117,7 @@ class Annealing
                     Solution threadBestSolution = new Solution();
                     Random threadRandom = new Random();
                     Judge threadJudge = new Judge(threadRandom);
+                    threadJudge.beginT = beginT;
                     return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, weights[j], cts.Token);
                 }, cts.Token));
             }
@@ -291,7 +292,7 @@ class Annealing
         //Start iterating
         //Set temperature values:
 
-        float beginT = 20000;
+        float beginT = 100000;
         //float beginT = float.MaxValue;
         float endT = 1f;
 
@@ -586,7 +587,10 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            double weight = beginT - T;
+            //double weight = beginT - T;
+
+            double maxWeightMultiplier = 1000;
+            double weight = (beginT - T) / beginT * maxWeightMultiplier;
             double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier * weight;
             double weightedTimePenalty = timePenalty * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
