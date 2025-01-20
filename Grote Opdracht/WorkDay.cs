@@ -45,10 +45,7 @@
         //}
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
+        judge.Testify(0, penalty, 0);
 
     }
 
@@ -80,10 +77,7 @@
         //}
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
+        judge.Testify(0, penalty, 0);
 
     }
 
@@ -150,10 +144,7 @@
         //    judge.OverrideJudge(Judgement.Fail);
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
+        judge.Testify(0, penalty, 0);
 
     }
 
@@ -169,10 +160,7 @@
         //    judge.OverrideJudge(Judgement.Fail);
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
+        judge.Testify(0, penalty, 0);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
