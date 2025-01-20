@@ -18,7 +18,7 @@ class Annealing
     bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
     bool deleteRandomStart = false;
 
-    bool debugMessages = true;
+    bool debugMessages = false;
 
     Statistics statistics = new Statistics();
 
@@ -355,7 +355,7 @@ class Annealing
             {
                 double progress = ((double)(i % modeIterations) / modeIterations);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
-                Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
+                //Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
                 weights.DynamicallyUpdateWeights(progress);
 
                 //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
@@ -555,7 +555,7 @@ class Judge
     public int maxRoutes = 15;
 
     public double garbagePenaltyMultiplier = 10;
-    public double timePenaltyMultiplier = 1 / 500;
+    public double timePenaltyMultiplier = 100;
     public float beginT;
 
     Judgement judgement;
@@ -640,7 +640,7 @@ class Weights()
     public void DynamicallyUpdateWeights(double progress)
     {
         addWeight = (int)(baseAddWeight * (1 - progress));
-        removeWeight = (int)(baseAddWeight * progress * 2);
+        removeWeight = (int)(baseAddWeight * progress * 10);
         shuffleScheduleWeight = (int)(baseAddWeight * progress);
         shuffleWorkDayWeight = (int)(baseAddWeight * progress);
         shuffleRouteWeight = (int)(baseAddWeight * progress);
