@@ -81,7 +81,7 @@ class Annealing
         }
 
         //Set temperature values:
-        float beginT = 20000f;
+        float beginT = 100000;
         float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
