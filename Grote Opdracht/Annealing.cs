@@ -70,7 +70,6 @@ class Annealing
     public Solution ParallelRun(ulong iter, int numOfThreads)
     {
         CancellationTokenSource cts = new CancellationTokenSource();
-        //List<Task<Solution>> tasks = new List<Task<Solution>>();
         Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
         Weights[] weights = new Weights[numOfThreads];
         iterations = iter;
@@ -81,7 +80,7 @@ class Annealing
         }
 
         //Set temperature values:
-        float beginT = 100000;
+        float beginT = 100000f;
         float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
@@ -102,9 +101,6 @@ class Annealing
 
         for (ulong r = 0; r < runs; r++)
         {
-            //tasks = new List<Task<Solution>>();
-            
-
             //Multi Threading
             for (int i = 0; i < weights.Length; i++)
             {
@@ -249,46 +245,6 @@ class Annealing
         //Displays the initial score.
         Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
-        //Randomly adds 5000 deliveries.
-        if (insertRandomStart)
-        {
-            for (int i = 0; i < 5000; i++)
-            {
-                judge.Reset();
-                judge.OverrideJudge(Judgement.Pass);
-                workingSchedule.AddRandomDelivery(rng, judge);
-
-                if (judge.GetJudgement() == Judgement.Pass)
-                    workingScore += judge.timeDelta;
-            }
-
-            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
-
-            judge.Reset();
-
-            Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
-        }
-
-        //Randomly removes 250 deliveries.
-        if (deleteRandomStart)
-        {
-            for (int i = 0; i < 250; i++)
-            {
-                judge.Reset();
-                judge.OverrideJudge(Judgement.Pass);
-                workingSchedule.RemoveRandomDelivery(rng, judge); 
-
-                if (judge.GetJudgement() == Judgement.Pass)
-                    workingScore += judge.timeDelta;
-            }
-
-            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
-
-            judge.Reset();
-
-            Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
-        }
-
         //Start iterating
         //Set temperature values:
 
@@ -343,13 +299,6 @@ class Annealing
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                 workingScore = bestSolution.score;
             }
-
-            //if (judge.timePenalty < 0)
-            //{
-            //    Console.WriteLine(judge.timePenalty);
-            //}
-
-            //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
 
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
