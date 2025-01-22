@@ -1,5 +1,6 @@
 
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using static System.Formats.Asn1.AsnWriter;
 
 class Annealing
@@ -85,7 +86,7 @@ class Annealing
         }
 
         //Set temperature values:
-        float beginT = 100000f;
+        float beginT = 75000f;
         float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
@@ -104,6 +105,9 @@ class Annealing
 
         int bestSolutionTotalGarbagePenalty = 0;
         int bestSolutionTotalTimePenalty = 0;
+
+        ulong difficulty = 0; // Increase when run with no improvement decrease when run with improvment
+        ulong modeIterationsDelta = modeIterations / 10;
 
         ulong runs = iter / modeIterations;
 
@@ -146,9 +150,17 @@ class Annealing
 
             if (threadBestSolution.score < bestSolution.score)
             {
+                difficulty--;
+                modeIterations -= modeIterationsDelta;
+
                 bestSolutionTotalGarbagePenalty = judges[bestThreadID - 1].totalGarbagePenalty;
                 bestSolutionTotalTimePenalty = judges[bestThreadID - 1].totalTimePenalty;
                 bestSolution = threadBestSolution;
+            }
+            else
+            {
+                difficulty++;
+                modeIterations += modeIterationsDelta;
             }
 
             Console.WriteLine($"Thread {bestThreadID} had the best solution.");
@@ -174,7 +186,7 @@ class Annealing
         //Set initial temperature
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
 
-        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 50, weights);
+        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 100, weights);
 
 
         for (ulong i = 0; i < iterations; i++)
@@ -567,8 +579,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 4.23 * 5.5;//10;
-    public double timePenaltyMultiplier = 1 * 0.1;//100
+    public double garbagePenaltyMultiplier = 4.23 * 6;//10;
+    public double timePenaltyMultiplier = 1 * 0.08;//100
 
     public float beginT;
 
@@ -643,7 +655,7 @@ class Weights()
 {
     readonly int baseAddWeight = 200;//200;
     readonly int baseRemoveWeight = 100;//100;
-    readonly int baseShuffleScheduleWeight = 100;//100;//100;
+    readonly int baseShuffleScheduleWeight = 200;//100;//100;
     readonly int baseShuffleWorkDayWeight = 200;//200;//200;
     readonly int baseShuffleRouteWeight = 400;//400;
 
