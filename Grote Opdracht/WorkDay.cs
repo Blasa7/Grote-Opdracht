@@ -22,7 +22,7 @@
     /// <summary>
     /// This functions only testifies the changes to the judge and return the values to enact the changes in AddStop
     /// </summary>
-    public void StageRandomStop(Delivery delivery, int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
+    public void StageAddStop(Delivery delivery, int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
     {
         //First calculate variables
         workDayIndex = workDay.getRandomIncluded(rng);
@@ -43,9 +43,7 @@
 
         //    judge.Testify(0, penalty, 0);
         //}
-
         int penalty = CalculateTimePenalty(timeDelta);
-
         judge.Testify(0, penalty, 0);
     }
 
@@ -57,7 +55,7 @@
         workDay.nodes[workDayIndex].value.AddStop(delivery, routeIndex, timeDelta);
     }
 
-    public void StageRemoveStop(Delivery delivery, int routeNum, Judge judge, out int timeDelta, out int routeNumDelta)
+    public void StageRemoveStop(Delivery delivery, int routeNum, bool testifyPentalties, Judge judge, out int timeDelta, out int routeNumDelta)
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, routeNum, judge, out timeDelta, out routeNumDelta);
 
@@ -76,9 +74,11 @@
         //    judge.Testify(0, -penalty, 0);
         //}
 
-        int penalty = CalculateTimePenalty(timeDelta);
-        judge.Testify(0, penalty, 0);
-
+        if (testifyPentalties)
+        {
+            int penalty = CalculateTimePenalty(timeDelta);
+            judge.Testify(0, penalty, 0);
+        }
     }
 
     public void RemoveStop(Delivery delivery, int timeDelta)
@@ -100,7 +100,11 @@
         if (changedDelivery == null)
             return;
 
-        StageShuffleWorkDay(changedDelivery, routeNum, rng, judge, out int workDayIndex, out int routeIndex, out int addTimeDelta, out int addRouteNumDelta);
+        StageAddShuffleWorkDay(changedDelivery, routeNum, rng, judge, out int workDayIndex, out int routeIndex, out int addTimeDelta, out int addRouteNumDelta);
+
+        int penalty = CalculateTimePenalty(removeTimeDelta + addTimeDelta);
+        judge.Testify(0, penalty, 0);
+
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
@@ -127,24 +131,28 @@
 
         Delivery removedDelivery = workDay.nodes[workDayIndex].value.route.nodes[routeIndex].value;
 
-        StageRemoveStop(removedDelivery, routeNum, judge, out timeDelta, out routeNumDelta);
+        StageRemoveStop(removedDelivery, routeNum, false, judge, out timeDelta, out routeNumDelta);
 
         return removedDelivery;
     }
 
-    void StageShuffleWorkDay(Delivery oldDelivery,int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
+    void StageAddShuffleWorkDay(Delivery oldDelivery,int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
     {
         //First calculate variables
         workDayIndex = (oldDelivery.workDayNode.index + rng.Next(1, workDay.currentIndex + 1)) % (workDay.currentIndex + 1);
 
         workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
+
+        //int penalty = CalculateTimePenalty(timeDelta);
+        //judge.Testify(0, penalty, 0);
+
         ////TODO
         //if (totalDuration + timeDelta > maximumDuration)
         //    judge.OverrideJudge(Judgement.Fail);
 
-        int penalty = CalculateTimePenalty(timeDelta);
-        judge.Testify(0, penalty, 0);
+        //int penalty = CalculateTimePenalty(timeDelta);
+        //judge.Testify(0, penalty, 0);
     }
 
     public void ShuffleRoute(Random rng, Judge judge)
@@ -212,19 +220,6 @@
         }
         return penalty;*/
     }
-
-    /*        if (collectedGarbage > maximumGarbage)
-        {
-            //120 > 100
-
-            int overLimit = collectedGarbage - maximumGarbage; //120 - 100
-            int delta = delivery.address.garbageAmount; // 5
-            //int newGarbageAmount = collectedGarbage - delta;
-
-            penalty = Math.Min(overLimit, delta);
-            
-        }
-*/
 
     public WorkDay Clone()
     {

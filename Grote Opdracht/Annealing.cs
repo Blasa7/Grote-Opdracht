@@ -313,6 +313,13 @@ class Annealing
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
+                /*if (judge.totalTimePenalty > 0)
+                {
+                    bestSolution.UpdateSolution(workingSchedule, workingScore, 0, 0);
+                    Console.WriteLine("final penalty: " +judge.totalTimePenalty);
+                    return;
+                }*/
+
                 double progress = ((double)(i % modeIterations) / modeIterations);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
                 //Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
@@ -329,10 +336,10 @@ class Annealing
                         //bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         Console.WriteLine($"TimeP: {judge.totalTimePenalty}, GarbageP: {judge.totalGarbagePenalty}");
-                        GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
-                        Console.WriteLine($"BestSolution: {bestSolution.score}");
-                        Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
-                        Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
+                        //GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
+                        //Console.WriteLine($"BestSolution: {bestSolution.score}");
+                        //Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
+                        //Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
                         return;
                     }
                     else if (key.Key == ConsoleKey.P)
@@ -588,8 +595,8 @@ class Judge
             //double weight = beginT - T;
             //double maxWeightMultiplier = 1000;
             //double weight = Math.Pow((beginT - T) / beginT * maxWeightMultiplier, 2);
-            double maxWeightMultiplier = 80;
-            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 20;
+            double maxWeightMultiplier = 8;
+            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 2;
             double weightedGarbagePenalty = garbagePenaltyDelta * garbagePenaltyMultiplier * weight;
             double weightedTimePenalty = timePenaltyDelta * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
@@ -626,11 +633,11 @@ class Judge
 
 class Weights()
 {
-    readonly int baseAddWeight = 200;
-    readonly int baseRemoveWeight = 100;
-    readonly int baseShuffleScheduleWeight = 100;
-    readonly int baseShuffleWorkDayWeight = 200;
-    readonly int baseShuffleRouteWeight = 400;
+    readonly int baseAddWeight = 200;//200;
+    readonly int baseRemoveWeight = 100;//100;
+    readonly int baseShuffleScheduleWeight = 100;//100;//100;
+    readonly int baseShuffleWorkDayWeight = 200;//200;//200;
+    readonly int baseShuffleRouteWeight = 400;//400;
 
     public int addWeight;
     public int removeWeight;

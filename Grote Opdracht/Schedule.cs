@@ -131,7 +131,7 @@ class Schedule
 
         for (int i = 0; i < address.frequency; i++)
         {
-            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], stagedRouteNum, rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i], out int routeNumDelta);
+            workDays[deliveries[i].truck][deliveries[i].day].StageAddStop(deliveries[i], stagedRouteNum, rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i], out int routeNumDelta);
             stagedRouteNum += routeNumDelta;
         }
 
@@ -181,7 +181,7 @@ class Schedule
         //Third call other functions that need to testify
         int stagedRouteNum = routeNum;
 
-        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, stagedRouteNum, judge, out int workDayTimeDelta, out int routeNumDelta);
+        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, stagedRouteNum, true, judge, out int workDayTimeDelta, out int routeNumDelta);
 
         stagedRouteNum += routeNumDelta;
 
@@ -190,7 +190,7 @@ class Schedule
 
         for (int i = 0; i < delivery.others.Length; i++)
         {
-            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], stagedRouteNum, judge, out otherWorkDayTimeDeltas[i], out routeNumDelta);
+            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], stagedRouteNum, true, judge, out otherWorkDayTimeDeltas[i], out routeNumDelta);
             stagedRouteNum += routeNumDelta;
         }
 
@@ -266,13 +266,13 @@ class Schedule
         //Third call other functions that need to testify
         int stagedRouteNum = routeNum;
 
-        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, routeNum, judge, out timeDeltas[0], out routeNumDelta);
+        workDays[delivery.truck][delivery.day].StageRemoveStop(delivery, routeNum, true, judge, out timeDeltas[0], out routeNumDelta);
 
         stagedRouteNum += routeNumDelta;
 
         for (int i = 0; i < delivery.others.Length; i++)
         { 
-            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], routeNum, judge, out timeDeltas[i + 1], out routeNumDelta);
+            workDays[delivery.others[i].truck][delivery.others[i].day].StageRemoveStop(delivery.others[i], routeNum, true, judge, out timeDeltas[i + 1], out routeNumDelta);
             stagedRouteNum += routeNumDelta;
         }
 
@@ -355,7 +355,7 @@ class Schedule
         {
             deliveries[i].day = weekDays[i];
 
-            workDays[deliveries[i].truck][deliveries[i].day].StageRandomStop(deliveries[i], stagedRouteNum, rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i], out routeNumDelta);
+            workDays[deliveries[i].truck][deliveries[i].day].StageAddStop(deliveries[i], stagedRouteNum, rng, judge, out workDayIndexes[i], out routeIndexes[i], out timeDeltas[i], out routeNumDelta);
 
             stagedRouteNum += routeNumDelta;
         }
