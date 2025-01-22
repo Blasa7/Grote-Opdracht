@@ -1,35 +1,37 @@
-
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using static System.Formats.Asn1.AsnWriter;
-
 class Annealing
 {
     #region Variable Declarations
-    public Solution bestSolution = new Solution();
-    // TODO: update these properly
-    public Solution bestValidSolution = new Solution();
-    public Schedule bestSchedule = new Schedule();
+    //Results
+    public Solution bestSolution = new Solution(); // Best solution score wise, may be or time or garbage amount
+    public Solution bestValidSolution = new Solution(); // Best solution that is valid
+
+    //Single threaded only variables (remove sometime)
+
+    //Schedule and score that are used while executing single threaded local search.
     Schedule workingSchedule = new Schedule();
     int workingScore;
-
-    ulong iterations = 100000000; //million : 1000000, billion : 1000000000, trillion : 1000000000000, infinite : 18446744073709551615
-    ulong modeIterations = 100000000;
-    float alpha = 0.99f;
-
-    Random rng = new Random();
+    //Judge that is used while executing single threaded local search.
     Judge judge;
 
-    bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
-    bool deleteRandomStart = false;
 
+    //General settings
+    ulong iterations = ulong.MaxValue; // basically infinite stop program by pressing q instead
+    ulong modeIterations = 100000000; // 1 billion
+    float alpha = 0.99f;
+
+    float beginT = 70000f;
+    float endT = 1f;
+
+    //Global random instance
+    Random rng = new Random();
+
+    //Debug related items
     bool debugMessages = false;
-
     Statistics statistics = new Statistics();
 
     #endregion
 
-    #region Init Annealing
+    #region Constructors
     /// <summary>
     /// Make new Annealing through the static factory functions.
     /// </summary>
@@ -56,6 +58,7 @@ class Annealing
         Annealing annealing = new Annealing();
 
         (Schedule schedule, int timePenalty, int garbagePenalty) = Schedule.LoadSchedule(path, out annealing.workingScore);
+        (Schedule schedule2, _, _) = Schedule.LoadSchedule(path, out _); //Assuming only use valid inputs.
 
         annealing.workingSchedule = schedule;
 
@@ -67,30 +70,26 @@ class Annealing
 
         return annealing;
     }
-
     #endregion
 
-    #region Multi Threading Territory ( PROCEED WITH CAUTION )
+    #region Multi Threading
 
-    public Solution ParallelRun(ulong iter, int numOfThreads)
+    public Solution ParallelRun(int numOfThreads)
     {
-        CancellationTokenSource cts = new CancellationTokenSource();
-        Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
+        CancellationTokenSource cts = new CancellationTokenSource(); //Used to interrupts threads.
+        Task[] tasks = new Task[numOfThreads];
+
+        //Thread variables
         Weights[] weights = new Weights[numOfThreads];
         Judge[] judges = new Judge[numOfThreads];
         Solution[] threadBestSolutions = new Solution[numOfThreads];
         Solution[] threadBestValidSolutions = new Solution[numOfThreads];
-
-        iterations = iter;
+        Schedule[] threadSchedules = new Schedule[numOfThreads];
 
         for (int i = 0; i < weights.Length; i++)
         {
             weights[i] = Weights.StartWeight();
         }
-
-        //Set temperature values:
-        float beginT = 70000f;
-        float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
         Task.Run(() =>
@@ -112,54 +111,55 @@ class Annealing
         ulong difficulty = 0; // Increase when run with no improvement decrease when run with improvment
         ulong modeIterationsDelta = modeIterations / 10;
 
-        ulong runs = iter / modeIterations;
+        ulong runs = iterations / modeIterations;
 
         for (ulong r = 0; r < runs; r++)
         {
             //Multi Threading
             for (int i = 0; i < weights.Length; i++)
             {
-                int threadID = i + 1;
                 int j = i;
                 int threadRandomSeed = rng.Next();
 
-                tasks[i] = (Task.Run(() =>
+                tasks[j] = Task.Run(() =>
                 {
-                    //Each thread gets their own schedule
-                    Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
-                    threadBestSolutions[j] = new Solution() { score = bestSolution.score }; //Solution threadBestSolution = new Solution();
-                    threadBestValidSolutions[j] = new Solution() { score = bestValidSolution.score }; //Solution threadBestValidSolution = new Solution();
+                    //Each thread needs its own schedule, best solution, random and judge.
+                    threadSchedules[j] = Schedule.FromSolution(bestSolution, out int threadScore);//Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
+                    threadBestSolutions[j] = new Solution() { score = bestSolution.score };
+                    threadBestValidSolutions[j] = new Solution() { score = bestValidSolution.score }; 
                     Random threadRandom = new Random(threadRandomSeed);
-                    judges[j] = new Judge(threadRandom);//Judge threadJudge = new Judge(threadRandom);
-                    judges[j].beginT = beginT; //threadJudge.beginT = beginT;
-                    judges[j].totalGarbagePenalty = bestSolutionTotalGarbagePenalty;//threadJudge.totalGarbagePenalty = bestSolutionTotalGarbagePenalty;
-                    judges[j].totalTimePenalty = bestSolutionTotalTimePenalty;//threadJudge.totalTimePenalty = bestSolutionTotalTimePenalty;
-                    return ParallelSimulatedAnnealing(threadID, threadRandom, judges[j], threadScore, threadSchedule, threadBestSolutions[j], threadBestValidSolutions[j], iterations, beginT, endT, weights[j], cts.Token);
-                }, cts.Token));
+                    judges[j] = new Judge(threadRandom);
+                    judges[j].beginT = this.beginT;
+                    judges[j].endT = this.endT;
+                    judges[j].totalGarbagePenalty = bestSolutionTotalGarbagePenalty;
+                    judges[j].totalTimePenalty = bestSolutionTotalTimePenalty;
+                    
+
+                    ParallelSimulatedAnnealing(j, threadRandom, judges[j], threadScore, threadSchedules[j], threadBestSolutions[j], threadBestValidSolutions[j], modeIterations, weights[j], cts.Token);
+                }, cts.Token);
             }
 
-            Task.WaitAll(tasks.ToArray()); // Wait for all threads to finish
+            Task.WaitAll(tasks); // Wait for all threads to finish
 
-            // for testing purpoises.
-            //Solution threadBestSolution = tasks[0].Result;
             Solution threadBestSolution = threadBestSolutions[0];
             Solution threadBestValidSolution = threadBestValidSolutions[0];
 
-            int bestSolutionThreadID = 1;
-            int bestValidSolutionThreadID = 1;
+            int bestSolutionThreadID = 0;
+            int bestValidSolutionThreadID = 0;
 
-            for (int i = 0; i < tasks.Length; i++)
+            for (int i = 0; i < numOfThreads; i++)
             {
-                Solution threadSolution = tasks[i].Result;
-                if (threadSolution.score < threadBestSolution.score)
+                //Solution threadSolution = threadBestSolutions[i];
+
+                if (threadBestSolutions[i].score < threadBestSolution.score)
                 {
-                    threadBestSolution = threadSolution;
-                    bestSolutionThreadID = i + 1;
+                    threadBestSolution = threadBestSolutions[i];
+                    bestSolutionThreadID = i;
                 }
                 if (threadBestValidSolutions[i].score < threadBestValidSolutions[i].score)
                 {
                     threadBestValidSolution = threadBestValidSolutions[i];
-                    bestValidSolutionThreadID = i + 1;
+                    bestValidSolutionThreadID = i;
                 }
             }
 
@@ -169,9 +169,9 @@ class Annealing
                 difficulty--;
                 modeIterations -= modeIterationsDelta;
 
-                bestSolutionTotalGarbagePenalty = judges[bestSolutionThreadID - 1].totalGarbagePenalty;
-                bestSolutionTotalTimePenalty = judges[bestSolutionThreadID - 1].totalTimePenalty;
-                bestSolution = threadBestSolution;
+                bestSolutionTotalGarbagePenalty = judges[bestSolutionThreadID].totalGarbagePenalty;
+                bestSolutionTotalTimePenalty = judges[bestSolutionThreadID].totalTimePenalty;
+                bestSolution.UpdateSolution(threadSchedules[bestSolutionThreadID], threadBestSolution.score, bestSolutionTotalTimePenalty, bestSolutionTotalGarbagePenalty);// = threadBestSolution;
             }
             else
             {
@@ -182,7 +182,7 @@ class Annealing
             // A new best valid solution was found update the best valid solution.
             if (threadBestValidSolution.score < bestValidSolution.score)
             {
-                bestValidSolution = threadBestSolution;
+                bestValidSolution.UpdateSolution(threadSchedules[bestValidSolutionThreadID], threadBestValidSolution.score, 0, 0);// = threadBestSolution;
             }
 
             Console.WriteLine($"Thread {bestSolutionThreadID} had the best solution and thread {bestValidSolutionThreadID} has the best valid solution!");
@@ -195,21 +195,18 @@ class Annealing
 
         cts.Dispose();
 
-        return bestValidSolution;//return bestSolution;
+        return bestValidSolution;
     }
 
-    public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Solution bestValidSolution, ulong iterations, float beginT, float endT, Weights weights, CancellationToken cts)
+    public void ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Solution bestValidSolution, ulong iterations, Weights weights, CancellationToken cts)
     {
-        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
 
-        //Set initial T
-        judge.T = beginT;
+        judge.T = judge.beginT;
 
-        //Set initial temperature
-        ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
+        ulong redInterval = GetReductionInterval(iterations, judge.beginT, judge.endT);
 
         workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 75, weights);
-
 
         for (ulong i = 0; i < iterations; i++)
         {
@@ -242,17 +239,17 @@ class Annealing
                             Console.WriteLine($"Thread {ID} will be remembered.");
                             break;
                     }
-                    return bestSolution;
+                    return;
                 }
             }
 
             if(i % 10000000 == 0)
             {
-                double progress = ((double)(i % modeIterations) / modeIterations);
+                double progress = (double)i / (double)iterations;//((double)(i % modeIterations) / modeIterations);
                 weights.DynamicallyUpdateWeights(progress);
                 weights.RecalculateWeights();
 
-                Console.WriteLine($"Thread {ID}, Best valid score: {bestValidSolution.score / 60 / 1000}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
+                Console.WriteLine($"Thread {ID}, Best valid score: {bestValidSolution.score / 60 / 1000}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {Math.Ceiling(progress * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
             }
 
             //Apply operation
@@ -261,33 +258,36 @@ class Annealing
             //A better solution was found
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
-                //workingScore = bestSolution.score;
+                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
             }
 
             // A better valid solution was found
             if (workingScore < bestValidSolution.score && judge.totalGarbagePenalty <= 0 && judge.totalTimePenalty <= 0)
             {
-                bestValidSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+                bestValidSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
             }
 
             judge.Reset();
 
-            //End of one temperate cycle
-            if (i % modeIterations == 0 && i > 0)
-            {
-                weights.ResetWeights();
-                weights.RecalculateWeights();
+            ////End of one temperate cycle
+            //if (i % modeIterations == 0 && i > 0)
+            //{
+            //    weights.ResetWeights();
+            //    weights.RecalculateWeights();
 
-                return bestSolution;
-            }
+            //    return;// bestSolution;
+            //}
         }
 
-        return bestSolution;
+        weights.ResetWeights();
+        weights.RecalculateWeights();
+
+        return;// bestSolution;
     }
 
     #endregion
 
+    #region Non Parallel
     public Solution Run(ulong iter)
     {
         //The total number of iterations, specified through input at the start.
@@ -306,7 +306,7 @@ class Annealing
 
         judge.beginT = beginT;
 
-        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, bestSchedule, iterations, beginT, endT);
+        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
 
         //Display debug prints after end of process.
         if (debugMessages)
@@ -324,7 +324,7 @@ class Annealing
         return (ulong) reductionInterval;
     }
 
-    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Schedule bestSchedule, ulong iterations, float beginT, float endT)
+    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT)
     { 
         bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
@@ -350,7 +350,6 @@ class Annealing
             {
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
-                bestSchedule = workingSchedule; // update Schedule aswell
                 if (judge.totalTimePenalty == 0 && judge.totalGarbagePenalty < 0) // Solution is Valid
                 {
                     bestValidSolution = bestSolution;
@@ -443,6 +442,8 @@ class Annealing
         Console.WriteLine($"Found valid solution");
         
     }
+
+    #endregion
 
     public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, Weights weights)
     {
@@ -611,6 +612,7 @@ class Judge
     public double timePenaltyMultiplier = 1 * 0.07;//100
 
     public float beginT;
+    public float endT;
 
     Judgement judgement;
 

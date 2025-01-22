@@ -60,7 +60,7 @@
                 numOfThreads = Environment.ProcessorCount - 1; //default
             }
 
-            solution = annealing.ParallelRun(iter, numOfThreads);
+            solution = annealing.ParallelRun(numOfThreads);
         }
         else 
         {
