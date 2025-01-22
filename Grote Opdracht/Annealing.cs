@@ -76,6 +76,7 @@ class Annealing
         CancellationTokenSource cts = new CancellationTokenSource();
         Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
         Weights[] weights = new Weights[numOfThreads];
+        Judge[] judges = new Judge[numOfThreads];
         iterations = iter;
 
         for (int i = 0; i < weights.Length; i++)
@@ -101,6 +102,9 @@ class Annealing
             }
         });
 
+        int bestSolutionTotalGarbagePenalty = 0;
+        int bestSolutionTotalTimePenalty = 0;
+
         ulong runs = iter / modeIterations;
 
         for (ulong r = 0; r < runs; r++)
@@ -116,9 +120,11 @@ class Annealing
                     Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
                     Solution threadBestSolution = new Solution();
                     Random threadRandom = new Random();
-                    Judge threadJudge = new Judge(threadRandom);
-                    threadJudge.beginT = beginT;
-                    return ParallelSimulatedAnnealing(threadID, threadRandom, threadJudge, threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, weights[j], cts.Token);
+                    judges[j] = new Judge(threadRandom);//Judge threadJudge = new Judge(threadRandom);
+                    judges[j].beginT = beginT; //threadJudge.beginT = beginT;
+                    judges[j].totalGarbagePenalty = bestSolutionTotalGarbagePenalty;//threadJudge.totalGarbagePenalty = bestSolutionTotalGarbagePenalty;
+                    judges[j].totalTimePenalty = bestSolutionTotalTimePenalty;//threadJudge.totalTimePenalty = bestSolutionTotalTimePenalty;
+                    return ParallelSimulatedAnnealing(threadID, threadRandom, judges[j], threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, weights[j], cts.Token);
                 }, cts.Token));
             }
 
@@ -140,6 +146,8 @@ class Annealing
 
             if (threadBestSolution.score < bestSolution.score)
             {
+                bestSolutionTotalGarbagePenalty = judges[bestThreadID - 1].totalGarbagePenalty;
+                bestSolutionTotalTimePenalty = judges[bestThreadID - 1].totalTimePenalty;
                 bestSolution = threadBestSolution;
             }
 
@@ -210,7 +218,7 @@ class Annealing
                 weights.DynamicallyUpdateWeights(progress);
                 weights.RecalculateWeights();
 
-                Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}");
+                Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
             }
 
             //Apply operation
@@ -559,8 +567,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 4.23;//10;
-    public double timePenaltyMultiplier = 1;//100
+    public double garbagePenaltyMultiplier = 4.23 * 3;//10;
+    public double timePenaltyMultiplier = 1 * 0.8;//100
 
     public float beginT;
 
