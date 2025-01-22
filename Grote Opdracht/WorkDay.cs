@@ -171,7 +171,29 @@
 
     public int CalculateTimePenalty(int timeDelta)
     {
-        int penalty = 0;
+        int penalty;
+        int newTotalTime = totalDuration + timeDelta;
+        if (newTotalTime > maximumDuration) //Already was and still is over the limit.
+        {
+            penalty = timeDelta;
+        }
+        else if (totalDuration > maximumDuration && newTotalTime < maximumDuration)  //Was over the limit but now no longer is.
+        {
+            penalty = maximumDuration - totalDuration;
+        }
+        else if (totalDuration < maximumDuration && newTotalTime > maximumDuration) //Was not over the limit but now it is.
+        {
+            penalty = totalDuration - maximumDuration;
+        }
+        else //"Wait, it is not over the limit?"  "Never was..."
+        {
+            penalty = 0;
+        }
+
+        return penalty; //returns penalty
+
+
+        /*int penalty = 0;
         int newTime = totalDuration + timeDelta;
         if (timeDelta < 0) // improvement
         {
@@ -189,8 +211,21 @@
                 penalty = Math.Min(overLimit, timeDelta);
             }
         }
-        return penalty;
+        return penalty;*/
     }
+
+    /*        if (collectedGarbage > maximumGarbage)
+        {
+            //120 > 100
+
+            int overLimit = collectedGarbage - maximumGarbage; //120 - 100
+            int delta = delivery.address.garbageAmount; // 5
+            //int newGarbageAmount = collectedGarbage - delta;
+
+            penalty = Math.Min(overLimit, delta);
+            
+        }
+*/
 
     public WorkDay Clone()
     {

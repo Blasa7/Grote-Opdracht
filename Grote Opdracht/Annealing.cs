@@ -55,8 +55,8 @@ class Annealing
         annealing.workingSchedule = schedule;
 
         annealing.judge = new Judge(annealing.rng);
-        annealing.judge.timePenalty = timePenalty;
-        annealing.judge.garbagePenalty = garbagePenalty;
+        annealing.judge.timePenaltyDelta = timePenalty;
+        annealing.judge.garbagePenaltyDelta = garbagePenalty;
 
         annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore, timePenalty, garbagePenalty);
 
@@ -158,7 +158,7 @@ class Annealing
 
     public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT, Weights weights, CancellationToken cts)
     {
-        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
         //Set initial T
         judge.T = beginT;
@@ -219,7 +219,7 @@ class Annealing
             //If better solution found
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
             }
 
@@ -262,7 +262,7 @@ class Annealing
                     workingScore += judge.timeDelta;
             }
 
-            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
             judge.Reset();
 
@@ -282,7 +282,7 @@ class Annealing
                     workingScore += judge.timeDelta;
             }
 
-            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
             judge.Reset();
 
@@ -318,7 +318,7 @@ class Annealing
 
     public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT)
     { 
-        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
         Weights weights = Weights.StartWeight();
 
@@ -340,22 +340,15 @@ class Annealing
 
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
             }
-
-            //if (judge.timePenalty < 0)
-            //{
-            //    Console.WriteLine(judge.timePenalty);
-            //}
-
-            //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
 
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
                 double progress = ((double)(i % modeIterations) / modeIterations);
-                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T);
+                Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
                 //Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
                 weights.DynamicallyUpdateWeights(progress);
 
@@ -368,12 +361,12 @@ class Annealing
                     {
                         //bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
-                        Console.WriteLine((judge.timePenalty, judge.garbagePenalty));
+                        Console.WriteLine((judge.timePenaltyDelta, judge.garbagePenaltyDelta));
                         return;
                     }
                     else if (key.Key == ConsoleKey.P)
                     {
-                        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+                        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                         workingScore = bestSolution.score;
                     }
                 }
@@ -407,7 +400,7 @@ class Annealing
 
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
+                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
             }
         }
@@ -549,14 +542,19 @@ class Judge
 {
     //public int scoreDelta; //newScore - oldScore (negative score suggests improvement!)
     public int timeDelta;
-    public int timePenalty;
-    public int garbagePenalty;
+    public int timePenaltyDelta;
+    public int garbagePenaltyDelta;
+
+    public int totalTimePenalty;
+    public int totalGarbagePenalty;
+
+    public bool updatedPenalties;
 
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 10;
-    public double timePenaltyMultiplier = 100;
+    public double garbagePenaltyMultiplier = 4.23;//10;
+    public double timePenaltyMultiplier = 1;//100
     public float beginT;
 
     Judgement judgement;
@@ -574,8 +572,8 @@ class Judge
     public void Testify(int timeDelta, int timePenaltyDelta, int garbagePenaltyDelta)
     {
         this.timeDelta += timeDelta;
-        this.timePenalty += timePenaltyDelta;
-        this.garbagePenalty += garbagePenaltyDelta;
+        this.timePenaltyDelta += timePenaltyDelta;
+        this.garbagePenaltyDelta += garbagePenaltyDelta;
     }
 
     public void OverrideJudge(Judgement judgement)
@@ -588,19 +586,29 @@ class Judge
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
             //double weight = beginT - T;
-
-            double maxWeightMultiplier = 1000;
-            double weight = (beginT - T) / beginT * maxWeightMultiplier;
-            double weightedGarbagePenalty = garbagePenalty * garbagePenaltyMultiplier * weight;
-            double weightedTimePenalty = timePenalty * timePenaltyMultiplier * weight;
+            //double maxWeightMultiplier = 1000;
+            //double weight = Math.Pow((beginT - T) / beginT * maxWeightMultiplier, 2);
+            double maxWeightMultiplier = 8;
+            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 2;
+            double weightedGarbagePenalty = garbagePenaltyDelta * garbagePenaltyMultiplier * weight;
+            double weightedTimePenalty = timePenaltyDelta * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
 
             double frac = numerator / T; // '-', because we want to minimize here
             double res = Math.Exp(frac);
             if (res >= rng.NextDouble())
+            {
                 judgement = Judgement.Pass;
+            }
             else
                 judgement = Judgement.Fail;
+        }
+
+        if (!updatedPenalties && judgement == Judgement.Pass)
+        {
+            totalTimePenalty += timePenaltyDelta;
+            totalGarbagePenalty += garbagePenaltyDelta;
+            updatedPenalties = true;
         }
 
         return judgement;
@@ -608,9 +616,10 @@ class Judge
 
     public void Reset()
     {
+        updatedPenalties = false;
         timeDelta = 0;
-        timePenalty = 0;
-        garbagePenalty = 0;
+        timePenaltyDelta = 0;
+        garbagePenaltyDelta = 0;
         judgement = Judgement.Undecided;
     }
 }
