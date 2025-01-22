@@ -67,7 +67,8 @@
             solution = annealing.Run(iter);
         }
 
-        annealing.bestSolution.PrintSolution(write);
+        //annealing.bestSolution.PrintSolution(write); bruh
+        annealing.bestValidSolution.PrintSolution(write);
 
         Console.WriteLine("Final score: " + solution.score / 60 / 1000);
     }

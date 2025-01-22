@@ -181,7 +181,7 @@ class Annealing
 
             // A new best valid solution was found update the best valid solution.
             if (threadBestValidSolution.score < bestValidSolution.score)
-            {
+            {//small chance this cause some weird reference bug
                 bestValidSolution = threadBestValidSolution;//bestValidSolution.UpdateSolution(threadSchedules[bestValidSolutionThreadID], threadBestValidSolution.score, 0, 0);// = threadBestSolution;
             }
 
