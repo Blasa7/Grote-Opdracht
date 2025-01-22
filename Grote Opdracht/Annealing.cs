@@ -89,7 +89,7 @@ class Annealing
         }
 
         //Set temperature values:
-        float beginT = 75000f;
+        float beginT = 70000f;
         float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
@@ -207,7 +207,7 @@ class Annealing
         //Set initial temperature
         ulong redInterval = GetReductionInterval(modeIterations, beginT, endT);
 
-        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 100, weights);
+        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 75, weights);
 
 
         for (ulong i = 0; i < iterations; i++)
@@ -265,7 +265,7 @@ class Annealing
             }
 
             // A better valid solution was found
-            if (workingScore < bestValidSolution.score && judge.garbagePenaltyDelta <= 0 && judge.timePenaltyDelta <= 0)
+            if (workingScore < bestValidSolution.score && judge.totalGarbagePenalty <= 0 && judge.totalTimePenalty <= 0)
             {
                 bestValidSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
             }
@@ -606,8 +606,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 4.32 * 7;//10;
-    public double timePenaltyMultiplier = 1 * 0.08;//100
+    public double garbagePenaltyMultiplier = 4.32 * 7.3;//10;
+    public double timePenaltyMultiplier = 1 * 0.07;//100
 
     public float beginT;
 
