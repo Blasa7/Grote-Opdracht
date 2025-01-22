@@ -110,6 +110,23 @@ class Route : IClonable<Route>
             }
         }
 
+        // Soft constraint:
+        // If there was a penalty, lower it after removing a stop
+
+        /*int newTotalGarbage = collectedGarbage + delivery.address.garbageAmount;
+
+        if (newTotalGarbage > maximumGarbage)
+        {
+            //120 > 100
+
+            int overLimit = newTotalGarbage - maximumGarbage; //120 - 100
+            int delta = delivery.address.garbageAmount; // 5
+            //int newGarbageAmount = collectedGarbage - delta;
+
+            penalty = Math.Min(overLimit, delta);
+
+        }*/
+
         judge.Testify(timeDelta, 0, penalty);
     }
 
@@ -188,7 +205,7 @@ class Route : IClonable<Route>
         {
             //120 > 100
 
-            int overLimit = collectedGarbage - maximumGarbage; //120 - 100
+            int overLimit = collectedGarbage - maximumGarbage; //102 - 100 = 2 // 120 - 5 = 15 
             int delta = delivery.address.garbageAmount; // 5
             //int newGarbageAmount = collectedGarbage - delta;
 
@@ -201,7 +218,7 @@ class Route : IClonable<Route>
 
     /// <summary>
     /// Call this after calling StageRemoveStop and use the correspoding returns.
-    /// The judgement is assumed to be passed (check before calling).
+    /// The judgement is assumed to have passed (check before calling).
     /// </summary>
     public void RemoveStop(Delivery delivery, int timeDelta)
     {

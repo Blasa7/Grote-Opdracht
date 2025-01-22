@@ -505,7 +505,7 @@ class Judge
     public int totalTimePenalty;
     public int totalGarbagePenalty;
 
-    public bool updatedPenalties;
+    public bool updatedPenalties = false;
 
     public int minRoutes = 14;
     public int maxRoutes = 15;
@@ -546,8 +546,8 @@ class Judge
             //double weight = beginT - T;
             //double maxWeightMultiplier = 1000;
             //double weight = Math.Pow((beginT - T) / beginT * maxWeightMultiplier, 2);
-            double maxWeightMultiplier = 8;
-            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 2;
+            double maxWeightMultiplier = 80;
+            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 20;
             double weightedGarbagePenalty = garbagePenaltyDelta * garbagePenaltyMultiplier * weight;
             double weightedTimePenalty = timePenaltyDelta * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
@@ -610,11 +610,11 @@ class Weights()
     /// <param name="progress">Progress should be between 0.0-1.0</param>
     public void DynamicallyUpdateWeights(double progress)
     {
-        addWeight = (int)(baseAddWeight * (1 - progress));
-        removeWeight = (int)(baseAddWeight * progress * 2);
-        shuffleScheduleWeight = (int)(baseAddWeight * progress);
-        shuffleWorkDayWeight = (int)(baseAddWeight * progress);
-        shuffleRouteWeight = (int)(baseAddWeight * progress);
+        addWeight = addWeight;//(int)(baseAddWeight * (1 - progress));
+        removeWeight = removeWeight;//(int)(baseAddWeight * progress * 2);
+        shuffleScheduleWeight = shuffleScheduleWeight;//(int)(baseAddWeight * progress);
+        shuffleWorkDayWeight = shuffleWorkDayWeight;//(int)(baseAddWeight * progress);
+        shuffleRouteWeight = shuffleRouteWeight;// (int)(baseAddWeight * progress);
 
         RecalculateWeights();
     }

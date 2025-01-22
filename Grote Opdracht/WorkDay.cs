@@ -33,7 +33,7 @@
         //if (totalDuration + timeDelta > maximumDuration)
         //    judge.OverrideJudge(Judgement.Fail);
 
-        int newTime = totalDuration + timeDelta;
+        //int newTime = totalDuration + timeDelta;
 
         //Soft contraint (Assume timeDelta is positive)
         //if (newTime > maximumDuration)
@@ -45,11 +45,8 @@
         //}
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
 
+        judge.Testify(0, penalty, 0);
     }
 
     public void AddStop(Delivery delivery, int workDayIndex, int routeIndex, int timeDelta)
@@ -68,7 +65,7 @@
         //if (totalDuration + timeDelta > maximumDuration)
         //    judge.OverrideJudge(Judgement.Fail);
 
-        int newTime = totalDuration + timeDelta;
+        //int newTime = totalDuration + timeDelta;
 
         ////Soft contraint (Assume timeDelta is negative)
         //if (totalDuration > maximumDuration)
@@ -80,10 +77,7 @@
         //}
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
+        judge.Testify(0, penalty, 0);
 
     }
 
@@ -150,11 +144,7 @@
         //    judge.OverrideJudge(Judgement.Fail);
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
-
+        judge.Testify(0, penalty, 0);
     }
 
     public void ShuffleRoute(Random rng, Judge judge)
@@ -169,10 +159,7 @@
         //    judge.OverrideJudge(Judgement.Fail);
 
         int penalty = CalculateTimePenalty(timeDelta);
-        if (timeDelta > 0)
-            judge.Testify(0, penalty, 0);
-        else
-            judge.Testify(0, -penalty, 0);
+        judge.Testify(0, penalty, 0);
 
         if (judge.GetJudgement() == Judgement.Pass)
         {
@@ -185,17 +172,17 @@
     {
         int penalty;
         int newTotalTime = totalDuration + timeDelta;
-        if (newTotalTime > maximumDuration) //Already was and still is over the limit.
+        if (totalDuration >= maximumDuration && newTotalTime >= maximumDuration) //Already was and still is over the limit.
         {
             penalty = timeDelta;
         }
         else if (totalDuration > maximumDuration && newTotalTime < maximumDuration)  //Was over the limit but now no longer is.
         {
-            penalty = maximumDuration - totalDuration;
+            penalty = maximumDuration - totalDuration; //smaller - greater = negative
         }
         else if (totalDuration < maximumDuration && newTotalTime > maximumDuration) //Was not over the limit but now it is.
         {
-            penalty = totalDuration - maximumDuration;
+            penalty = newTotalTime - maximumDuration; //greater - smaller = positive
         }
         else //"Wait, it is not over the limit?"  "Never was..."
         {
