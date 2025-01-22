@@ -7,6 +7,7 @@ class Annealing
     #region Variable Declarations
     public Solution bestSolution = new Solution();
     // TODO: update these properly
+    public Solution bestValidSolution = new Solution();
     public Schedule bestSchedule = new Schedule();
     Schedule workingSchedule = new Schedule();
     int workingScore;
@@ -302,6 +303,11 @@ class Annealing
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
                 bestSchedule = workingSchedule; // update Schedule aswell
+                if (judge.totalTimePenalty == 0 && judge.totalGarbagePenalty < 0) // Solution is Valid
+                {
+                    bestValidSolution = bestSolution;
+                }
+
             }
 
             // Print bestScore, workingScore and progress every million iterations
@@ -324,6 +330,9 @@ class Annealing
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         Console.WriteLine($"TimeP: {judge.totalTimePenalty}, GarbageP: {judge.totalGarbagePenalty}");
                         GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
+                        Console.WriteLine($"BestSolution: {bestSolution.score}");
+                        Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
+                        Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
                         return;
                     }
                     else if (key.Key == ConsoleKey.P)
