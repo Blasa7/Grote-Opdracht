@@ -567,8 +567,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 4.23 * 3;//10;
-    public double timePenaltyMultiplier = 1 * 0.8;//100
+    public double garbagePenaltyMultiplier = 4.23 * 5.5;//10;
+    public double timePenaltyMultiplier = 1 * 0.1;//100
 
     public float beginT;
 
