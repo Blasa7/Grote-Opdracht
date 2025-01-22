@@ -84,7 +84,7 @@ class Solution
             }
             if (write)
             {
-                sw.WriteLine($"{timePenalty};{garbagePenalty}");
+                //sw.WriteLine($"{timePenalty};{garbagePenalty}");
             }
         }
         return "";

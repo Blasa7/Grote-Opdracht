@@ -141,7 +141,8 @@ class Annealing
             Task.WaitAll(tasks.ToArray()); // Wait for all threads to finish
 
             // for testing purpoises.
-            Solution threadBestSolution = tasks[0].Result;
+            //Solution threadBestSolution = tasks[0].Result;
+            Solution threadBestSolution = threadBestSolutions[0];
             Solution threadBestValidSolution = threadBestValidSolutions[0];
 
             int bestSolutionThreadID = 1;
@@ -179,7 +180,7 @@ class Annealing
             }
 
             // A new best valid solution was found update the best valid solution.
-            if (threadBestSolution.score < bestValidSolution.score)
+            if (threadBestValidSolution.score < bestValidSolution.score)
             {
                 bestValidSolution = threadBestSolution;
             }
