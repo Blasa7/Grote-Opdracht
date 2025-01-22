@@ -1,10 +1,14 @@
 
 using System.Net.Http.Headers;
+using static System.Formats.Asn1.AsnWriter;
 
 class Annealing
 {
     #region Variable Declarations
     public Solution bestSolution = new Solution();
+    // TODO: update these properly
+    public Solution bestValidSolution = new Solution();
+    public Schedule bestSchedule = new Schedule();
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
@@ -254,7 +258,7 @@ class Annealing
 
         judge.beginT = beginT;
 
-        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, iterations, beginT, endT);
+        SimmulatedAnnealing(rng, judge, workingScore, workingSchedule, bestSolution, bestSchedule, iterations, beginT, endT);
 
         //Display debug prints after end of process.
         if (debugMessages)
@@ -272,7 +276,7 @@ class Annealing
         return (ulong) reductionInterval;
     }
 
-    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT)
+    public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Schedule bestSchedule, ulong iterations, float beginT, float endT)
     { 
         bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
@@ -298,6 +302,12 @@ class Annealing
             {
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
+                bestSchedule = workingSchedule; // update Schedule aswell
+                if (judge.totalTimePenalty == 0 && judge.totalGarbagePenalty < 0) // Solution is Valid
+                {
+                    bestValidSolution = bestSolution;
+                }
+
             }
 
             // Print bestScore, workingScore and progress every million iterations
@@ -318,7 +328,11 @@ class Annealing
                     {
                         //bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
-                        Console.WriteLine((judge.timePenaltyDelta, judge.garbagePenaltyDelta));
+                        Console.WriteLine($"TimeP: {judge.totalTimePenalty}, GarbageP: {judge.totalGarbagePenalty}");
+                        GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
+                        Console.WriteLine($"BestSolution: {bestSolution.score}");
+                        Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
+                        Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
                         return;
                     }
                     else if (key.Key == ConsoleKey.P)
@@ -345,6 +359,34 @@ class Annealing
             }
 
         }
+    }
+
+    public void GoUntilValid(Judge judge, Weights weights, Random rng, Solution bestSolution, Schedule bestSchedule)
+    {
+        //Set new weights
+        weights.addWeight = 1;
+        weights.removeWeight = 200;
+        weights.shuffleScheduleWeight = 10;
+        weights.shuffleWorkDayWeight = 10;
+        weights.shuffleRouteWeight = 100;
+
+        weights.RecalculateWeights();
+
+        while (judge.totalTimePenalty > 0 || judge.totalGarbagePenalty > 0)
+        {
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
+
+            if (workingScore < bestSolution.score)
+            {
+                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+                workingScore = bestSolution.score;
+                bestSchedule = workingSchedule;
+            }
+        }
+
+        //UpdateSolution();
+        Console.WriteLine($"Found valid solution");
+        
     }
 
     public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, Weights weights)
