@@ -19,7 +19,7 @@ class Annealing
     ulong modeIterations = 100000000; // 1 billion
     float alpha = 0.99f;
 
-    float beginT = 70000f;
+    float beginT = 60000f;//70000f;
     float endT = 1f;
 
     //Global random instance
@@ -182,7 +182,7 @@ class Annealing
             // A new best valid solution was found update the best valid solution.
             if (threadBestValidSolution.score < bestValidSolution.score)
             {
-                bestValidSolution.UpdateSolution(threadSchedules[bestValidSolutionThreadID], threadBestValidSolution.score, 0, 0);// = threadBestSolution;
+                bestValidSolution = threadBestValidSolution;//bestValidSolution.UpdateSolution(threadSchedules[bestValidSolutionThreadID], threadBestValidSolution.score, 0, 0);// = threadBestSolution;
             }
 
             Console.WriteLine($"Thread {bestSolutionThreadID} had the best solution and thread {bestValidSolutionThreadID} has the best valid solution!");
@@ -683,11 +683,11 @@ class Judge
 
 class Weights()
 {
-    readonly int baseAddWeight = 200;//200;
-    readonly int baseRemoveWeight = 100;//100;
-    readonly int baseShuffleScheduleWeight = 200;//100;//100;
+    readonly int baseAddWeight = 100;//200;//200;
+    readonly int baseRemoveWeight = 50;//100;
+    readonly int baseShuffleScheduleWeight = 200;//200;//100;//100;
     readonly int baseShuffleWorkDayWeight = 200;//200;//200;
-    readonly int baseShuffleRouteWeight = 400;//400;
+    readonly int baseShuffleRouteWeight = 200;//400;//400;
 
     public int addWeight;
     public int removeWeight;
