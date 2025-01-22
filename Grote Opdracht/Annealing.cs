@@ -336,10 +336,10 @@ class Annealing
                         //bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
                         Console.WriteLine($"TimeP: {judge.totalTimePenalty}, GarbageP: {judge.totalGarbagePenalty}");
-                        //GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
-                        //Console.WriteLine($"BestSolution: {bestSolution.score}");
-                        //Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
-                        //Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
+                        GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
+                        Console.WriteLine($"BestSolution: {bestSolution.score}");
+                        Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
+                        Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
                         return;
                     }
                     else if (key.Key == ConsoleKey.P)
@@ -371,27 +371,32 @@ class Annealing
     public void GoUntilValid(Judge judge, Weights weights, Random rng, Solution bestSolution, Schedule bestSchedule)
     {
         //Set new weights
-        weights.addWeight = 1;
+        weights.addWeight = 100;
         weights.removeWeight = 200;
         weights.shuffleScheduleWeight = 10;
         weights.shuffleWorkDayWeight = 10;
         weights.shuffleRouteWeight = 100;
 
+        judge.timePenaltyMultiplier *= 2;
+        judge.garbagePenaltyMultiplier *= 2;
+
         weights.RecalculateWeights();
 
         while (judge.totalTimePenalty > 0 || judge.totalGarbagePenalty > 0)
         {
+            Console.WriteLine((judge.totalTimePenalty, judge.totalGarbagePenalty));
             workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
 
             if (workingScore < bestSolution.score)
             {
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
                 workingScore = bestSolution.score;
-                bestSchedule = workingSchedule;
             }
+
+            judge.Reset();
         }
 
-        //UpdateSolution();
+        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
         Console.WriteLine($"Found valid solution");
         
     }
@@ -559,8 +564,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 4.23;//10;
-    public double timePenaltyMultiplier = 1;//100
+    public double garbagePenaltyMultiplier = 4.23 * 20; //10;
+    public double timePenaltyMultiplier = 0.05; //100
 
     public float beginT;
 
