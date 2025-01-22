@@ -18,7 +18,7 @@ class Annealing
     bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
     bool deleteRandomStart = false;
 
-    bool debugMessages = false;
+    bool debugMessages = true;
 
     Statistics statistics = new Statistics();
 
@@ -70,7 +70,6 @@ class Annealing
     public Solution ParallelRun(ulong iter, int numOfThreads)
     {
         CancellationTokenSource cts = new CancellationTokenSource();
-        //List<Task<Solution>> tasks = new List<Task<Solution>>();
         Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
         Weights[] weights = new Weights[numOfThreads];
         iterations = iter;
@@ -81,7 +80,7 @@ class Annealing
         }
 
         //Set temperature values:
-        float beginT = 100000;
+        float beginT = 100000f;
         float endT = 1f;
 
         //Start one thread that handles the Q press for quitting
@@ -102,9 +101,6 @@ class Annealing
 
         for (ulong r = 0; r < runs; r++)
         {
-            //tasks = new List<Task<Solution>>();
-            
-
             //Multi Threading
             for (int i = 0; i < weights.Length; i++)
             {
@@ -249,46 +245,6 @@ class Annealing
         //Displays the initial score.
         Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
-        //Randomly adds 5000 deliveries.
-        if (insertRandomStart)
-        {
-            for (int i = 0; i < 5000; i++)
-            {
-                judge.Reset();
-                judge.OverrideJudge(Judgement.Pass);
-                workingSchedule.AddRandomDelivery(rng, judge);
-
-                if (judge.GetJudgement() == Judgement.Pass)
-                    workingScore += judge.timeDelta;
-            }
-
-            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
-
-            judge.Reset();
-
-            Console.WriteLine("After inserting score: " + workingScore / 60 / 1000);
-        }
-
-        //Randomly removes 250 deliveries.
-        if (deleteRandomStart)
-        {
-            for (int i = 0; i < 250; i++)
-            {
-                judge.Reset();
-                judge.OverrideJudge(Judgement.Pass);
-                workingSchedule.RemoveRandomDelivery(rng, judge); 
-
-                if (judge.GetJudgement() == Judgement.Pass)
-                    workingScore += judge.timeDelta;
-            }
-
-            bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
-
-            judge.Reset();
-
-            Console.WriteLine("After deleting score: " + workingScore / 60 / 1000);
-        }
-
         //Start iterating
         //Set temperature values:
 
@@ -350,6 +306,7 @@ class Annealing
                 double progress = ((double)(i % modeIterations) / modeIterations);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
                 //Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
+
                 weights.DynamicallyUpdateWeights(progress);
 
                 //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
@@ -555,6 +512,7 @@ class Judge
 
     public double garbagePenaltyMultiplier = 4.23;//10;
     public double timePenaltyMultiplier = 1;//100
+
     public float beginT;
 
     Judgement judgement;
@@ -653,7 +611,7 @@ class Weights()
     public void DynamicallyUpdateWeights(double progress)
     {
         addWeight = (int)(baseAddWeight * (1 - progress));
-        removeWeight = (int)(baseAddWeight * progress * 10);
+        removeWeight = (int)(baseAddWeight * progress * 2);
         shuffleScheduleWeight = (int)(baseAddWeight * progress);
         shuffleWorkDayWeight = (int)(baseAddWeight * progress);
         shuffleRouteWeight = (int)(baseAddWeight * progress);
