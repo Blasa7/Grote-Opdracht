@@ -156,7 +156,7 @@ class Annealing
                     threadBestSolution = threadBestSolutions[i];
                     bestSolutionThreadID = i;
                 }
-                if (threadBestValidSolutions[i].score < threadBestValidSolutions[i].score)
+                if (threadBestValidSolutions[i].score < threadBestValidSolution.score)
                 {
                     threadBestValidSolution = threadBestValidSolutions[i];
                     bestValidSolutionThreadID = i;
