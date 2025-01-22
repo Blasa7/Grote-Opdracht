@@ -23,7 +23,7 @@ class Annealing
     bool insertRandomStart = false; //Whether or not to insert a number of nodes regardless of score before local search.
     bool deleteRandomStart = false;
 
-    bool debugMessages = true;
+    bool debugMessages = false;
 
     Statistics statistics = new Statistics();
 
@@ -78,6 +78,9 @@ class Annealing
         Task<Solution>[] tasks = new Task<Solution>[numOfThreads];
         Weights[] weights = new Weights[numOfThreads];
         Judge[] judges = new Judge[numOfThreads];
+        Solution[] threadBestSolutions = new Solution[numOfThreads];
+        Solution[] threadBestValidSolutions = new Solution[numOfThreads];
+
         iterations = iter;
 
         for (int i = 0; i < weights.Length; i++)
@@ -118,17 +121,20 @@ class Annealing
             {
                 int threadID = i + 1;
                 int j = i;
+                int threadRandomSeed = rng.Next();
+
                 tasks[i] = (Task.Run(() =>
                 {
                     //Each thread gets their own schedule
                     Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
-                    Solution threadBestSolution = new Solution();
-                    Random threadRandom = new Random();
+                    threadBestSolutions[j] = new Solution() { score = bestSolution.score }; //Solution threadBestSolution = new Solution();
+                    threadBestValidSolutions[j] = new Solution() { score = bestValidSolution.score }; //Solution threadBestValidSolution = new Solution();
+                    Random threadRandom = new Random(threadRandomSeed);
                     judges[j] = new Judge(threadRandom);//Judge threadJudge = new Judge(threadRandom);
                     judges[j].beginT = beginT; //threadJudge.beginT = beginT;
                     judges[j].totalGarbagePenalty = bestSolutionTotalGarbagePenalty;//threadJudge.totalGarbagePenalty = bestSolutionTotalGarbagePenalty;
                     judges[j].totalTimePenalty = bestSolutionTotalTimePenalty;//threadJudge.totalTimePenalty = bestSolutionTotalTimePenalty;
-                    return ParallelSimulatedAnnealing(threadID, threadRandom, judges[j], threadScore, threadSchedule, threadBestSolution, iterations, beginT, endT, weights[j], cts.Token);
+                    return ParallelSimulatedAnnealing(threadID, threadRandom, judges[j], threadScore, threadSchedule, threadBestSolutions[j], threadBestValidSolutions[j], iterations, beginT, endT, weights[j], cts.Token);
                 }, cts.Token));
             }
 
@@ -136,7 +142,10 @@ class Annealing
 
             // for testing purpoises.
             Solution threadBestSolution = tasks[0].Result;
-            int bestThreadID = 1;
+            Solution threadBestValidSolution = threadBestValidSolutions[0];
+
+            int bestSolutionThreadID = 1;
+            int bestValidSolutionThreadID = 1;
 
             for (int i = 0; i < tasks.Length; i++)
             {
@@ -144,17 +153,23 @@ class Annealing
                 if (threadSolution.score < threadBestSolution.score)
                 {
                     threadBestSolution = threadSolution;
-                    bestThreadID = i + 1;
+                    bestSolutionThreadID = i + 1;
+                }
+                if (threadBestValidSolutions[i].score < threadBestValidSolutions[i].score)
+                {
+                    threadBestValidSolution = threadBestValidSolutions[i];
+                    bestValidSolutionThreadID = i + 1;
                 }
             }
 
+            // A new best solution was found update the best solution.
             if (threadBestSolution.score < bestSolution.score)
             {
                 difficulty--;
                 modeIterations -= modeIterationsDelta;
 
-                bestSolutionTotalGarbagePenalty = judges[bestThreadID - 1].totalGarbagePenalty;
-                bestSolutionTotalTimePenalty = judges[bestThreadID - 1].totalTimePenalty;
+                bestSolutionTotalGarbagePenalty = judges[bestSolutionThreadID - 1].totalGarbagePenalty;
+                bestSolutionTotalTimePenalty = judges[bestSolutionThreadID - 1].totalTimePenalty;
                 bestSolution = threadBestSolution;
             }
             else
@@ -163,7 +178,13 @@ class Annealing
                 modeIterations += modeIterationsDelta;
             }
 
-            Console.WriteLine($"Thread {bestThreadID} had the best solution.");
+            // A new best valid solution was found update the best valid solution.
+            if (threadBestSolution.score < bestValidSolution.score)
+            {
+                bestValidSolution = threadBestSolution;
+            }
+
+            Console.WriteLine($"Thread {bestSolutionThreadID} had the best solution and thread {bestValidSolutionThreadID} has the best valid solution!");
 
             if (cts.IsCancellationRequested)
             {
@@ -173,10 +194,10 @@ class Annealing
 
         cts.Dispose();
 
-        return bestSolution;
+        return bestValidSolution;//return bestSolution;
     }
 
-    public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT, Weights weights, CancellationToken cts)
+    public Solution ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Solution bestValidSolution, ulong iterations, float beginT, float endT, Weights weights, CancellationToken cts)
     {
         bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
 
@@ -230,17 +251,23 @@ class Annealing
                 weights.DynamicallyUpdateWeights(progress);
                 weights.RecalculateWeights();
 
-                Console.WriteLine($"Thread {ID}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
+                Console.WriteLine($"Thread {ID}, Best valid score: {bestValidSolution.score / 60 / 1000}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {(int)((double)(i % modeIterations) / modeIterations * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
             }
 
             //Apply operation
             workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
 
-            //If better solution found
+            //A better solution was found
             if (workingScore < bestSolution.score)
             {
                 bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
-                workingScore = bestSolution.score;
+                //workingScore = bestSolution.score;
+            }
+
+            // A better valid solution was found
+            if (workingScore < bestValidSolution.score && judge.garbagePenaltyDelta <= 0 && judge.timePenaltyDelta <= 0)
+            {
+                bestValidSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
             }
 
             judge.Reset();
@@ -579,7 +606,7 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 15;
 
-    public double garbagePenaltyMultiplier = 4.23 * 6;//10;
+    public double garbagePenaltyMultiplier = 4.32 * 7;//10;
     public double timePenaltyMultiplier = 1 * 0.08;//100
 
     public float beginT;
