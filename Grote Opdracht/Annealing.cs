@@ -80,15 +80,24 @@ class Annealing
         Task[] tasks = new Task[numOfThreads];
 
         //Thread variables
-        Weights[] weights = new Weights[numOfThreads];
+        Weights[] annealingWeights = new Weights[numOfThreads];
+        Weights[] randomWalkWeights = new Weights[numOfThreads];
         Judge[] judges = new Judge[numOfThreads];
         Solution[] threadBestSolutions = new Solution[numOfThreads];
         Solution[] threadBestValidSolutions = new Solution[numOfThreads];
         Schedule[] threadSchedules = new Schedule[numOfThreads];
 
-        for (int i = 0; i < weights.Length; i++)
+        for (int i = 0; i < numOfThreads; i++)
         {
-            weights[i] = Weights.StartWeight();
+            annealingWeights[i] = Weights.StartWeight();
+            randomWalkWeights[i] = new Weights();
+            randomWalkWeights[i].addWeight = 100;
+            randomWalkWeights[i].removeWeight = 10;
+            randomWalkWeights[i].shuffleScheduleWeight = 10;
+            randomWalkWeights[i].shuffleWorkDayWeight = 10;
+            randomWalkWeights[i].shuffleRouteWeight = 5;
+            randomWalkWeights[i].ResetWeights();
+            randomWalkWeights[i].RecalculateWeights();
         }
 
         //Start one thread that handles the Q press for quitting
@@ -116,7 +125,7 @@ class Annealing
         for (ulong r = 0; r < runs; r++)
         {
             //Multi Threading
-            for (int i = 0; i < weights.Length; i++)
+            for (int i = 0; i < numOfThreads; i++)
             {
                 int j = i;
                 int threadRandomSeed = rng.Next();
@@ -135,7 +144,7 @@ class Annealing
                     judges[j].totalTimePenalty = bestSolutionTotalTimePenalty;
                     
 
-                    ParallelSimulatedAnnealing(j, threadRandom, judges[j], threadScore, threadSchedules[j], threadBestSolutions[j], threadBestValidSolutions[j], modeIterations, weights[j], cts.Token);
+                    ParallelSimulatedAnnealing(j, threadRandom, judges[j], threadScore, threadSchedules[j], threadBestSolutions[j], threadBestValidSolutions[j], modeIterations, annealingWeights[j], randomWalkWeights[j], cts.Token);
                 }, cts.Token);
             }
 
@@ -198,7 +207,7 @@ class Annealing
         return bestValidSolution;
     }
 
-    public void ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Solution bestValidSolution, ulong iterations, Weights weights, CancellationToken cts)
+    public void ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Solution bestValidSolution, ulong iterations, Weights annealingWeights, Weights randomWalkWeights, CancellationToken cts)
     {
         bestSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
 
@@ -206,7 +215,7 @@ class Annealing
 
         ulong redInterval = GetReductionInterval(iterations, judge.beginT, judge.endT);
 
-        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 75, weights);
+        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 75, randomWalkWeights);
 
         for (ulong i = 0; i < iterations; i++)
         {
@@ -246,14 +255,14 @@ class Annealing
             if(i % 10000000 == 0)
             {
                 double progress = (double)i / (double)iterations;//((double)(i % modeIterations) / modeIterations);
-                weights.DynamicallyUpdateWeights(progress);
-                weights.RecalculateWeights();
+                annealingWeights.DynamicallyUpdateWeights(progress);
+                annealingWeights.RecalculateWeights();
 
                 Console.WriteLine($"Thread {ID}, Best valid score: {bestValidSolution.score / 60 / 1000}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {Math.Ceiling(progress * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
             }
 
             //Apply operation
-            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
+            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, annealingWeights);
 
             //A better solution was found
             if (workingScore < bestSolution.score)
@@ -279,8 +288,11 @@ class Annealing
             //}
         }
 
-        weights.ResetWeights();
-        weights.RecalculateWeights();
+        annealingWeights.ResetWeights();
+        annealingWeights.RecalculateWeights();
+
+        randomWalkWeights.ResetWeights();
+        randomWalkWeights.RecalculateWeights();
 
         return;// bestSolution;
     }
@@ -645,8 +657,8 @@ class Judge
             //double weight = beginT - T;
             //double maxWeightMultiplier = 1000;
             //double weight = Math.Pow((beginT - T) / beginT * maxWeightMultiplier, 2);
-            double maxWeightMultiplier = 8;
-            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 2;
+            double maxWeightMultiplier = 9;
+            double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 1;
             double weightedGarbagePenalty = garbagePenaltyDelta * garbagePenaltyMultiplier * weight;
             double weightedTimePenalty = timePenaltyDelta * timePenaltyMultiplier * weight;
             double numerator = -(timeDelta + weightedTimePenalty + weightedGarbagePenalty);
