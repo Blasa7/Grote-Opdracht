@@ -16,11 +16,11 @@ class Annealing
 
     //General settings
     ulong iterations = ulong.MaxValue; // basically infinite stop program by pressing q instead
-    ulong modeIterations = 100000000; // 1 billion
+    ulong modeIterations = 300000000; // 1 billion
     float alpha = 0.99f;
 
-    float beginT = 60000f;//70000f;
-    float endT = 1f;
+    float beginT = 55000f;//70000f;
+    float endT = 0.8f;
 
     //Global random instance
     Random rng = new Random();
