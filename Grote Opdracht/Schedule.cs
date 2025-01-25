@@ -550,12 +550,9 @@ class Schedule
     /// <summary>
     /// Parses a solution file and transforms it into a Schedule
     /// </summary>
-    public static (Schedule, int, int) LoadSchedule(string path, out int score)
+    public static Schedule LoadSchedule(string path, out int score)
     {
         List<List<(int, int, int, int)>> routes = new List<List<(int, int, int, int)>>();
-
-        int fileReadTimePenalty = 0;
-        int fileReadGarbagePenalty = 0;
 
         using (StreamReader streamReader = new StreamReader(path))
         {
@@ -575,12 +572,6 @@ class Schedule
                 routes[i].Add(lineValue);
 
                 line = streamReader.ReadLine();
-
-                if (split.Length < 4) // penalties line
-                {
-                    fileReadTimePenalty = int.Parse(split[0]);
-                    fileReadGarbagePenalty = int.Parse(split[1]);
-                }
 
                 if (lineValue.orderId == 0 && line != null)
                 {
@@ -687,7 +678,7 @@ class Schedule
 
         schedule.routeNum = routes.Count;
 
-        return (schedule, fileReadTimePenalty, fileReadGarbagePenalty);
+        return schedule;
     }
 
     // Used in LoadSchedule

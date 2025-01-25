@@ -55,8 +55,8 @@ class Annealing
     {
         Annealing annealing = new Annealing();
 
-        (Schedule schedule, int timePenalty, int garbagePenalty) = Schedule.LoadSchedule(path, out annealing.workingScore);
-        (Schedule schedule2, _, _) = Schedule.LoadSchedule(path, out _); //Assuming only use valid inputs.
+        Schedule schedule = Schedule.LoadSchedule(path, out annealing.workingScore);
+        Schedule schedule2 = Schedule.LoadSchedule(path, out _); //Assuming only use valid inputs.
 
         annealing.workingSchedule = schedule;
 
@@ -305,11 +305,9 @@ class Annealing
         //Displays the initial score.
         Console.WriteLine("Initial score: " + workingScore / 60 / 1000);
 
-        //Start iterating
         //Set temperature values:
 
-        float beginT = 100000;
-        //float beginT = float.MaxValue;
+        float beginT = 100000f;
         float endT = 1f;
 
         judge.beginT = beginT;
@@ -404,34 +402,6 @@ class Annealing
             }
 
         }
-    }
-
-    public void GoUntilValid(Judge judge, Weights weights, Random rng, Solution bestSolution, Schedule bestSchedule)
-    {
-        //Set new weights
-        weights.addWeight = 1;
-        weights.removeWeight = 200;
-        weights.shuffleScheduleWeight = 10;
-        weights.shuffleWorkDayWeight = 10;
-        weights.shuffleRouteWeight = 100;
-
-        weights.RecalculateWeights();
-
-        while (judge.totalTimePenalty > 0 || judge.totalGarbagePenalty > 0)
-        {
-            workingScore = TryIterate(workingScore, workingSchedule, rng, judge, weights);
-
-            if (workingScore < bestSolution.score)
-            {
-                bestSolution.UpdateSolution(workingSchedule, workingScore);
-                workingScore = bestSolution.score;
-                bestSchedule = workingSchedule;
-            }
-        }
-
-        //UpdateSolution();
-        Console.WriteLine($"Found valid solution");
-        
     }
 
     #endregion
@@ -586,7 +556,6 @@ class Annealing
 
 class Judge
 {
-    //public int scoreDelta; //newScore - oldScore (negative score suggests improvement!)
     public int timeDelta;
     public int timePenaltyDelta;
     public int garbagePenaltyDelta;
@@ -599,8 +568,8 @@ class Judge
     public int minRoutes = 14;
     public int maxRoutes = 16;
 
-    public double garbagePenaltyMultiplier = 4.32 * 7.3;//10;
-    public double timePenaltyMultiplier = 1 * 0.07;//100
+    public double garbagePenaltyMultiplier = 4.32 * 7.3;
+    public double timePenaltyMultiplier = 1 * 0.07;
 
     public float beginT;
     public float endT;
@@ -633,9 +602,6 @@ class Judge
     {
         if (judgement == Judgement.Undecided) //If no function has overidden the judgement
         {
-            //double weight = beginT - T;
-            //double maxWeightMultiplier = 1000;
-            //double weight = Math.Pow((beginT - T) / beginT * maxWeightMultiplier, 2);
             double maxWeightMultiplier = 9;
             double weight = ((beginT - T) / beginT) * maxWeightMultiplier + 1;
             double weightedGarbagePenalty = garbagePenaltyDelta * garbagePenaltyMultiplier * weight;
@@ -674,17 +640,11 @@ class Judge
 
 class Weights()
 {
-    readonly int baseAddWeight = 100;//200;//200;
-    readonly int baseRemoveWeight = 50;//100;
-    readonly int baseShuffleScheduleWeight = 200;//200;//100;//100;
-    readonly int baseShuffleWorkDayWeight = 200;//200;//200;
-    readonly int baseShuffleRouteWeight = 200;//400;//400;
-
-    public int addWeight;
-    public int removeWeight;
-    public int shuffleScheduleWeight;
-    public int shuffleWorkDayWeight;
-    public int shuffleRouteWeight;
+    public int addWeight = 100;
+    public int removeWeight = 50;
+    public int shuffleScheduleWeight = 200;
+    public int shuffleWorkDayWeight = 200;
+    public int shuffleRouteWeight = 200;
 
     public int addWeightSum;
     public int removeWeightSum;
@@ -695,11 +655,11 @@ class Weights()
 
     public void ResetWeights()
     {
-        addWeight = baseAddWeight;
-        removeWeight = baseRemoveWeight;
-        shuffleScheduleWeight = baseShuffleScheduleWeight;
-        shuffleWorkDayWeight = baseShuffleWorkDayWeight;
-        shuffleRouteWeight = baseShuffleRouteWeight;
+        addWeight = 100;
+        removeWeight = 50;
+        shuffleScheduleWeight = 200;
+        shuffleWorkDayWeight = 200;
+        shuffleRouteWeight = 200;
     }
 
     public void RecalculateWeights()
