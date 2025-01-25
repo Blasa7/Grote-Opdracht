@@ -14,7 +14,7 @@ class Annealing
     //General settings
     ulong iterations = ulong.MaxValue; // basically infinite. Stop the program by pressing 'q' instead
     ulong modeIterations = 200000000;
-    float alpha = 0.99f;
+    readonly float alpha = 0.99f;
 
     float beginT = 35000f;
     float endT = 1f;
@@ -85,14 +85,6 @@ class Annealing
         {
             annealingWeights[i] = Weights.StartWeight();
             randomWalkWeights[i] = Weights.StartWeight();
-            /*randomWalkWeights[i] = new Weights();
-            randomWalkWeights[i].addWeight = 100;
-            randomWalkWeights[i].removeWeight = 10;
-            randomWalkWeights[i].shuffleScheduleWeight = 10;
-            randomWalkWeights[i].shuffleWorkDayWeight = 10;
-            randomWalkWeights[i].shuffleRouteWeight = 5;
-            randomWalkWeights[i].ResetWeights();
-            randomWalkWeights[i].RecalculateWeights();*/
         }
 
         //Start one thread that handles the Q press for quitting
@@ -128,7 +120,7 @@ class Annealing
                 tasks[j] = Task.Run(() =>
                 {
                     //Each thread needs its own schedule, best solution, random and judge.
-                    threadSchedules[j] = Schedule.FromSolution(bestSolution, out int threadScore);//Schedule threadSchedule = Schedule.FromSolution(bestSolution, out int threadScore);
+                    threadSchedules[j] = Schedule.FromSolution(bestSolution, out int threadScore);
                     threadBestSolutions[j] = new Solution() { score = bestSolution.score };
                     threadBestValidSolutions[j] = new Solution() { score = bestValidSolution.score }; 
                     Random threadRandom = new Random(threadRandomSeed);
@@ -138,7 +130,6 @@ class Annealing
                     judges[j].totalGarbagePenalty = bestSolutionTotalGarbagePenalty;
                     judges[j].totalTimePenalty = bestSolutionTotalTimePenalty;
                     
-
                     ParallelSimulatedAnnealing(j, threadRandom, judges[j], threadScore, threadSchedules[j], threadBestSolutions[j], threadBestValidSolutions[j], modeIterations, annealingWeights[j], randomWalkWeights[j], cts.Token);
                 }, cts.Token);
             }
@@ -153,7 +144,6 @@ class Annealing
 
             for (int i = 0; i < numOfThreads; i++)
             {
-                //Solution threadSolution = threadBestSolutions[i];
 
                 if (threadBestSolutions[i].score < threadBestSolution.score)
                 {
@@ -175,7 +165,7 @@ class Annealing
 
                 bestSolutionTotalGarbagePenalty = judges[bestSolutionThreadID].totalGarbagePenalty;
                 bestSolutionTotalTimePenalty = judges[bestSolutionThreadID].totalTimePenalty;
-                bestSolution.UpdateSolution(threadSchedules[bestSolutionThreadID], threadBestSolution.score);// = threadBestSolution;
+                bestSolution.UpdateSolution(threadSchedules[bestSolutionThreadID], threadBestSolution.score);
             }
             else
             {
@@ -185,8 +175,8 @@ class Annealing
 
             // A new best valid solution was found update the best valid solution.
             if (threadBestValidSolution.score < bestValidSolution.score)
-            {//small chance this cause some weird reference bug
-                bestValidSolution = threadBestValidSolution;//bestValidSolution.UpdateSolution(threadSchedules[bestValidSolutionThreadID], threadBestValidSolution.score, 0, 0);// = threadBestSolution;
+            {
+                bestValidSolution = threadBestValidSolution;
             }
 
             Console.WriteLine($"Thread {bestSolutionThreadID} had the best solution and thread {bestValidSolutionThreadID} has the best valid solution!");
@@ -247,9 +237,10 @@ class Annealing
                 }
             }
 
+            // Print every 10000000 iterations
             if(i % 10000000 == 0)
             {
-                double progress = (double)i / (double)iterations;//((double)(i % modeIterations) / modeIterations);
+                double progress = (double)i / (double)iterations;
                 annealingWeights.RecalculateWeights();
 
                 Console.WriteLine($"Thread {ID}, Best valid score: {bestValidSolution.score / 60 / 1000}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {Math.Ceiling(progress * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
@@ -271,15 +262,6 @@ class Annealing
             }
 
             judge.Reset();
-
-            ////End of one temperate cycle
-            //if (i % modeIterations == 0 && i > 0)
-            //{
-            //    weights.ResetWeights();
-            //    weights.RecalculateWeights();
-
-            //    return;// bestSolution;
-            //}
         }
 
         annealingWeights.ResetWeights();
@@ -288,7 +270,7 @@ class Annealing
         randomWalkWeights.ResetWeights();
         randomWalkWeights.RecalculateWeights();
 
-        return;// bestSolution;
+        return;
     }
 
     #endregion
