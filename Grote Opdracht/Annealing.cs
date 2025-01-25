@@ -8,12 +8,13 @@ class Annealing
     //Schedule and score that are used while executing single threaded local search.
     Schedule workingSchedule = new Schedule();
     int workingScore;
+
     //Judge that is used while executing single threaded local search.
     Judge judge;
 
     //General settings
-    ulong iterations = ulong.MaxValue; // basically infinite. Stop the program by pressing 'q' instead
-    ulong modeIterations = 200000000;
+    ulong iterations = ulong.MaxValue; // Basically infinite. Stop the program by pressing 'q' instead
+    ulong modeIterations = 2000000;
     readonly float alpha = 0.99f;
 
     float beginT = 35000f;
@@ -263,12 +264,6 @@ class Annealing
 
             judge.Reset();
         }
-
-        annealingWeights.ResetWeights();
-        annealingWeights.RecalculateWeights();
-
-        randomWalkWeights.ResetWeights();
-        randomWalkWeights.RecalculateWeights();
 
         return;
     }
