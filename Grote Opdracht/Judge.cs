@@ -12,8 +12,8 @@
     public int minRoutes = 14;
     public int maxRoutes = 16;
 
-    public double garbagePenaltyMultiplier = 4.32 * 7.3;
-    public double timePenaltyMultiplier = 1 * 0.07;
+    public double garbagePenaltyMultiplier = 4.32 * 8;
+    public double timePenaltyMultiplier = 0.08;
 
     public float beginT;
     public float endT;
