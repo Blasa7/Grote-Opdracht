@@ -24,8 +24,7 @@ class Annealing
     Random rng = new Random();
 
     //Debug related items
-    bool debugMessages = false;
-    Statistics statistics = new Statistics();
+    readonly bool debugMessages = false;
 
     #endregion
 
@@ -438,14 +437,7 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                //statistics.addScoreDelta += judge.timeDelta;
-                //statistics.addSuccessCount++;
-
                 return workingScore + judge.timeDelta;
-            }
-            else
-            {
-                //statistics.addFailCount++;
             }
         }
         else if (weight < weights.removeWeightSum)
@@ -454,14 +446,7 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                //statistics.removeScoreDelta += judge.timeDelta;
-                //statistics.removeSuccessCount++;
-
                 return workingScore + judge.timeDelta;
-            }
-            else
-            {
-                //statistics.removeFailCount++;
             }
         }
         else if (weight < weights.shuffleScheduleSum)
@@ -470,14 +455,7 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                //statistics.shuffleScheduleScoreDelta += judge.timeDelta;
-                //statistics.shuffleScheduleSuccessCount++;
-
                 return workingScore + judge.timeDelta;
-            }
-            else
-            {
-                //statistics.shuffleScheduleFailCount++;
             }
         }
         else if (weight < weights.shuffleWorkDayWeightSum)
@@ -486,14 +464,7 @@ class Annealing
 
             if (judge.GetJudgement() == Judgement.Pass)
             {
-                //statistics.shuffleWorkDayScoreDelta += judge.timeDelta;
-                //statistics.shuffleWorkDaySuccessCount++;
-
                 return workingScore + judge.timeDelta;
-            }
-            else
-            {
-               // statistics.shuffleWorkDayFailCount++;
             }
         }
         else if (weight < weights.shuffleRouteWeightSum)
@@ -501,15 +472,8 @@ class Annealing
             schedule.ShuffleRoute(rng, judge);
 
             if (judge.GetJudgement() == Judgement.Pass)
-            {
-               // statistics.shuffleRouteScoreDelta += judge.timeDelta;
-                //statistics.shuffleRouteSuccessCount++;
-                
+            { 
                 return workingScore + judge.timeDelta;
-            }
-            else
-            {
-               //statistics.shuffleRouteFailCount++;
             }
         }
 
@@ -543,14 +507,11 @@ class Annealing
                     sumDuration += r.value.duration;
                     Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
 
-
                     r = r.next;
                 }
 
             }
         }
-
-        Console.WriteLine(statistics);
     }
 }
 
@@ -687,56 +648,4 @@ enum Judgement
     Fail = 0,
     Pass = 1,
     Undecided = -1
-}
-
-class Statistics()
-{
-    public long addScoreDelta;
-    public long addSuccessCount;
-    public long addFailCount;
-
-    public long removeScoreDelta;
-    public long removeSuccessCount;
-    public long removeFailCount;
-
-    public long shuffleScheduleScoreDelta;
-    public long shuffleScheduleSuccessCount;
-    public long shuffleScheduleFailCount;
-
-    public long shuffleWorkDayScoreDelta;
-    public long shuffleWorkDaySuccessCount;
-    public long shuffleWorkDayFailCount;
-
-    public long shuffleRouteScoreDelta;
-    public long shuffleRouteSuccessCount;
-    public long shuffleRouteFailCount;
-
-    public long swapDeliveryScoreDelta;
-    public long swapDeliverySuccessCount;
-    public long swapDeliveryFailCount;
-
-
-    public override string ToString()
-    {
-        return
-            $"Statistics: \n" +
-            $"Add score delta: {addScoreDelta / 60 / 1000} \n" +
-            $"Add success count: {addSuccessCount} \n" +
-            $"Add fail count: {addFailCount} \n" +
-            $"Remove score delta: {removeScoreDelta / 60 / 1000} \n" +
-            $"Remove success count: {removeSuccessCount} \n" +
-            $"Remove fail count: {removeFailCount} \n" +
-            $"Shuffle schedule score delta: {shuffleScheduleScoreDelta / 60 / 1000} \n" +
-            $"Shuffle schedule success count: {shuffleScheduleSuccessCount} \n" +
-            $"Shuffle schedule fail count: {shuffleScheduleFailCount} \n" +
-            $"Shuffle workday score delta: {shuffleWorkDayScoreDelta / 60 / 1000} \n" +
-            $"Shuffle workday success count: {shuffleWorkDaySuccessCount} \n" +
-            $"Shuffle workday fail count: {shuffleWorkDayFailCount} \n" +
-            $"Shuffle route score delta: {shuffleRouteScoreDelta / 60 / 1000} \n" +
-            $"Shuffle route success count: {shuffleRouteSuccessCount} \n" +
-            $"Shuffle route fail count: {shuffleRouteFailCount} \n" +
-            $"Swap delivery score delta: {swapDeliveryScoreDelta / 60 / 1000} \n" +
-            $"Swap delivery success count: {swapDeliverySuccessCount} \n" +
-            $"Swap delivery fail count: {swapDeliveryFailCount}";
-    }
 }
