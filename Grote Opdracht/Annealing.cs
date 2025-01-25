@@ -22,6 +22,7 @@ class Annealing
     float beginT = 35000f;//80000f;//60000f;//70000f;
     float endT = 1f;
 
+
     //Global random instance
     Random rng = new Random();
 
