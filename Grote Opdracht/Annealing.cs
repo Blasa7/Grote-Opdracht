@@ -11,7 +11,7 @@ class Annealing
 
     //General settings
     ulong iterations = ulong.MaxValue; // Basically infinite. Stop the program by pressing 'q' instead
-    ulong modeIterations = 2000000;
+    ulong modeIterations = 200000000;
     readonly float alpha = 0.99f;
 
     float beginT = 35000f;
