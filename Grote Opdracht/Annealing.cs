@@ -16,10 +16,10 @@ class Annealing
 
     //General settings
     ulong iterations = ulong.MaxValue; // basically infinite stop program by pressing q instead
-    ulong modeIterations = 100000000; // 1 billion
+    ulong modeIterations = 200000000; // 1 billion
     float alpha = 0.99f;
 
-    float beginT = 60000f;//70000f;
+    float beginT = 35000f;//80000f;//60000f;//70000f;
     float endT = 1f;
 
     //Global random instance
@@ -90,14 +90,15 @@ class Annealing
         for (int i = 0; i < numOfThreads; i++)
         {
             annealingWeights[i] = Weights.StartWeight();
-            randomWalkWeights[i] = new Weights();
+            randomWalkWeights[i] = Weights.StartWeight();
+            /*randomWalkWeights[i] = new Weights();
             randomWalkWeights[i].addWeight = 100;
             randomWalkWeights[i].removeWeight = 10;
             randomWalkWeights[i].shuffleScheduleWeight = 10;
             randomWalkWeights[i].shuffleWorkDayWeight = 10;
             randomWalkWeights[i].shuffleRouteWeight = 5;
             randomWalkWeights[i].ResetWeights();
-            randomWalkWeights[i].RecalculateWeights();
+            randomWalkWeights[i].RecalculateWeights();*/
         }
 
         //Start one thread that handles the Q press for quitting
@@ -118,7 +119,7 @@ class Annealing
         int bestSolutionTotalTimePenalty = 0;
 
         ulong difficulty = 0; // Increase when run with no improvement decrease when run with improvment
-        ulong modeIterationsDelta = modeIterations / 10;
+        ulong modeIterationsDelta = modeIterations / 20;
 
         ulong runs = iterations / modeIterations;
 
@@ -215,7 +216,7 @@ class Annealing
 
         ulong redInterval = GetReductionInterval(iterations, judge.beginT, judge.endT);
 
-        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 75, randomWalkWeights);
+        workingScore = RandomWalk(rng, judge, workingScore,workingSchedule, bestSolution, 50, randomWalkWeights);
 
         for (ulong i = 0; i < iterations; i++)
         {
@@ -618,7 +619,7 @@ class Judge
     public bool updatedPenalties = false;
 
     public int minRoutes = 14;
-    public int maxRoutes = 15;
+    public int maxRoutes = 16;
 
     public double garbagePenaltyMultiplier = 4.32 * 7.3;//10;
     public double timePenaltyMultiplier = 1 * 0.07;//100
