@@ -63,7 +63,7 @@ class Route : IClonable<Route>
         routeNumDelta = 0;
 
         //First calculate variables
-        routeIndex = route.getRandomIncluded(rng, 0);
+        routeIndex = route.GetRandomIncluded(rng, 0);
 
         Address address = delivery.address;
         int prevID = route.nodes[routeIndex].value.address.matrixID;
@@ -271,7 +271,7 @@ class Route : IClonable<Route>
             return;
         }
 
-        int index = route.getRandomIncluded(rng); //The node that will be inserted
+        int index = route.GetRandomIncluded(rng); //The node that will be inserted
         int newIndex = (index + rng.Next(0, route.currentIndex - 2)) % route.currentIndex + 1; //The position that 'index' will be put after
 
         changedDelivery = route.nodes[index].value;

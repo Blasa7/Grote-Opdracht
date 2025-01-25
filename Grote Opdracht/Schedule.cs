@@ -56,7 +56,7 @@ class Schedule
 
 
         //Get a random unfulfilled address
-        int index = unfulfilledAddresses.getRandomIncluded(rng);
+        int index = unfulfilledAddresses.GetRandomIncluded(rng);
         Address address = unfulfilledAddresses.nodes[index].value;
 
         Delivery[] deliveries = new Delivery[address.frequency];
@@ -168,7 +168,7 @@ class Schedule
         if (schedule[weekDay].currentIndex == -1)
             return;
 
-        int index = schedule[weekDay].getRandomIncluded(rng);
+        int index = schedule[weekDay].GetRandomIncluded(rng);
 
         Delivery delivery = schedule[weekDay].nodes[index].value; //Get a random delivery
 
@@ -247,7 +247,7 @@ class Schedule
             return null;
         }
 
-        int index = schedule[weekDay].getRandomIncluded(rng);
+        int index = schedule[weekDay].GetRandomIncluded(rng);
 
         Delivery delivery = schedule[weekDay].nodes[index].value; //Get a random delivery
 

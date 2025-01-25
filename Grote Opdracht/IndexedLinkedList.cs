@@ -40,12 +40,12 @@
     /// Returns a random index from the nodes that are part of the linked list excluding the start node.
     /// Do not use on a linked list with only a single node.
     /// </summary>
-    public int getRandomIncluded(Random rng)
+    public int GetRandomIncluded(Random rng)
     {
         return rng.Next(startIndex, currentIndex + 1);
     }
 
-    public int getRandomIncluded(Random rng, int startIndex)
+    public int GetRandomIncluded(Random rng, int startIndex)
     {
         return rng.Next(startIndex, currentIndex + 1);
     }
@@ -107,96 +107,6 @@
     }
 
     /// <summary>
-    /// Swaps two nodes. A node is not allowed to swap with itself.
-    /// </summary>
-    public void SwapNodes(int leftIndex, int rightIndex)
-    {
-        //A node is not allowed to swap with itself.
-        if (leftIndex == rightIndex)
-            throw new System.Exception("leftIndex is the same as rightIndex. Cannot swap a node with itself!");
-
-        //If the list is empty
-        if (currentIndex == -1)
-        {
-            throw new System.Exception("This list is empty. Cannot swap nodes in an empty list!");
-        }
-
-        IndexedLinkedListNode<Type> prevLeftNode = nodes[leftIndex].prev;
-        IndexedLinkedListNode<Type> leftNode = nodes[leftIndex];
-        IndexedLinkedListNode<Type> nextLeftNode = nodes[leftIndex].next;
-
-        IndexedLinkedListNode<Type> rightNode = nodes[rightIndex];
-
-        leftNode.index = rightIndex;
-        rightNode.index = leftIndex;
-
-        //If the left node is the right neighbor of the right node
-        //swap them to ensure the leftNode is to the left of the rightNode.
-        if (prevLeftNode == rightNode)
-        {
-            prevLeftNode = nodes[rightIndex].prev;
-            leftNode = nodes[rightIndex];
-            nextLeftNode = nodes[rightIndex].next;
-
-            rightNode = nodes[leftIndex];
-        }
-
-        //Unique case when leftIndex is the direct neighbor of the rightIndex.
-        if (nextLeftNode == rightNode)
-        {
-
-            leftNode.prev = rightNode;
-            leftNode.next = rightNode.next;
-
-            rightNode.next = leftNode;
-            rightNode.prev = prevLeftNode;
-
-            //Update the neighbors
-            rightNode.prev.next = rightNode;
-            leftNode.next.prev = leftNode;
-
-            return;
-        }
-
-        //Default case where two nodes are not neighboring each other.
-
-        //Left points to right's neighbors.
-        leftNode.prev = rightNode.prev;
-        leftNode.next = rightNode.next;
-
-        //Right's neighbors point to left.
-        leftNode.prev.next = leftNode;
-        leftNode.next.prev = leftNode;
-
-        //Right points to left's neighbors.
-        rightNode.prev = prevLeftNode;
-        rightNode.next = nextLeftNode;
-
-        //Left's neighbors point to right.
-        rightNode.prev.next = rightNode;
-        rightNode.next.prev = rightNode;
-    }
-
-    /// <summary>
-    /// Takes the node at shuffleFrom and inserts it after shuffleTo
-    /// </summary>
-    public void ShuffleNode(int shuffleFrom, int shuffleTo)
-    {
-        IndexedLinkedListNode<Type> node1 = nodes[shuffleFrom];
-        IndexedLinkedListNode<Type> node2 = nodes[shuffleTo];
-
-        //Removing the node from the linked list.
-        node1.prev.next = node1.next;
-        node1.next.prev = node1.prev;
-
-        //Then inserting it at a different position.
-        node1.next = node2.next;
-        node1.prev = node2;
-        node2.next.prev = node1;
-        node2.next = node1;
-    }
-
-    /// <summary>
     /// Inserts a value node at the end of the linked list. 
     /// Note it is a circular linked list so this also means before the first node.
     /// </summary>
@@ -248,11 +158,6 @@ class IndexedLinkedListNode<Type> where Type: IClonable<Type>
     public IndexedLinkedListNode(Type value)
     {
         this.value = value;
-    }
-
-    public IndexedLinkedListNode<Type> Clone()
-    {
-        throw new NotImplementedException();
     }
 
     public override string ToString()

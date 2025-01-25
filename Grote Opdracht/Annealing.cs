@@ -24,9 +24,6 @@ class Annealing
     //Global random instance
     Random rng = new Random();
 
-    //Debug related items
-    readonly bool debugMessages = false;
-
     #endregion
 
     #region Constructors
@@ -350,39 +347,5 @@ class Annealing
             }
         }
         return workingScore;
-    }
-
-    /// <summary>
-    /// Prints the schedule for debug purposes
-    /// </summary>
-    void DebugMessages()
-    {
-        for (int i = 0; i < workingSchedule.workDays.Length; i++)
-        {
-            for (int j = 0; j < workingSchedule.workDays[i].Length; j++)
-            {
-                IndexedLinkedListNode<Route> r = workingSchedule.workDays[i][j].workDay.nodes[0];
-
-                Console.WriteLine(workingSchedule.workDays[i][j].totalDuration);
-
-                float sumDuration = 0;
-
-                for (int k = 0; k < workingSchedule.workDays[i][j].workDay.currentIndex + 1; k++)
-                {
-                    IndexedLinkedListNode<Delivery> d = r.value.route.nodes[0];
-
-                    for (int l = 0; l < r.value.route.currentIndex; l++)
-                    {
-                        d = d.next;
-                    }
-
-                    sumDuration += r.value.duration;
-                    Console.WriteLine("Truck: " + i + ", Day: " + j + ", Route: " + k + " , Nodes: " + r.value.route.currentIndex + " , Duration: " + sumDuration);
-
-                    r = r.next;
-                }
-
-            }
-        }
     }
 }

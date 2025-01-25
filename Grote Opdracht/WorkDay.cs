@@ -25,7 +25,7 @@
     public void StageAddStop(Delivery delivery, int routeNum, Random rng, Judge judge, out int workDayIndex, out int routeIndex, out int timeDelta, out int routeNumDelta)
     {
         //First calculate variables
-        workDayIndex = workDay.getRandomIncluded(rng);
+        workDayIndex = workDay.GetRandomIncluded(rng);
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
@@ -117,7 +117,7 @@
 
     Delivery StageRemoveShuffleWorkDay(int routeNum, Random rng, Judge judge, out int timeDelta, out int routeNumDelta)
     {
-        int workDayIndex = workDay.getRandomIncluded(rng);
+        int workDayIndex = workDay.GetRandomIncluded(rng);
 
         if (workDay.nodes[workDayIndex].value.route.currentIndex == 0)
         {
@@ -127,7 +127,7 @@
             return null;
         }
 
-        int routeIndex = workDay.nodes[workDayIndex].value.route.getRandomIncluded(rng);
+        int routeIndex = workDay.nodes[workDayIndex].value.route.GetRandomIncluded(rng);
 
         Delivery removedDelivery = workDay.nodes[workDayIndex].value.route.nodes[routeIndex].value;
 
@@ -157,7 +157,7 @@
 
     public void ShuffleRoute(Random rng, Judge judge)
     {
-        int workDayIndex = workDay.getRandomIncluded(rng);
+        int workDayIndex = workDay.GetRandomIncluded(rng);
 
         // Stage and testify
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);

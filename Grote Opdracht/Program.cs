@@ -27,15 +27,6 @@
         else
             annealing = Annealing.FromRandom();
 
-        //Number of iterations
-        ulong iter;
-        Console.WriteLine("Enter amount of iterations (in million) (press Enter for infinite)");
-        response = Console.ReadLine();
-        if (response == "")
-            iter = ulong.MaxValue;
-        else
-            iter = ulong.Parse(response) * 1000000;
-
         //The solution to be worked on
         Solution solution;
 
@@ -55,6 +46,9 @@
         {
             numOfThreads = Environment.ProcessorCount - 1; //default
         }
+
+        Console.WriteLine($"Running with {numOfThreads} threads");
+        Console.WriteLine($"You can always press 'q' to stop running");
         solution = annealing.ParallelRun(numOfThreads);
 
         annealing.bestValidSolution.PrintSolution(write);
