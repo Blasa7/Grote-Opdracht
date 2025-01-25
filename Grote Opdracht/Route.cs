@@ -287,7 +287,6 @@ class Route : IClonable<Route>
             (Input.GetTimeFromTo(removePrevID, currentID) + //Old values are substracted
             Input.GetTimeFromTo(currentID, removeNextID));
 
-        int addPrevID = route.nodes[newIndex].prev.value.address.matrixID;
         int addID = route.nodes[newIndex].value.address.matrixID;
         int addNextID = route.nodes[newIndex].next.value.address.matrixID;
 
