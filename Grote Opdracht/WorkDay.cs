@@ -5,13 +5,13 @@
     public int weekDay; // 0, 1, 2, 3, 4
 
     public int totalDuration = 0;
-    public int maximumDuration = 43200000; // 720 min, 432000 sec //in minutes aka 11.5 hours in a work day
+    public int maximumDuration = 43200000; // 720 min, 432000 sec, aka 11.5 hours in a work day
 
     public WorkDay(int weekDay)
     {
         this.weekDay = weekDay;
         int numRoutes = 3;
-        workDay = new IndexedLinkedList<Route>(numRoutes); //Hard coded size may need to be larger
+        workDay = new IndexedLinkedList<Route>(numRoutes);
 
         for (int i = 0; i < numRoutes; i++)
         {
@@ -29,20 +29,6 @@
 
         workDay.nodes[workDayIndex].value.StageRandomStop(delivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
 
-        ////TODO
-        //if (totalDuration + timeDelta > maximumDuration)
-        //    judge.OverrideJudge(Judgement.Fail);
-
-        //int newTime = totalDuration + timeDelta;
-
-        //Soft contraint (Assume timeDelta is positive)
-        //if (newTime > maximumDuration)
-        //{
-        //    int overLimit = newTime - maximumDuration;
-        //    int penalty = Math.Min(overLimit, timeDelta);
-
-        //    judge.Testify(0, penalty, 0);
-        //}
         int penalty = CalculateTimePenalty(timeDelta);
         judge.Testify(0, penalty, 0);
     }
@@ -58,21 +44,6 @@
     public void StageRemoveStop(Delivery delivery, int routeNum, bool testifyPentalties, Judge judge, out int timeDelta, out int routeNumDelta)
     {
         workDay.nodes[delivery.workDayNode.index].value.StageRemoveStop(delivery, routeNum, judge, out timeDelta, out routeNumDelta);
-
-        ////TODO
-        //if (totalDuration + timeDelta > maximumDuration)
-        //    judge.OverrideJudge(Judgement.Fail);
-
-        //int newTime = totalDuration + timeDelta;
-
-        ////Soft contraint (Assume timeDelta is negative)
-        //if (totalDuration > maximumDuration)
-        //{
-        //    int overLimit = newTime - maximumDuration;
-        //    int penalty = Math.Min(overLimit, timeDelta);
-
-        //    judge.Testify(0, -penalty, 0);
-        //}
 
         if (testifyPentalties)
         {
@@ -142,17 +113,6 @@
         workDayIndex = (oldDelivery.workDayNode.index + rng.Next(1, workDay.currentIndex + 1)) % (workDay.currentIndex + 1);
 
         workDay.nodes[workDayIndex].value.StageRandomStop(oldDelivery, routeNum, rng, judge, out routeIndex, out timeDelta, out routeNumDelta);
-
-
-        //int penalty = CalculateTimePenalty(timeDelta);
-        //judge.Testify(0, penalty, 0);
-
-        ////TODO
-        //if (totalDuration + timeDelta > maximumDuration)
-        //    judge.OverrideJudge(Judgement.Fail);
-
-        //int penalty = CalculateTimePenalty(timeDelta);
-        //judge.Testify(0, penalty, 0);
     }
 
     public void ShuffleRoute(Random rng, Judge judge)
@@ -161,10 +121,6 @@
 
         // Stage and testify
         workDay.nodes[workDayIndex].value.StageShuffleRoute(rng, judge, out Delivery changedDelivery, out Delivery newIndexDelivery, out int removeTimeDelta, out int addTimeDelta, out int timeDelta);
-
-        ////TODO
-        //if (totalDuration + timeDelta > maximumDuration)
-        //    judge.OverrideJudge(Judgement.Fail);
 
         int penalty = CalculateTimePenalty(timeDelta);
         judge.Testify(0, penalty, 0);
@@ -197,28 +153,7 @@
             penalty = 0;
         }
 
-        return penalty; //returns penalty
-
-
-        /*int penalty = 0;
-        int newTime = totalDuration + timeDelta;
-        if (timeDelta < 0) // improvement
-        {
-            if (totalDuration > maximumDuration)
-            {
-                int overLimit = newTime - maximumDuration;
-                penalty = Math.Min(overLimit, timeDelta);
-            }
-        }
-        else // timedelta > 0
-        {
-            if (newTime > maximumDuration)
-            {
-                int overLimit = newTime - maximumDuration;
-                penalty = Math.Min(overLimit, timeDelta);
-            }
-        }
-        return penalty;*/
+        return penalty;
     }
 
     public WorkDay Clone()

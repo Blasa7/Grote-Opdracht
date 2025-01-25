@@ -9,9 +9,6 @@ class Annealing
     Schedule workingSchedule = new Schedule();
     int workingScore;
 
-    //Judge that is used while executing single threaded local search.
-    Judge judge;
-
     //General settings
     ulong iterations = ulong.MaxValue; // Basically infinite. Stop the program by pressing 'q' instead
     ulong modeIterations = 2000000;
@@ -37,8 +34,6 @@ class Annealing
         Annealing annealing = new Annealing();
 
         annealing.workingScore = annealing.bestSolution.score;
-        
-        annealing.judge = new Judge(annealing.rng);
 
         annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
 
@@ -55,8 +50,6 @@ class Annealing
         Schedule schedule = Schedule.LoadSchedule(path, out annealing.workingScore);
 
         annealing.workingSchedule = schedule;
-
-        annealing.judge = new Judge(annealing.rng);
 
         annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
 
@@ -270,9 +263,8 @@ class Annealing
     {
         float reductionTimes = (float)Math.Log(endT / beginT, alpha);
         float reductionInterval = totalIter / reductionTimes;
-        Console.WriteLine("Reduction times: " + reductionTimes + ", Reduction interval: " + reductionInterval);
 
-        return (ulong)reductionInterval;
+        return (ulong) reductionInterval;
     }
 
     public static int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, Weights weights)

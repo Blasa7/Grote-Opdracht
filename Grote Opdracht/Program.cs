@@ -36,6 +36,7 @@
         Console.WriteLine("Enter amount of threads to run with");
         Console.WriteLine($"You have {Environment.ProcessorCount - 1} logical processors available");
         Console.WriteLine("(One is used for quitting behaviour):");
+        Console.WriteLine($"-- You can always press 'q' to stop running --");
 
         response = Console.ReadLine();
         try
