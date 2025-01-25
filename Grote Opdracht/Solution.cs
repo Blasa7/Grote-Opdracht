@@ -16,7 +16,7 @@ class Solution
         }
     }
 
-    public void UpdateSolution(Schedule schedule, int score, int timePenalty, int garbagePenalty)
+    public void UpdateSolution(Schedule schedule, int score)
     {
         this.score = score;
 

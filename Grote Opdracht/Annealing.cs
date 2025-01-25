@@ -5,21 +5,18 @@ class Annealing
     public Solution bestSolution = new Solution(); // Best solution score wise, may be or time or garbage amount
     public Solution bestValidSolution = new Solution(); // Best solution that is valid
 
-    //Single threaded only variables (remove sometime)
-
     //Schedule and score that are used while executing single threaded local search.
     Schedule workingSchedule = new Schedule();
     int workingScore;
     //Judge that is used while executing single threaded local search.
     Judge judge;
 
-
     //General settings
-    ulong iterations = ulong.MaxValue; // basically infinite stop program by pressing q instead
-    ulong modeIterations = 200000000; // 1 billion
+    ulong iterations = ulong.MaxValue; // basically infinite. Stop the program by pressing 'q' instead
+    ulong modeIterations = 200000000;
     float alpha = 0.99f;
 
-    float beginT = 35000f;//80000f;//60000f;//70000f;
+    float beginT = 35000f;
     float endT = 1f;
 
 
@@ -46,7 +43,7 @@ class Annealing
         
         annealing.judge = new Judge(annealing.rng);
 
-        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore, 0, 0);
+        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
 
         return annealing;
     }
@@ -64,10 +61,8 @@ class Annealing
         annealing.workingSchedule = schedule;
 
         annealing.judge = new Judge(annealing.rng);
-        annealing.judge.timePenaltyDelta = timePenalty;
-        annealing.judge.garbagePenaltyDelta = garbagePenalty;
 
-        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore, timePenalty, garbagePenalty);
+        annealing.bestSolution.UpdateSolution(annealing.workingSchedule, annealing.workingScore);
 
         return annealing;
     }
@@ -182,7 +177,7 @@ class Annealing
 
                 bestSolutionTotalGarbagePenalty = judges[bestSolutionThreadID].totalGarbagePenalty;
                 bestSolutionTotalTimePenalty = judges[bestSolutionThreadID].totalTimePenalty;
-                bestSolution.UpdateSolution(threadSchedules[bestSolutionThreadID], threadBestSolution.score, bestSolutionTotalTimePenalty, bestSolutionTotalGarbagePenalty);// = threadBestSolution;
+                bestSolution.UpdateSolution(threadSchedules[bestSolutionThreadID], threadBestSolution.score);// = threadBestSolution;
             }
             else
             {
@@ -211,7 +206,7 @@ class Annealing
 
     public void ParallelSimulatedAnnealing(int ID, Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, Solution bestValidSolution, ulong iterations, Weights annealingWeights, Weights randomWalkWeights, CancellationToken cts)
     {
-        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
+        bestSolution.UpdateSolution(workingSchedule, workingScore);
 
         judge.T = judge.beginT;
 
@@ -257,7 +252,6 @@ class Annealing
             if(i % 10000000 == 0)
             {
                 double progress = (double)i / (double)iterations;//((double)(i % modeIterations) / modeIterations);
-                annealingWeights.DynamicallyUpdateWeights(progress);
                 annealingWeights.RecalculateWeights();
 
                 Console.WriteLine($"Thread {ID}, Best valid score: {bestValidSolution.score / 60 / 1000}, Best Score: {bestSolution.score / 60 / 1000}, Working score: {workingScore / 60 / 1000}, Progress: {Math.Ceiling(progress * 100)}%, Temperature: {judge.T}" + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
@@ -269,13 +263,13 @@ class Annealing
             //A better solution was found
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
             }
 
             // A better valid solution was found
             if (workingScore < bestValidSolution.score && judge.totalGarbagePenalty <= 0 && judge.totalTimePenalty <= 0)
             {
-                bestValidSolution.UpdateSolution(workingSchedule, workingScore, judge.totalTimePenalty, judge.totalGarbagePenalty);
+                bestValidSolution.UpdateSolution(workingSchedule, workingScore);
             }
 
             judge.Reset();
@@ -340,7 +334,7 @@ class Annealing
 
     public void SimmulatedAnnealing(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, float beginT, float endT)
     { 
-        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+        bestSolution.UpdateSolution(workingSchedule, workingScore);
 
         Weights weights = Weights.StartWeight();
 
@@ -362,7 +356,7 @@ class Annealing
 
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
                 workingScore = bestSolution.score;
                 if (judge.totalTimePenalty == 0 && judge.totalGarbagePenalty < 0) // Solution is Valid
                 {
@@ -374,38 +368,21 @@ class Annealing
             // Print bestScore, workingScore and progress every million iterations
             if (i % 1000000 == 0) 
             {
-                /*if (judge.totalTimePenalty > 0)
-                {
-                    bestSolution.UpdateSolution(workingSchedule, workingScore, 0, 0);
-                    Console.WriteLine("final penalty: " +judge.totalTimePenalty);
-                    return;
-                }*/
 
                 double progress = ((double)(i % modeIterations) / modeIterations);
                 Console.WriteLine("Best score: " + (bestSolution.score / 60 / 1000) + ", Working score: " + (workingScore / 60 / 1000) + ", Progress " + (int) (progress*100) + "%, Mode Progress " + (int)((double)(i % modeIterations) / modeIterations * 100) + "%, Temperature: " + judge.T + ", Time Penalty: " + judge.totalTimePenalty + ", Garbage Penalty: " + judge.totalGarbagePenalty);
-                //Console.WriteLine(("Time penalty: " + judge.timePenalty / (1000 * 60), judge.garbagePenalty));
-
-                weights.DynamicallyUpdateWeights(progress);
-
-                //Console.WriteLine((judge.timeDelta, judge.timePenalty, judge.garbagePenalty));
 
                 if (Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(true);
                     if (key.Key == ConsoleKey.Q) // Quit the program when the user presses 'q'
                     {
-                        //bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenalty, judge.garbagePenalty);
                         Console.WriteLine($"Interrupted by user after {i/1000000} million iterations");
-                        Console.WriteLine($"TimeP: {judge.totalTimePenalty}, GarbageP: {judge.totalGarbagePenalty}");
-                        //GoUntilValid(judge, weights, rng, bestSolution, bestSchedule);
-                        //Console.WriteLine($"BestSolution: {bestSolution.score}");
-                        //Console.WriteLine($"BestValidSolution {bestValidSolution.score}");
-                        //Console.WriteLine($"CurrentFoundValidSolution {workingScore}");
                         return;
                     }
                     else if (key.Key == ConsoleKey.P)
                     {
-                        bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+                        bestSolution.UpdateSolution(workingSchedule, workingScore);
                         workingScore = bestSolution.score;
                     }
                 }
@@ -446,7 +423,7 @@ class Annealing
 
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
                 workingScore = bestSolution.score;
                 bestSchedule = workingSchedule;
             }
@@ -469,7 +446,7 @@ class Annealing
 
             if (workingScore < bestSolution.score)
             {
-                bestSolution.UpdateSolution(workingSchedule, workingScore, judge.timePenaltyDelta, judge.garbagePenaltyDelta);
+                bestSolution.UpdateSolution(workingSchedule, workingScore);
                 workingScore = bestSolution.score;
             }
         }
@@ -715,22 +692,6 @@ class Weights()
     public int shuffleWorkDayWeightSum;
     public int shuffleRouteWeightSum;
     public int totalWeightSum;
-
-    /// <summary>
-    /// Dynamically change the weights as we progress through the algorithm.
-    /// Increase the chances of removal and shuffling the closer we are to the end
-    /// </summary>
-    /// <param name="progress">Progress should be between 0.0-1.0</param>
-    public void DynamicallyUpdateWeights(double progress)
-    {
-        addWeight = addWeight;//(int)(baseAddWeight * (1 - progress));
-        removeWeight = removeWeight;//(int)(baseAddWeight * progress * 2);
-        shuffleScheduleWeight = shuffleScheduleWeight;//(int)(baseAddWeight * progress);
-        shuffleWorkDayWeight = shuffleWorkDayWeight;//(int)(baseAddWeight * progress);
-        shuffleRouteWeight = shuffleRouteWeight;// (int)(baseAddWeight * progress);
-
-        RecalculateWeights();
-    }
 
     public void ResetWeights()
     {
