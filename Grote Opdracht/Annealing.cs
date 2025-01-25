@@ -55,7 +55,6 @@ class Annealing
         Annealing annealing = new Annealing();
 
         Schedule schedule = Schedule.LoadSchedule(path, out annealing.workingScore);
-        Schedule schedule2 = Schedule.LoadSchedule(path, out _); //Assuming only use valid inputs.
 
         annealing.workingSchedule = schedule;
 
@@ -405,7 +404,7 @@ class Annealing
 
     #endregion
 
-    public int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, Weights weights)
+    public static int RandomWalk(Random rng, Judge judge, int workingScore, Schedule workingSchedule, Solution bestSolution, ulong iterations, Weights weights)
     {
         for (ulong i = 0; i < iterations; i++)
         {
@@ -427,7 +426,7 @@ class Annealing
         return workingScore;
     }
 
-    public int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge, Weights weights)
+    public static int TryIterate(int workingScore, Schedule schedule, Random rng, Judge judge, Weights weights)
     {
         int weight = rng.Next(0, weights.totalWeightSum); 
 
