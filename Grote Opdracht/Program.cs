@@ -36,38 +36,27 @@
         else
             iter = ulong.Parse(response) * 1000000;
 
-
         //The solution to be worked on
         Solution solution;
 
         //Multi threading
-        Console.WriteLine("Do you want to run in parallel? y|n");
+        int numOfThreads;
+
+        Console.WriteLine("Enter amount of threads to run with");
+        Console.WriteLine($"You have {Environment.ProcessorCount - 1} logical processors available");
+        Console.WriteLine("(One is used for quitting behaviour):");
+
         response = Console.ReadLine();
-        if (response == "y")
+        try
         {
-            int numOfThreads;
-
-            Console.WriteLine("How many threads?");
-            Console.WriteLine($"You have {Environment.ProcessorCount - 1} logical processors available");
-            Console.WriteLine("(One is used for quitting behaviour)");
-            response = Console.ReadLine();
-            try
-            {
-                numOfThreads = int.Parse(response);
-            }
-            catch
-            {
-                numOfThreads = Environment.ProcessorCount - 1; //default
-            }
-
-            solution = annealing.ParallelRun(numOfThreads);
+            numOfThreads = int.Parse(response);
         }
-        else 
+        catch
         {
-            solution = annealing.Run(iter);
+            numOfThreads = Environment.ProcessorCount - 1; //default
         }
+        solution = annealing.ParallelRun(numOfThreads);
 
-        //annealing.bestSolution.PrintSolution(write); bruh
         annealing.bestValidSolution.PrintSolution(write);
 
         Console.WriteLine("Final score: " + solution.score / 60 / 1000);
